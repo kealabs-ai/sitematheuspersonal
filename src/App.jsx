@@ -6,6 +6,9 @@ import { ChevronLeft, ChevronRight, ArrowRight, Menu, X } from 'lucide-react';
 const App = () => {
   return (
     <div className="bg-black text-white font-inter">
+      <div className="bg-yellow-500 text-black text-center py-2 px-4 text-sm md:text-base font-bold">
+        🚧 Site em Desenvolvimento 🚧
+      </div>
       <Header />
       <main>
         <HeroSection />
@@ -23,7 +26,7 @@ const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50">
+    <header className="fixed top-10 left-0 right-0 z-50">
       <nav className="flex justify-between items-center p-4 bg-black/30 backdrop-blur-md">
         <h1 className="text-xl md:text-2xl font-oswald uppercase">Matheus Personal</h1>
         
