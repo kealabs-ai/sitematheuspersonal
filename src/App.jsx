@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ArrowRight, Menu, X } from 'lucide-react';
+import kealabsLogo from './assets/kealabs_logo_strategic.png';
 
 const App = () => {
   return (
@@ -307,7 +308,7 @@ const Footer = () => {
         <div className="text-center md:text-left">
           <a href="https://www.kealabs.com.br" target="_blank" rel="noopener noreferrer">
             <img 
-              src="/src/assets/kealabs_logo_strategic.png" 
+              src={kealabsLogo} 
               alt="KeaLabs" 
               className="h-12 mx-auto md:mx-0 mb-2"
             />
