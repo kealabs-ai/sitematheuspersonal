@@ -302,17 +302,31 @@ const ContactSection = () => {
 
 const Footer = () => {
   return (
-    <footer className="py-6 text-center px-4">
-      <div className="mb-4">
-        <img 
-          src="/src/assets/kealabs_logo_strategic.png" 
-          alt="KeaLabs Logo" 
-          className="h-12 mx-auto mb-2"
-        />
-        <p className="text-sm text-gray-400">Construído e Assessorado por KeaLabs</p>
-        <p className="text-xs text-gray-500">Lab de Passos-MG</p>
+    <footer className="py-6 px-4">
+      <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="text-center md:text-left">
+          <a href="https://www.kealabs.com.br" target="_blank" rel="noopener noreferrer">
+            <img 
+              src="/src/assets/kealabs_logo_strategic.png" 
+              alt="KeaLabs" 
+              className="h-12 mx-auto md:mx-0 mb-2"
+            />
+          </a>
+          <p className="text-sm text-gray-400">Construído e Assessorado por KeaLabs</p>
+          <p className="text-xs text-gray-500">Lab de Passos-MG</p>
+        </div>
+        <div className="text-center md:text-right">
+          <h4 className="text-lime-green font-bold mb-3">Mapa do Site</h4>
+          <ul className="space-y-2 text-sm">
+            <li><a href="#início" className="text-gray-400 hover:text-lime-green transition-colors">Início</a></li>
+            <li><a href="#serviços" className="text-gray-400 hover:text-lime-green transition-colors">Serviços</a></li>
+            <li><a href="#preços" className="text-gray-400 hover:text-lime-green transition-colors">Preços</a></li>
+            <li><a href="#resultados" className="text-gray-400 hover:text-lime-green transition-colors">Resultados</a></li>
+            <li><a href="#contato" className="text-gray-400 hover:text-lime-green transition-colors">Contato</a></li>
+          </ul>
+        </div>
       </div>
-      <p className="text-gray-500 text-sm md:text-base">&copy; {new Date().getFullYear()} Matheus Personal. Todos os direitos reservados.</p>
+      <p className="text-gray-500 text-sm md:text-base text-center mt-6">&copy; {new Date().getFullYear()} Matheus Personal. Todos os direitos reservados.</p>
     </footer>
   );
 };
