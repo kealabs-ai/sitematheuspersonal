@@ -313,7 +313,7 @@ const Footer = () => {
               className="h-12 mx-auto md:mx-0 mb-2"
             />
           </a>
-          <p className="text-sm text-gray-400">Construído e Assessorado por KeaLabs</p>
+          <p className="text-sm text-gray-400">Business Intelligence e Agentes de IA</p>
           <p className="text-xs text-gray-500">Lab de Passos-MG</p>
         </div>
         <div className="text-center md:text-right">
