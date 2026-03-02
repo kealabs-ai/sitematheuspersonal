@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ArrowRight, Menu, X, Dumbbell, Target, TrendingUp, Award } from 'lucide-react';
 import kealabsLogo from './assets/kealabs_logo_strategic.png';
+import matheusPhoto from './assets/matheus_personal.jpg';
 
 const App = () => {
   return (
@@ -159,20 +160,38 @@ const AboutSection = () => {
             initial={{ opacity: 0, x: 50 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="grid grid-cols-2 gap-4"
+            className="flex flex-col items-center"
           >
-            {[
-              { icon: <Award size={40} />, value: '300+', label: 'Alunos' },
-              { icon: <Target size={40} />, value: '30', label: 'Anos' },
-              { icon: <TrendingUp size={40} />, value: 'CREF', label: '035480-G/MG' },
-              { icon: <Dumbbell size={40} />, value: '100%', label: 'Dedicação' },
-            ].map((stat, i) => (
-              <div key={i} className="bg-black border border-dark-border p-6 text-center">
-                <div className="text-lime-green mb-2 flex justify-center">{stat.icon}</div>
-                <div className="text-3xl font-bebas text-white mb-1">{stat.value}</div>
-                <div className="text-sm text-gray-400 uppercase">{stat.label}</div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="mb-6"
+            >
+              <div className="w-[350px] h-[350px] rounded-full overflow-hidden">
+                <motion.img
+                  src={matheusPhoto}
+                  alt="Matheus Castro"
+                  className="w-full h-full object-cover object-top"
+                  whileHover={{ scale: 1.1 }}
+                  transition={{ duration: 0.3 }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
               </div>
-            ))}
+            </motion.div>
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { icon: <Award size={40} />, value: '300+', label: 'Alunos' },
+                { icon: <Dumbbell size={40} />, value: '100%', label: 'Dedicação' },
+              ].map((stat, i) => (
+                <div key={i} className="bg-black border border-dark-border p-6 text-center">
+                  <div className="text-lime-green mb-2 flex justify-center">{stat.icon}</div>
+                  <div className="text-3xl font-bebas text-white mb-1">{stat.value}</div>
+                  <div className="text-sm text-gray-400 uppercase">{stat.label}</div>
+                </div>
+              ))}
+            </div>
           </motion.div>
         </div>
       </div>
