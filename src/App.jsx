@@ -58,11 +58,18 @@ const Header = () => {
       </nav>
 
       {isOpen && (
-        <motion.div 
-          initial={{ x: '100%' }}
-          animate={{ x: 0 }}
-          className="fixed top-0 right-0 h-screen w-72 bg-black/98 backdrop-blur-lg md:hidden pt-20 px-6 border-l border-lime-green/20"
-        >
+        <>
+          <div 
+            className="fixed inset-0 bg-black/50 md:hidden"
+            style={{ zIndex: 45 }}
+            onClick={() => setIsOpen(false)}
+          ></div>
+          <motion.div 
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            className="fixed top-0 right-0 h-screen w-72 bg-black/98 backdrop-blur-lg md:hidden pt-20 px-6 border-l border-lime-green/20"
+            style={{ zIndex: 50 }}
+          >
           <ul className="flex flex-col space-y-6">
             {['Início', 'Sobre', 'Serviços', 'Presencial', 'Online', 'Resultados', 'Contato'].map(item => (
               <li key={item}>
@@ -77,6 +84,7 @@ const Header = () => {
             ))}
           </ul>
         </motion.div>
+        </>
       )}
     </header>
   );
@@ -603,7 +611,7 @@ const Footer = () => {
               <img 
                 src={kealabsLogo} 
                 alt="KeaLabs" 
-                className="h-10 mb-3 opacity-80 hover:opacity-100 transition-opacity"
+                className="h-10 mb-3 opacity-80 hover:opacity-100 transition-opacity brightness-0 invert"
               />
             </a>
             <p className="text-sm text-gray-400">Business Intelligence e Agentes de IA</p>
