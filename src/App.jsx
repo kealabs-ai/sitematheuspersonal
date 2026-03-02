@@ -302,8 +302,17 @@ const ContactSection = () => {
 
 const Footer = () => {
   return (
-    <footer className="py-6 text-center text-gray-500 text-sm md:text-base px-4">
-      <p>&copy; {new Date().getFullYear()} Matheus Personal. Todos os direitos reservados.</p>
+    <footer className="py-6 text-center px-4">
+      <div className="mb-4">
+        <img 
+          src="/src/assets/kealabs_logo_strategic.png" 
+          alt="KeaLabs Logo" 
+          className="h-12 mx-auto mb-2"
+        />
+        <p className="text-sm text-gray-400">Construído e Assessorado por KeaLabs</p>
+        <p className="text-xs text-gray-500">Lab de Passos-MG</p>
+      </div>
+      <p className="text-gray-500 text-sm md:text-base">&copy; {new Date().getFullYear()} Matheus Personal. Todos os direitos reservados.</p>
     </footer>
   );
 };
