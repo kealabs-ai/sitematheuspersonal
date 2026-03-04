@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, useAnimation } from 'framer-motion';
-import { ChevronLeft, ChevronRight, ArrowRight, Menu, X, Dumbbell, Target, TrendingUp, Award } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowRight, Menu, X, Dumbbell, Target, TrendingUp, Award, Instagram, Phone } from 'lucide-react';
 import kealabsLogo from './assets/kealabs_logo_strategic.png';
 import matheusPhoto from './assets/matheus_personal.jpg';
 
@@ -43,11 +43,22 @@ const Header = () => {
           <span className="text-lime-green">Matheus</span> Personal
         </h1>
         
-        <button onClick={() => setIsOpen(!isOpen)} className="md:hidden text-lime-green">
-          {isOpen ? <X size={32} /> : <Menu size={32} />}
-        </button>
+        <div className="flex items-center gap-4">
+          <a 
+            href="https://instagram.com/matheusc_personal" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-lime-green hover:text-neon-green transition-colors"
+            aria-label="Instagram"
+          >
+            <Instagram size={28} />
+          </a>
+          <button onClick={() => setIsOpen(!isOpen)} className="md:hidden text-lime-green">
+            {isOpen ? <X size={32} /> : <Menu size={32} />}
+          </button>
+        </div>
 
-        <ul className="hidden md:flex space-x-8 font-semibold">
+        <ul className="hidden md:flex space-x-8 font-semibold items-center">
           {['Início', 'Sobre', 'Serviços', 'Presencial', 'Online', 'Resultados', 'Contato'].map(item => (
             <li key={item}>
               <a href={`#${item.toLowerCase()}`} className="hover:text-lime-green transition-colors uppercase text-sm tracking-wide">
@@ -55,6 +66,17 @@ const Header = () => {
               </a>
             </li>
           ))}
+          <li>
+            <a 
+              href="https://instagram.com/matheusc_personal" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-lime-green hover:text-neon-green transition-colors"
+              aria-label="Instagram"
+            >
+              <Instagram size={24} />
+            </a>
+          </li>
         </ul>
       </nav>
 
@@ -555,7 +577,7 @@ const ContactSection = () => {
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
       const message = `Olá! Meu nome é ${name}. Gostaria de mais informações sobre consultoria. Email: ${email}`;
-      const whatsappUrl = `https://wa.me/5500000000000?text=${encodeURIComponent(message)}`;
+      const whatsappUrl = `https://wa.me/5535998572602?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank');
     } catch (error) {
       alert("Ocorreu um erro. Tente novamente.");
@@ -579,7 +601,15 @@ const ContactSection = () => {
           <h3 className="text-5xl md:text-6xl font-bebas uppercase mb-4">
             Comece Sua <span className="text-lime-green">Transformação</span>
           </h3>
-          <p className="text-gray-400 text-lg">Agende sua avaliação gratuita agora</p>
+          <p className="text-gray-400 text-lg mb-4">Agende sua avaliação gratuita agora</p>
+          <a 
+            href="https://wa.me/5535998572602" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-lime-green hover:text-neon-green transition-colors text-xl font-bold"
+          >
+            <Phone size={24} /> (35) 99857-2602
+          </a>
         </motion.div>
 
         <form onSubmit={handleSubmit} className="bg-black border border-dark-border p-8">
@@ -648,6 +678,25 @@ const Footer = () => {
                 </li>
               ))}
             </ul>
+            <div className="mt-4 space-y-2">
+              <a 
+                href="https://instagram.com/matheusc_personal" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-lime-green hover:text-neon-green transition-colors text-sm"
+              >
+                <Instagram size={20} /> @matheusc_personal
+              </a>
+              <br />
+              <a 
+                href="https://wa.me/5535998572602" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-lime-green hover:text-neon-green transition-colors text-sm"
+              >
+                <Phone size={20} /> (35) 99857-2602
+              </a>
+            </div>
           </div>
         </div>
         
