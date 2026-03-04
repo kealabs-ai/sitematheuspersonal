@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ArrowRight, Menu, X, Dumbbell, Target, TrendingUp, Award, Instagram, Phone } from 'lucide-react';
-import kealabsLogo from './assets/kealabs_logo_strategic.png';
+import kealabsLogo from './assets/kealabs_logo_strategic_white.png';
+import matheusLogo from './assets/logotipo_matheus_personal.png';
 import matheusPhoto from './assets/matheus_personal.jpg';
 
 const App = () => {
@@ -39,9 +40,7 @@ const Header = () => {
   return (
     <header className={`fixed top-10 left-0 right-0 z-50 transition-all ${scrolled ? 'bg-black/95 backdrop-blur-lg shadow-lg' : 'bg-transparent'}`}>
       <nav className="container mx-auto flex justify-between items-center p-4">
-        <h1 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider">
-          <span className="text-lime-green">Matheus</span> Personal
-        </h1>
+        <img src={matheusLogo} alt="Matheus Personal" className="h-10 md:h-12 brightness-0 invert" />
         
         <div className="flex items-center gap-4">
           <a 
