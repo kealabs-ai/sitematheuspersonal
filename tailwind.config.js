@@ -7,8 +7,8 @@ export default {
   theme: {
     extend: {
       colors: {
-        'lime-green': '#FF6B00',
-        'neon-green': '#FF8C00',
+        'lime-green': '#00B4D8',
+        'neon-green': '#0096C7',
         'dark-bg': '#0a0a0a',
         'dark-card': '#1a1a1a',
         'dark-border': '#2a2a2a',
