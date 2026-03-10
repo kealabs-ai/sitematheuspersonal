@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, useAnimation } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ArrowRight, Menu, X, Dumbbell, Target, TrendingUp, Award, Instagram, Phone } from 'lucide-react';
 import kealabsLogo from './assets/kealabs_logo_strategic_white.png';
@@ -17,7 +18,6 @@ const App = () => {
         <AboutSection />
         <ServicesSection />
         <PricingSection />
-        <OnlineSection />
         <TestimonialsSection />
         <ResultsSection />
         <ContactSection />
@@ -58,13 +58,21 @@ const Header = () => {
         </div>
 
         <ul className="hidden md:flex space-x-8 font-semibold items-center">
-          {['Início', 'Sobre', 'Serviços', 'Presencial', 'Online', 'Resultados', 'Contato'].map(item => (
+          {['Início', 'Sobre', 'Serviços', 'Consultoria', 'Resultados', 'Contato'].map(item => (
             <li key={item}>
               <a href={`#${item.toLowerCase()}`} className="hover:text-lime-green transition-colors uppercase text-sm tracking-wide">
                 {item}
               </a>
             </li>
           ))}
+          <li>
+            <a 
+              href="/login"
+              className="bg-lime-green text-black px-4 py-2 font-bold uppercase text-xs hover:bg-neon-green transition-colors"
+            >
+              Área do Aluno
+            </a>
+          </li>
           <li>
             <a 
               href="https://instagram.com/matheusc_personal" 
@@ -93,7 +101,7 @@ const Header = () => {
             style={{ zIndex: 50 }}
           >
           <ul className="flex flex-col space-y-6">
-            {['Início', 'Sobre', 'Serviços', 'Presencial', 'Online', 'Resultados', 'Contato'].map(item => (
+            {['Início', 'Sobre', 'Serviços', 'Consultoria', 'Resultados', 'Contato'].map(item => (
               <li key={item}>
                 <a 
                   href={`#${item.toLowerCase()}`} 
@@ -104,6 +112,15 @@ const Header = () => {
                 </a>
               </li>
             ))}
+            <li>
+              <a 
+                href="/login"
+                onClick={() => setIsOpen(false)}
+                className="text-xl hover:text-lime-green transition-colors block uppercase font-semibold"
+              >
+                Área do Aluno
+              </a>
+            </li>
           </ul>
         </motion.div>
         </>
@@ -133,10 +150,10 @@ const HeroSection = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a 
-              href="#presencial"
+              href="#consultoria"
               className="inline-flex items-center justify-center bg-lime-green text-black font-bold py-4 px-10 rounded-none uppercase hover:bg-neon-green transition-all transform hover:scale-105 text-lg"
             >
-              Ver Planos <ArrowRight className="ml-2" size={24} />
+              Ver Consultoria <ArrowRight className="ml-2" size={24} />
             </a>
             <a 
               href="#contato"
@@ -269,39 +286,49 @@ const pricingPlans = [
     name: 'BRONZE', 
     frequency: '2x na semana',
     classes: '8 aulas/mês',
-    price: '499', 
+    price: '240', 
     description: 'Ideal para quem quer consistência e um acompanhamento próximo para garantir o progresso',
-    popular: false
+    popular: false,
+    pricePerClass: '30'
   },
   { 
     name: 'PRATA', 
     frequency: '3x na semana',
     classes: '12 aulas/mês',
-    price: '729', 
+    price: '300', 
     description: 'Para quem está totalmente focado e quer uma transformação corporal mais rápida e intensa',
-    popular: true
+    popular: true,
+    pricePerClass: '25'
   },
   { 
     name: 'OURO', 
     frequency: '4x na semana',
     classes: '16 aulas/mês',
-    price: '949', 
+    price: '320', 
     description: 'Para quem está totalmente focado e quer uma transformação corporal mais rápida e intensa',
-    popular: false
+    popular: false,
+    pricePerClass: '20'
   },
   { 
     name: 'PLUS', 
     frequency: '5x na semana',
     classes: '20 aulas/mês',
-    price: '1199', 
+    price: '360', 
     description: 'O acompanhamento definitivo. Máximo comprometimento para uma transformação completa de corpo e mente',
-    popular: false
+    popular: false,
+    pricePerClass: '18'
   },
 ];
 
 const PricingSection = () => {
+  const navigate = useNavigate();
+
+  const handlePlanClick = (plan) => {
+    navigate('/cart', { state: { plan } });
+  };
+
   return (
-    <section id="presencial" className="py-20 px-4 bg-dark-card">
+    <section id="consultoria" className="py-20 px-4 bg-dark-card">
       <div className="container mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -310,10 +337,10 @@ const PricingSection = () => {
           className="text-center mb-12"
         >
           <h3 className="text-5xl md:text-6xl font-bebas uppercase mb-6">
-            Acompanhamento <span className="text-lime-green">Presencial</span>
+            Consultoria <span className="text-lime-green">Online</span>
           </h3>
           <p className="text-gray-300 text-lg max-w-3xl mx-auto leading-relaxed">
-            O plano presencial é para você que busca a <span className="text-lime-green font-semibold">máxima performance e segurança</span>, com minha supervisão direta em cada exercício. Garanto a <span className="text-lime-green font-semibold">técnica perfeita</span>, a motivação extra e os ajustes necessários em tempo real para <span className="text-lime-green font-semibold">acelerar seus resultados</span>.
+            Treine de onde estiver com <span className="text-lime-green font-semibold">acompanhamento profissional completo</span>. Escolha a frequência ideal para seus objetivos e tenha acesso a treinos personalizados, suporte direto e resultados garantidos.
           </p>
         </motion.div>
 
@@ -335,23 +362,24 @@ const PricingSection = () => {
               <h4 className="text-3xl font-bebas mb-1 text-center text-lime-green">{plan.name}</h4>
               <p className="text-center text-gray-400 text-sm mb-4">{plan.frequency}</p>
               <div className="text-center mb-4 pb-4 border-b border-dark-border">
-                <span className="text-4xl font-bebas text-white">R${plan.price}</span>
-                <span className="text-gray-400 text-sm">/mês</span>
+                <span className="text-4xl font-bebas text-white">R${plan.pricePerClass}</span>
+                <span className="text-gray-400 text-sm">/aula</span>
                 <p className="text-lime-green text-xs mt-1 font-semibold">{plan.classes}</p>
+                <p className="text-gray-400 text-xs mt-1">R${plan.price}/mês</p>
               </div>
               <p className="text-gray-300 text-sm leading-relaxed mb-6 min-h-[80px]">
                 {plan.description}
               </p>
-              <a 
-                href="#contato"
-                className={`block text-center py-3 font-bold uppercase transition-all text-sm ${
+              <button 
+                onClick={() => handlePlanClick(plan)}
+                className={`w-full text-center py-3 px-4 font-bold uppercase transition-all text-sm ${
                   plan.popular 
                     ? 'bg-lime-green text-black hover:bg-neon-green' 
                     : 'border-2 border-lime-green text-lime-green hover:bg-lime-green hover:text-black'
                 }`}
               >
                 Contratar
-              </a>
+              </button>
             </motion.div>
           ))}
         </div>
@@ -370,7 +398,7 @@ const OnlineSection = () => {
   ];
 
   return (
-    <section id="online" className="py-20 px-4">
+    <section id="beneficios" className="py-20 px-4">
       <div className="container mx-auto max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -379,23 +407,18 @@ const OnlineSection = () => {
           className="text-center mb-12"
         >
           <h3 className="text-5xl md:text-6xl font-bebas uppercase mb-6">
-            Consultoria <span className="text-lime-green">Online</span>
+            Benefícios da <span className="text-lime-green">Consultoria</span>
           </h3>
           <p className="text-gray-300 text-lg max-w-3xl mx-auto leading-relaxed">
-            Leve meu método para onde você estiver. Com a consultoria online, você tem a <span className="text-lime-green font-semibold">flexibilidade de treinar em casa ou na academia</span>, no seu próprio ritmo, mas com todo o meu planejamento e suporte para não perder o foco e <span className="text-lime-green font-semibold">alcançar seus objetivos</span>.
+            Todos os planos incluem acesso completo à plataforma com treinos personalizados, acompanhamento semanal e suporte direto via WhatsApp.
           </p>
         </motion.div>
 
         <div className="bg-dark-card border-2 border-lime-green p-8 md:p-12">
           <div className="text-center mb-8">
             <h4 className="text-3xl font-bebas uppercase text-lime-green mb-4">
-              Itens Inclusos na Consultoria Online
+              Itens Inclusos em Todos os Planos
             </h4>
-            <div className="inline-block bg-black border-2 border-lime-green px-8 py-4">
-              <span className="text-5xl font-bebas text-lime-green">R$119</span>
-              <span className="text-2xl text-gray-400">,90</span>
-              <span className="text-gray-400">/mês</span>
-            </div>
           </div>
           <div className="grid md:grid-cols-2 gap-6">
             {benefits.map((benefit, index) => (
@@ -417,10 +440,10 @@ const OnlineSection = () => {
           </div>
           <div className="text-center mt-10">
             <a 
-              href="#contato"
+              href="#consultoria"
               className="inline-flex items-center justify-center bg-lime-green text-black font-bold py-4 px-12 uppercase hover:bg-neon-green transition-all transform hover:scale-105 text-lg"
             >
-              Quero Consultoria Online <ArrowRight className="ml-2" size={24} />
+              Ver Planos <ArrowRight className="ml-2" size={24} />
             </a>
           </div>
         </div>
@@ -560,34 +583,6 @@ const ResultsSection = () => {
 };
 
 const ContactSection = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!name || !email || !phone) {
-      alert("Por favor, preencha todos os campos.");
-      return;
-    }
-    setLoading(true);
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const message = `Olá! Meu nome é ${name}. Gostaria de mais informações sobre consultoria. Email: ${email}`;
-      const whatsappUrl = `https://wa.me/5535998572602?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, '_blank');
-    } catch (error) {
-      alert("Ocorreu um erro. Tente novamente.");
-    } finally {
-      setLoading(false);
-      setName('');
-      setEmail('');
-      setPhone('');
-    }
-  };
-
   return (
     <section id="contato" className="py-20 px-4 bg-dark-card">
       <div className="container mx-auto max-w-3xl">
@@ -595,55 +590,21 @@ const ContactSection = () => {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-12"
+          className="text-center"
         >
           <h3 className="text-5xl md:text-6xl font-bebas uppercase mb-4">
             Comece Sua <span className="text-lime-green">Transformação</span>
           </h3>
-          <p className="text-gray-400 text-lg mb-4">Agende sua avaliação gratuita agora</p>
+          <p className="text-gray-400 text-lg mb-8">Entre em contato agora mesmo</p>
           <a 
             href="https://wa.me/5535998572602" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-lime-green hover:text-neon-green transition-colors text-xl font-bold"
+            className="inline-flex items-center gap-2 text-lime-green hover:text-neon-green transition-colors text-2xl font-bold"
           >
-            <Phone size={24} /> (35) 99857-2602
+            <Phone size={32} /> (35) 99857-2602
           </a>
         </motion.div>
-
-        <form onSubmit={handleSubmit} className="bg-black border border-dark-border p-8">
-          <div className="grid md:grid-cols-2 gap-6 mb-6">
-            <input 
-              type="text" 
-              placeholder="Seu nome completo" 
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full p-4 bg-dark-card border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
-            />
-            <input 
-              type="email" 
-              placeholder="Seu e-mail" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-4 bg-dark-card border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
-            />
-          </div>
-          <input 
-            type="tel" 
-            placeholder="Seu telefone/WhatsApp" 
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="w-full p-4 bg-dark-card border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors mb-6"
-          />
-          <button 
-            type="submit" 
-            disabled={loading}
-            className="w-full bg-lime-green text-black font-bold py-4 uppercase hover:bg-neon-green transition-all transform hover:scale-105 disabled:opacity-50 text-lg flex items-center justify-center"
-          >
-            {loading ? 'Enviando...' : 'Agendar Avaliação Gratuita'}
-            {!loading && <ArrowRight className="ml-2" size={24} />}
-          </button>
-        </form>
       </div>
     </section>
   );
@@ -669,7 +630,7 @@ const Footer = () => {
           <div className="text-center md:text-right">
             <h4 className="text-lime-green font-bebas text-xl mb-3 uppercase tracking-wider">Navegação</h4>
             <ul className="space-y-2 text-sm">
-              {['Início', 'Sobre', 'Serviços', 'Presencial', 'Online', 'Resultados', 'Contato'].map(item => (
+              {['Início', 'Sobre', 'Serviços', 'Consultoria', 'Resultados', 'Contato'].map(item => (
                 <li key={item}>
                   <a href={`#${item.toLowerCase()}`} className="text-gray-400 hover:text-lime-green transition-colors uppercase text-xs tracking-wide">
                     {item}

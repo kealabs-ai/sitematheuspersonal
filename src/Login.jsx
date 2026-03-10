@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
+import matheusLogo from './assets/logotipo_matheus_personal.png';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -14,9 +15,11 @@ const Login = () => {
     <div className="min-h-screen bg-dark-bg flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bebas uppercase mb-2">
-            <span className="text-lime-green">Matheus</span> Personal
-          </h1>
+          <img 
+            src={matheusLogo} 
+            alt="Matheus Personal" 
+            className="h-16 mx-auto mb-4 brightness-0 invert"
+          />
           <p className="text-gray-400 text-sm uppercase tracking-wider">Área do Aluno</p>
         </div>
 
