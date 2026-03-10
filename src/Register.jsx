@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, User } from 'lucide-react';
 import ProgressIndicator from './ProgressIndicator';
+import api from './services/api';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -18,6 +19,9 @@ const Register = () => {
     confirmPassword: '',
     countryCode: '+55',
   });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
 
 
@@ -45,13 +49,42 @@ const Register = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
-      alert('As senhas não coincidem!');
+      setError('As senhas não coincidem!');
       return;
     }
-    navigate('/checkout', { state: { plan, userData: formData } });
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      const result = await api.createUser({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        cpf: formData.cpf,
+        username: formData.username,
+        password: formData.password,
+        countryCode: formData.countryCode
+      });
+      
+      if (result.success) {
+        navigate('/checkout', { 
+          state: { 
+            plan, 
+            userData: { ...formData, userId: result.userId } 
+          } 
+        });
+      } else {
+        setError(result.message || 'Erro ao criar usuário');
+      }
+    } catch (err) {
+      setError('Erro ao conectar com o servidor');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!plan) {
@@ -228,11 +261,18 @@ const Register = () => {
                 <p>* Campos obrigatórios</p>
               </div>
 
+              {error && (
+                <div className="bg-red-500/10 border border-red-500 p-4 text-red-500 text-sm">
+                  {error}
+                </div>
+              )}
+
               <button
                 type="submit"
-                className="w-full bg-lime-green text-black font-bold py-4 uppercase hover:bg-neon-green transition-all text-lg"
+                disabled={loading}
+                className="w-full bg-lime-green text-black font-bold py-4 uppercase hover:bg-neon-green transition-all text-lg disabled:opacity-50"
               >
-                Continuar para Pagamento
+                {loading ? 'Criando conta...' : 'Continuar para Pagamento'}
               </button>
             </form>
           </div>

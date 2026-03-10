@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Trash2, ShoppingCart, Plus, Tag } from 'lucide-react';
 import ProgressIndicator from './ProgressIndicator';
+import api from './services/api';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ const Cart = () => {
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const coupons = {
     'PRIMEIRA': { discount: 10, type: 'percent' },
@@ -23,14 +25,29 @@ const Cart = () => {
     setCartItems(cartItems.filter((_, i) => i !== index));
   };
 
-  const applyCoupon = () => {
-    const coupon = coupons[couponCode.toUpperCase()];
-    if (coupon) {
-      setAppliedCoupon({ code: couponCode.toUpperCase(), ...coupon });
-      setCouponError('');
-    } else {
-      setCouponError('Cupom inválido');
+  const applyCoupon = async () => {
+    setLoading(true);
+    setCouponError('');
+    
+    try {
+      const result = await api.validateCoupon(couponCode, calculateSubtotal());
+      
+      if (result.success) {
+        setAppliedCoupon({
+          id: result.coupon.id,
+          code: result.coupon.code,
+          type: result.coupon.discountType,
+          discount: result.coupon.discountValue
+        });
+      } else {
+        setCouponError(result.message);
+        setAppliedCoupon(null);
+      }
+    } catch (error) {
+      setCouponError('Erro ao validar cupom');
       setAppliedCoupon(null);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -164,9 +181,10 @@ const Cart = () => {
                   />
                   <button
                     onClick={applyCoupon}
-                    className="bg-lime-green text-black font-bold px-6 py-3 uppercase hover:bg-neon-green transition-all"
+                    disabled={loading || !couponCode}
+                    className="bg-lime-green text-black font-bold px-6 py-3 uppercase hover:bg-neon-green transition-all disabled:opacity-50"
                   >
-                    Aplicar
+                    {loading ? 'Validando...' : 'Aplicar'}
                   </button>
                 </div>
                 {couponError && (

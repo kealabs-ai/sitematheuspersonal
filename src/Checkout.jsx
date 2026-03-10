@@ -4,6 +4,7 @@ import { ArrowLeft, Lock, Shield, CreditCard, Copy, Check } from 'lucide-react';
 import ProgressIndicator from './ProgressIndicator';
 import { QRCodeSVG } from 'qrcode.react';
 import { createStaticPix } from 'pix-utils';
+import api from './services/api';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -69,30 +70,47 @@ const Checkout = () => {
     setError(null);
 
     try {
-      // Simular processamento de pagamento
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const orderData = {
+        userId: userData.userId,
+        items: [{
+          name: plan.name,
+          price: plan.price,
+          frequency: plan.frequency
+        }],
+        subtotal: parseFloat(plan.price),
+        discountAmount: 0,
+        totalAmount: parseFloat(plan.price),
+        paymentMethod: formData.paymentMethod,
+        couponId: null
+      };
 
-      // Extrair últimos 4 dígitos do cartão se for cartão
-      const last4Digits = formData.paymentMethod !== 'pix' 
-        ? formData.cardNumber.replace(/\s/g, '').slice(-4)
-        : null;
+      const result = await api.createOrder(orderData);
 
-      // Redirecionar para confirmação
-      navigate('/confirmation', {
-        state: {
-          plan,
-          userData: {
-            ...userData,
-            paymentMethod: formData.paymentMethod,
-            last4Digits,
-            recurringPayment: formData.recurringPayment
-          },
-          orderId: 'MP' + Date.now()
-        }
-      });
+      if (result.success) {
+        const last4Digits = formData.paymentMethod !== 'pix' 
+          ? formData.cardNumber.replace(/\s/g, '').slice(-4)
+          : null;
+
+        navigate('/confirmation', {
+          state: {
+            plan,
+            userData: {
+              ...userData,
+              paymentMethod: formData.paymentMethod,
+              last4Digits,
+              recurringPayment: formData.recurringPayment
+            },
+            orderId: result.orderId,
+            orderNumber: result.orderNumber
+          }
+        });
+      } else {
+        setError(result.message || 'Erro ao criar pedido');
+      }
     } catch (err) {
       console.error('Erro ao processar pagamento:', err);
       setError('Erro ao processar pagamento. Tente novamente.');
+    } finally {
       setLoading(false);
     }
   };
@@ -125,8 +143,6 @@ const Checkout = () => {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-
-
 
   return (
     <div className="min-h-screen bg-dark-bg text-white">
