@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Lock, Shield, CreditCard, Copy, Check } from 'lucide-react';
 import ProgressIndicator from './ProgressIndicator';
 import { QRCodeSVG } from 'qrcode.react';
-import { createStaticPix } from 'pix-utils';
+import { generatePixCode } from './services/pixService';
 import api from './services/api';
 
 const Checkout = () => {
@@ -122,20 +122,13 @@ const Checkout = () => {
 
   useEffect(() => {
     if (formData.paymentMethod === 'pix') {
-      generatePixCode();
+      generatePixCodeForPayment();
     }
   }, [formData.paymentMethod]);
 
-  const generatePixCode = () => {
-    const pix = createStaticPix({
-      merchantName: 'MATHEUS CASTRO PERSONAL',
-      merchantCity: 'PASSOS',
-      pixKey: '22410655874',
-      infoAdicional: `Plano ${plan.name}`,
-      transactionAmount: parseFloat(plan.price)
-    });
-    
-    setPixCode(pix.toBRCode());
+  const generatePixCodeForPayment = () => {
+    const code = generatePixCode('22410655874', parseFloat(plan.price), `Plano ${plan.name}`);
+    setPixCode(code);
   };
 
   const copyPixCode = () => {
@@ -163,10 +156,8 @@ const Checkout = () => {
           </h1>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {/* Formulário */}
             <div className="md:col-span-2">
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Dados Pessoais */}
                 <div className="bg-dark-card border border-dark-border p-6">
                   <h3 className="text-2xl font-bebas uppercase mb-4 text-lime-green">
                     Confirme seus Dados
@@ -191,7 +182,6 @@ const Checkout = () => {
                   </div>
                 </div>
 
-                {/* Método de Pagamento */}
                 <div className="bg-dark-card border border-dark-border p-6">
                   <h3 className="text-2xl font-bebas uppercase mb-4 text-lime-green">
                     Método de Pagamento
@@ -242,16 +232,8 @@ const Checkout = () => {
                       </div>
                     </button>
                   </div>
-                  <div className="flex flex-wrap gap-4 justify-center items-center p-4 bg-black border border-dark-border">
-                    <img src="https://logodownload.org/wp-content/uploads/2016/10/visa-logo-2-1.png" alt="Visa" className="h-4" />
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-4" />
-                    <img src="https://logodownload.org/wp-content/uploads/2017/04/elo-logo-2-2.png" alt="Elo" className="h-4" />
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/3/30/American_Express_logo.svg" alt="American Express" className="h-4" />
-                    <img src="https://logodownload.org/wp-content/uploads/2015/03/hipercard-logo-4.png" alt="Hipercard" className="h-4" />
-                  </div>
                 </div>
 
-                {/* Dados do Cartão */}
                 {formData.paymentMethod !== 'pix' && (
                 <div className="bg-dark-card border border-dark-border p-6">
                   <h3 className="text-2xl font-bebas uppercase mb-4 text-lime-green flex items-center gap-2">
@@ -322,25 +304,17 @@ const Checkout = () => {
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 mt-4 text-gray-400 text-sm">
-                    <Lock size={16} />
-                    <span>Pagamento 100% seguro e criptografado</span>
-                  </div>
                 </div>
                 )}
 
-                {/* PIX */}
                 {formData.paymentMethod === 'pix' && (
                 <div className="bg-dark-card border border-dark-border p-6">
-                  <h3 className="text-2xl font-bebas uppercase mb-4 text-lime-green flex items-center gap-2">
-                    <svg width="24" height="24" viewBox="0 0 512 512" fill="currentColor">
-                      <path className="text-lime-green" d="M242.4 292.5C247.8 287.1 257.1 287.1 262.5 292.5L339.5 369.5C353.7 383.7 372.6 391.5 392.6 391.5H407.7L310.6 488.6C280.3 518.1 231.1 518.1 200.8 488.6L103.3 391.2H112.6C132.6 391.2 151.5 383.4 165.7 369.2L242.4 292.5zM262.5 218.9C257.1 224.3 247.8 224.3 242.4 218.9L165.7 142.2C151.5 127.1 132.6 120.2 112.6 120.2H103.3L200.7 22.8C231.1-7.6 280.3-7.6 310.6 22.8L407.8 119.9H392.6C372.6 119.9 353.7 127.7 339.5 141.9L262.5 218.9zM112.6 142.7C126.4 142.7 139.1 148.3 149.7 158.1L226.4 234.8C233.6 241.1 243 245.6 252.5 245.6C261.9 245.6 271.3 241.1 278.5 234.8L355.5 157.8C365.3 148.1 378.8 142.5 392.6 142.5H430.3L488.6 200.8C518.9 231.1 518.9 280.3 488.6 310.6L430.3 368.9H392.6C378.8 368.9 365.3 363.3 355.5 353.5L278.5 276.5C264.6 262.6 240.3 262.6 226.4 276.6L149.7 353.2C139.1 363 126.4 368.6 112.6 368.6H80.8L22.8 310.6C-7.6 280.3-7.6 231.1 22.8 200.8L80.8 142.8H112.6z"/>
-                    </svg>
+                  <h3 className="text-2xl font-bebas uppercase mb-4 text-lime-green">
                     Pagamento via PIX
                   </h3>
                   <div className="bg-black border border-lime-green/30 p-6">
-                    <div className="text-center mb-4">
-                      <p className="text-gray-300 mb-4">Escaneie o QR Code ou copie o código PIX</p>
+                    <div className="text-center mb-6">
+                      <p className="text-gray-300 mb-4">Escaneie o QR Code para pagar</p>
                       <div className="bg-white p-4 inline-block rounded">
                         <QRCodeSVG value={pixCode} size={200} />
                       </div>
@@ -367,7 +341,7 @@ const Checkout = () => {
                       </div>
                     </div>
                     <div className="mt-4 bg-lime-green/10 border border-lime-green/30 p-4 text-sm text-gray-300">
-                      <p className="mb-2 font-bold text-lime-green">Instruções:</p>
+                      <p className="mb-2 font-bold text-lime-green">Como pagar:</p>
                       <ol className="list-decimal list-inside space-y-1">
                         <li>Abra o app do seu banco</li>
                         <li>Escolha pagar com PIX</li>
@@ -375,15 +349,10 @@ const Checkout = () => {
                         <li>Confirme o pagamento de R$ {plan.price}</li>
                       </ol>
                     </div>
-                    <div className="flex items-center justify-center gap-2 text-lime-green mt-4">
-                      <Lock size={16} />
-                      <span className="text-sm">Pagamento instantâneo e seguro</span>
-                    </div>
                   </div>
                 </div>
                 )}
 
-                {/* Pagamento Seguro */}
                 <div className="bg-black border border-lime-green/30 p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <Shield size={24} className="text-lime-green" />
@@ -407,7 +376,6 @@ const Checkout = () => {
                   </div>
                 </div>
 
-                {/* Recorrência */}
                 {formData.paymentMethod === 'credit' && (
                 <div className="bg-black border border-dark-border p-6">
                   <div className="flex items-center gap-3">
@@ -456,7 +424,6 @@ const Checkout = () => {
               </form>
             </div>
 
-            {/* Resumo do Pedido */}
             <div className="md:col-span-1">
               <div className="bg-dark-card border border-dark-border p-6 sticky top-24">
                 <h3 className="text-2xl font-bebas uppercase mb-4 text-lime-green">
