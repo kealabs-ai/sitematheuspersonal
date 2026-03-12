@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -51,6 +52,10 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Servir arquivos estáticos do frontend (dist)
+const distPath = path.join(__dirname, '..', 'dist');
+app.use(express.static(distPath));
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ 
@@ -66,13 +71,18 @@ app.use('/api/coupons', require('./routes/coupons'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/leads', require('./routes/leads'));
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ 
-    success: false, 
-    message: 'Endpoint não encontrado',
-    path: req.path
-  });
+// Servir index.html para todas as rotas do frontend (SPA)
+app.get('*', (req, res) => {
+  // Se a rota começa com /api, retorna 404
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ 
+      success: false, 
+      message: 'Endpoint não encontrado',
+      path: req.path
+    });
+  }
+  // Caso contrário, serve o index.html do frontend
+  res.sendFile(path.join(distPath, 'index.html'));
 });
 
 // Error handler

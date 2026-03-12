@@ -23,10 +23,13 @@ dist-ssr
 *.sln
 *.sw?
 
-# Environment variables (keep .env.production for deployment)
+# Environment variables
 .env.local
 .env.development
+.env
 
 # API
 api/node_modules
-api/.env
+api/.env.development
+api/.env.local
+api/logs/
