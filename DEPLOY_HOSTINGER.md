@@ -1,99 +1,248 @@
-# Instruções de Deploy - Hostinger
+# 🚀 Guia de Deploy - Hostinger
 
-## Passo 1: Preparar o Backend
+## 📋 Pré-requisitos
 
-1. Acesse o painel da Hostinger
-2. Vá em "Arquivos" > "Gerenciador de Arquivos"
-3. Crie uma pasta `api` na raiz do domínio
-4. Faça upload de todos os arquivos da pasta `api/` local para a pasta `api/` no servidor
+- Acesso SSH à Hostinger
+- Node.js configurado no painel da Hostinger
+- Banco de dados MySQL criado
 
-## Passo 2: Configurar Node.js na Hostinger
+## 🔧 Preparação Local
 
-1. No painel da Hostinger, vá em "Avançado" > "Node.js"
-2. Clique em "Criar Aplicação"
-3. Configure:
-   - **Versão Node.js**: 18.x ou superior
-   - **Modo da Aplicação**: Produção
-   - **Diretório da Aplicação**: `/domains/matheuspersonal.com.br/public_html/api`
-   - **Arquivo de Inicialização**: `server.js`
-   - **Porta**: 3001
-
-4. Clique em "Criar"
-
-## Passo 3: Instalar Dependências
-
-1. Acesse o terminal SSH da Hostinger ou use o terminal do painel
-2. Navegue até a pasta da API:
+### 1. Build do Frontend
 ```bash
-cd /domains/matheuspersonal.com.br/public_html/api
+npm run build
 ```
 
-3. Instale as dependências:
-```bash
-npm install
-```
-
-## Passo 4: Configurar Variáveis de Ambiente
-
-1. Crie o arquivo `.env` na pasta `api/`:
-```bash
-nano .env
-```
-
-2. Cole o conteúdo:
-```
+### 2. Preparar arquivos da API
+Certifique-se de que o arquivo `.env.production` está configurado:
+```env
 DB_HOST=srv1078.hstgr.io
 DB_PORT=3306
 DB_USER=u549746795_matheusmp
 DB_PASSWORD=MP@2026!Passos
 DB_NAME=u549746795_mp
-PORT=3001
 NODE_ENV=production
 ```
 
-3. Salve (Ctrl+O, Enter, Ctrl+X)
+## 📤 Upload dos Arquivos
 
-## Passo 5: Iniciar a Aplicação
+### Via FTP/SFTP ou File Manager da Hostinger:
 
-1. No painel Node.js da Hostinger, clique em "Iniciar" na sua aplicação
-2. Verifique se o status está "Rodando"
+1. **Frontend (pasta dist/):**
+   - Upload TODO o conteúdo da pasta `dist/` para `public_html/`
+   - Arquivos: index.html, assets/, etc.
 
-## Passo 6: Configurar Proxy Reverso
+2. **Backend (pasta api/):**
+   - Criar pasta `api/` dentro de `public_html/`
+   - Upload dos arquivos:
+     - server.js
+     - package.json
+     - ecosystem.config.js
+     - config/
+     - controllers/
+     - routes/
 
-1. Faça upload do arquivo `.htaccess` para a raiz do domínio (`public_html/`)
-2. Certifique-se de que o módulo `mod_proxy` está habilitado
+3. **Arquivo .env:**
+   - Renomear `.env.production` para `.env`
+   - Upload para `public_html/api/.env`
 
-## Passo 7: Deploy do Frontend
+## ⚙️ Configuração no Painel da Hostinger
 
-1. Faça build do frontend:
+### 1. Configurar Aplicação Node.js
+
+1. Acesse: **Avançado** → **Node.js**
+2. Clique em **Criar Aplicação**
+3. Configure:
+   - **Versão do Node.js:** 18.x ou 20.x
+   - **Diretório da Aplicação:** `/home/u549746795/public_html/api`
+   - **Arquivo de Entrada:** `server.js`
+   - **Modo:** Production
+   - **Porta:** (deixe em branco - será atribuída automaticamente)
+
+4. Clique em **Criar**
+
+### 2. Instalar Dependências via SSH
+
 ```bash
-npm run build
+# Conectar via SSH
+ssh u549746795@srv1078.hstgr.io
+
+# Navegar até a pasta da API
+cd ~/public_html/api
+
+# Instalar dependências
+npm install --production
+
+# Criar pasta de logs (para PM2)
+mkdir -p logs
 ```
 
-2. Faça upload de todos os arquivos da pasta `dist/` para `public_html/`
+### 3. Iniciar a Aplicação
 
-## Passo 8: Testar
+**Opção A: Via Painel da Hostinger**
+- Clique no botão **Start Application** no painel Node.js
 
-1. Acesse: https://matheuspersonal.com.br
-2. Teste o cadastro de usuário
-3. Verifique os logs no painel Node.js se houver erros
+**Opção B: Via PM2 (Recomendado)**
+```bash
+# Instalar PM2 globalmente (se não estiver instalado)
+npm install -g pm2
 
-## Troubleshooting
+# Iniciar aplicação com PM2
+pm2 start ecosystem.config.js
 
-### API não responde (404)
-- Verifique se a aplicação Node.js está rodando no painel
-- Verifique os logs da aplicação
-- Teste diretamente: `curl http://localhost:3001/api/users`
+# Salvar configuração
+pm2 save
 
-### Erro de CORS
-- Verifique se o `.htaccess` está na raiz
-- Verifique se o módulo `mod_headers` está habilitado
+# Configurar para iniciar automaticamente
+pm2 startup
+
+# Verificar status
+pm2 status
+pm2 logs matheus-personal-api
+```
+
+## 🧪 Testes Pós-Deploy
+
+### 1. Testar API
+```bash
+curl https://matheuspersonal.com.br/api/health
+```
+
+Resposta esperada:
+```json
+{
+  "status": "OK",
+  "message": "API está funcionando",
+  "timestamp": "2024-01-01T00:00:00.000Z"
+}
+```
+
+### 2. Testar Frontend
+Acesse: https://matheuspersonal.com.br
+
+### 3. Testar Integração Completa
+- Preencher formulário de cadastro
+- Verificar geração de PIX
+- Confirmar criação de pedido
+
+## 🔍 Troubleshooting
+
+### API não inicia
+```bash
+# Verificar logs
+pm2 logs matheus-personal-api
+
+# Verificar status
+pm2 status
+
+# Reiniciar
+pm2 restart matheus-personal-api
+```
 
 ### Erro de conexão com banco
-- Verifique as credenciais no `.env`
-- Teste a conexão com o banco via phpMyAdmin
+```bash
+# Testar conexão MySQL
+mysql -h srv1078.hstgr.io -u u549746795_matheusmp -p
 
-### Aplicação não inicia
-- Verifique os logs no painel Node.js
-- Verifique se todas as dependências foram instaladas
-- Verifique se a porta 3001 está disponível
+# Verificar .env
+cat ~/public_html/api/.env
+```
+
+### Erro 502 Bad Gateway
+- Verificar se a aplicação Node.js está rodando
+- Verificar logs no painel da Hostinger
+- Reiniciar aplicação
+
+### CORS Error
+- Verificar se a URL do frontend está em `allowedOrigins` no server.js
+- Verificar se a API está acessível
+
+## 📊 Monitoramento
+
+### Comandos PM2 úteis:
+```bash
+pm2 status                          # Status de todas as apps
+pm2 logs matheus-personal-api       # Ver logs em tempo real
+pm2 logs matheus-personal-api --lines 100  # Ver últimas 100 linhas
+pm2 restart matheus-personal-api    # Reiniciar app
+pm2 stop matheus-personal-api       # Parar app
+pm2 delete matheus-personal-api     # Remover app
+pm2 monit                           # Monitor interativo
+```
+
+### Verificar uso de recursos:
+```bash
+pm2 monit
+```
+
+## 🔄 Atualizações Futuras
+
+### Para atualizar o Frontend:
+```bash
+# Local
+npm run build
+
+# Upload do conteúdo de dist/ para public_html/
+```
+
+### Para atualizar a API:
+```bash
+# Upload dos arquivos alterados via FTP
+
+# Via SSH
+cd ~/public_html/api
+npm install --production
+pm2 restart matheus-personal-api
+```
+
+## 📝 Estrutura Final no Servidor
+
+```
+/home/u549746795/
+└── public_html/
+    ├── index.html              # Frontend
+    ├── assets/                 # Assets do frontend
+    │   ├── index-xxx.js
+    │   └── index-xxx.css
+    └── api/                    # Backend
+        ├── server.js
+        ├── package.json
+        ├── ecosystem.config.js
+        ├── .env
+        ├── node_modules/
+        ├── logs/
+        ├── config/
+        │   └── database.js
+        ├── controllers/
+        │   ├── userController.js
+        │   ├── couponController.js
+        │   ├── orderController.js
+        │   └── leadController.js
+        └── routes/
+            ├── users.js
+            ├── coupons.js
+            ├── orders.js
+            └── leads.js
+```
+
+## ✅ Checklist Final
+
+- [ ] Build do frontend executado
+- [ ] Arquivos do frontend (dist/) enviados para public_html/
+- [ ] Pasta api/ criada e arquivos enviados
+- [ ] Arquivo .env.production renomeado para .env e enviado
+- [ ] Aplicação Node.js configurada no painel
+- [ ] Dependências instaladas via SSH
+- [ ] PM2 configurado e aplicação iniciada
+- [ ] Health check da API funcionando
+- [ ] Frontend carregando corretamente
+- [ ] Integração frontend-backend testada
+- [ ] Cadastro e pagamento testados
+
+## 🆘 Suporte
+
+Em caso de problemas:
+1. Verificar logs: `pm2 logs matheus-personal-api`
+2. Verificar status: `pm2 status`
+3. Verificar painel da Hostinger → Node.js
+4. Contatar suporte da Hostinger se necessário
