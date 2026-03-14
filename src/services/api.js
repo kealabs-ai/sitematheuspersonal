@@ -1,10 +1,10 @@
 const URLS = {
-  users:         'https://srv1023256.hstgr.cloud:8001',
-  subscriptions: 'https://srv1023256.hstgr.cloud:8002',
-  orders:        'https://srv1023256.hstgr.cloud:8003',
-  payments:      'https://srv1023256.hstgr.cloud:8004',
-  coupons:       'https://srv1023256.hstgr.cloud:8005',
-  leads:         'https://srv1023256.hstgr.cloud:8006'
+  users:         'https://matheuspersonal.com.br/service/users',
+  subscriptions: 'https://matheuspersonal.com.br/service/subscriptions',
+  orders:        'https://matheuspersonal.com.br/service/orders',
+  payments:      'https://matheuspersonal.com.br/service/payments',
+  coupons:       'https://matheuspersonal.com.br/service/coupons',
+  leads:         'https://matheuspersonal.com.br/service/leads'
 };
 
 const fetchWithTimeout = async (url, options = {}, timeout = 30000) => {
