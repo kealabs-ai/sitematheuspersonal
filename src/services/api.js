@@ -1,10 +1,10 @@
 const URLS = {
-  users:         'http://srv1023256.hstgr.cloud:8001',
-  subscriptions: 'http://srv1023256.hstgr.cloud:8002',
-  orders:        'http://srv1023256.hstgr.cloud:8003',
-  payments:      'http://srv1023256.hstgr.cloud:8004',
-  coupons:       'http://srv1023256.hstgr.cloud:8005',
-  leads:         'http://srv1023256.hstgr.cloud:8006'
+  users:         'https://srv1023256.hstgr.cloud:8001',
+  subscriptions: 'https://srv1023256.hstgr.cloud:8002',
+  orders:        'https://srv1023256.hstgr.cloud:8003',
+  payments:      'https://srv1023256.hstgr.cloud:8004',
+  coupons:       'https://srv1023256.hstgr.cloud:8005',
+  leads:         'https://srv1023256.hstgr.cloud:8006'
 };
 
 const fetchWithTimeout = async (url, options = {}, timeout = 30000) => {
