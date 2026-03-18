@@ -1,4 +1,6 @@
-const BASE = 'https://srv1023256.hstgr.cloud/api';
+const BASE = import.meta.env.PROD 
+  ? 'https://srv1023256.hstgr.cloud/api'
+  : '/api';
 
 const fetchWithTimeout = async (url, options = {}, timeout = 30000) => {
   const controller = new AbortController();

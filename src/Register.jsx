@@ -233,6 +233,7 @@ const Register = () => {
                         onChange={handleChange}
                         required
                         minLength="6"
+                        autoComplete="new-password"
                         className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
                         placeholder="Mínimo 6 caracteres"
                       />
@@ -249,6 +250,7 @@ const Register = () => {
                         onChange={handleChange}
                         required
                         minLength="6"
+                        autoComplete="new-password"
                         className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
                         placeholder="Repita a senha"
                       />
