@@ -25,7 +25,7 @@ const api = {
   // Users
   async createUser(userData) {
     try {
-      const res = await post(`${BASE}/users`, userData);
+      const res = await post(`${BASE}/users/users`, userData);
       return res.json();
     } catch (error) {
       console.error('Erro ao criar usuário:', error);
