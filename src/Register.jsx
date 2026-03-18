@@ -60,21 +60,34 @@ const Register = () => {
     setError('');
     
     try {
-      const result = await api.createUser({
+      // Monta o body conforme solicitado
+      const now = new Date();
+      const isoDate = now.toISOString().slice(0, 19);
+      const userBody = {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
         cpf: formData.cpf,
+        birth_date: formData.birth_date || '',
+        cep: formData.cep || '',
+        address: formData.address || '',
+        number: formData.number || '',
+        neighborhood: formData.neighborhood || '',
+        city: formData.city || '',
+        state: formData.state || '',
+        country_code: formData.countryCode,
         username: formData.username,
         password: formData.password,
-        countryCode: formData.countryCode
-      });
-      
+        created_at: isoDate,
+        updated_at: isoDate
+      };
+      // Não envia confirmPassword e não loga senha
+      const result = await api.createUser(userBody);
       if (result.success) {
         navigate('/checkout', { 
           state: { 
             plan, 
-            userData: { ...formData, userId: result.userId } 
+            userData: { ...userBody, userId: result.userId } 
           } 
         });
       } else {
