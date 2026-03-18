@@ -63,12 +63,20 @@ const Register = () => {
       // Monta o body conforme solicitado
       const now = new Date();
       const isoDate = now.toISOString().slice(0, 19);
+      // Ajusta birth_date para YYYY-MM-dd
+      let birthDateFormatted = '';
+      if (formData.birth_date) {
+        const d = new Date(formData.birth_date);
+        if (!isNaN(d)) {
+          birthDateFormatted = d.toISOString().slice(0, 10);
+        }
+      }
       const userBody = {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
         cpf: formData.cpf,
-        birth_date: formData.birth_date || '',
+        birth_date: birthDateFormatted,
         cep: formData.cep || '',
         address: formData.address || '',
         number: formData.number || '',
