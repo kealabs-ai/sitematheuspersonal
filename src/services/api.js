@@ -27,6 +27,11 @@ const api = {
   // Users
   async createUser(userData) {
     try {
+      // Monta o body sem a senha para log
+      const logBody = { ...userData };
+      if (logBody.password) logBody.password = '[HIDDEN]';
+      console.log('Enviando requisição para:', `${BASE}/users/`);
+      console.log('Body enviado:', JSON.stringify(logBody, null, 2));
       const res = await post(`${BASE}/users/`, userData);
       return res.json();
     } catch (error) {
