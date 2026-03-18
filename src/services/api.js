@@ -1,11 +1,4 @@
-const URLS = {
-  users:         'https://matheuspersonal.com.br/service/users',
-  subscriptions: 'https://matheuspersonal.com.br/service/subscriptions',
-  orders:        'https://matheuspersonal.com.br/service/orders',
-  payments:      'https://matheuspersonal.com.br/service/payments',
-  coupons:       'https://matheuspersonal.com.br/service/coupons',
-  leads:         'https://matheuspersonal.com.br/service/leads'
-};
+const BASE_URL = 'https://srv1023256.hstgr.cloud/api';
 
 const fetchWithTimeout = async (url, options = {}, timeout = 30000) => {
   const controller = new AbortController();
@@ -23,7 +16,7 @@ const fetchWithTimeout = async (url, options = {}, timeout = 30000) => {
 const api = {
   async createUser(userData) {
     try {
-      const response = await fetchWithTimeout(`${URLS.users}/users`, {
+      const response = await fetchWithTimeout(`${BASE_URL}/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData)
@@ -37,7 +30,7 @@ const api = {
 
   async getUserById(userId) {
     try {
-      const response = await fetchWithTimeout(`${URLS.users}/users/${userId}`);
+      const response = await fetchWithTimeout(`${BASE_URL}/users/${userId}`);
       return response.json();
     } catch (error) {
       console.error('Erro ao buscar usuário:', error);
@@ -47,7 +40,7 @@ const api = {
 
   async validateCoupon(code, amount) {
     try {
-      const response = await fetchWithTimeout(`${URLS.coupons}/coupons/validate`, {
+      const response = await fetchWithTimeout(`${BASE_URL}/coupons/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, amount })
@@ -61,7 +54,7 @@ const api = {
 
   async createOrder(orderData) {
     try {
-      const response = await fetchWithTimeout(`${URLS.orders}/orders`, {
+      const response = await fetchWithTimeout(`${BASE_URL}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderData)
@@ -75,7 +68,7 @@ const api = {
 
   async getOrderById(orderId) {
     try {
-      const response = await fetchWithTimeout(`${URLS.orders}/orders/${orderId}`);
+      const response = await fetchWithTimeout(`${BASE_URL}/orders/${orderId}`);
       return response.json();
     } catch (error) {
       console.error('Erro ao buscar pedido:', error);
@@ -85,7 +78,7 @@ const api = {
 
   async createPayment(paymentData) {
     try {
-      const response = await fetchWithTimeout(`${URLS.payments}/payments`, {
+      const response = await fetchWithTimeout(`${BASE_URL}/payments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(paymentData)
@@ -99,7 +92,7 @@ const api = {
 
   async createLead(leadData) {
     try {
-      const response = await fetchWithTimeout(`${URLS.leads}/leads`, {
+      const response = await fetchWithTimeout(`${BASE_URL}/leads`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(leadData)
