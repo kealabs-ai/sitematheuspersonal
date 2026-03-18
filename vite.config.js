@@ -10,5 +10,14 @@ export default defineConfig({
   },
   define: {
     global: 'globalThis'
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://srv1023256.hstgr.cloud',
+        changeOrigin: true,
+        secure: false
+      }
+    }
   }
 })
