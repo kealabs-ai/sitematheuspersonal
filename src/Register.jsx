@@ -64,19 +64,11 @@ const Register = () => {
       const now = new Date();
       const isoDate = now.toISOString().slice(0, 19);
       // Ajusta birth_date para YYYY-MM-dd
-      let birthDateFormatted = '';
-      if (formData.birth_date) {
-        const d = new Date(formData.birth_date);
-        if (!isNaN(d)) {
-          birthDateFormatted = d.toISOString().slice(0, 10);
-        }
-      }
-      const userBody = {
+      let userBody = {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
         cpf: formData.cpf,
-        birth_date: birthDateFormatted,
         cep: formData.cep || '',
         address: formData.address || '',
         number: formData.number || '',
@@ -89,6 +81,12 @@ const Register = () => {
         created_at: isoDate,
         updated_at: isoDate
       };
+      if (formData.birth_date) {
+        const d = new Date(formData.birth_date);
+        if (!isNaN(d)) {
+          userBody.birth_date = d.toISOString().slice(0, 10);
+        }
+      }
       // Não envia confirmPassword e não loga senha
       const result = await api.createUser(userBody);
       if (result.success) {
