@@ -1,4 +1,4 @@
-const BASE = 'https://srv1023256.hstgr.cloud/api';
+const BASE = '/api';
 
 const fetchWithTimeout = async (url, options = {}, timeout = 30000) => {
   const controller = new AbortController();
