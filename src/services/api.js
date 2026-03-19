@@ -1,4 +1,4 @@
-const BASE = import.meta.env.VITE_API_URL || 'https://srv1023256.hstgr.cloud/api';
+const BASE = 'https://srv1023256.hstgr.cloud/api';
 
 const fetchWithTimeout = async (url, options = {}, timeout = 30000) => {
   const controller = new AbortController();
@@ -15,11 +15,12 @@ const fetchWithTimeout = async (url, options = {}, timeout = 30000) => {
 
 const post = (url, body) => fetchWithTimeout(url, {
   method: 'POST',
+  mode: 'cors',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(body)
 });
 
-const get = (url) => fetchWithTimeout(url);
+const get = (url) => fetchWithTimeout(url, { mode: 'cors' });
 
 const api = {
   // Users
