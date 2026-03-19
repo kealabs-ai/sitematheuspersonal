@@ -1,6 +1,4 @@
-const BASE = import.meta.env.PROD 
-  ? 'https://srv1023256.hstgr.cloud/api'
-  : '/api';
+const BASE = import.meta.env.VITE_API_URL || 'https://srv1023256.hstgr.cloud/api';
 
 const fetchWithTimeout = async (url, options = {}, timeout = 30000) => {
   const controller = new AbortController();
