@@ -33,7 +33,11 @@ const api = {
       console.log('Enviando requisição para:', `${BASE}/users`);
       console.log('Body enviado:', JSON.stringify(logBody, null, 2));
       const res = await post(`${BASE}/users`, userData);
-      return res.json();
+      const data = await res.json();
+      if (!res.ok) {
+        console.error('Resposta de erro do backend:', data);
+      }
+      return data;
     } catch (error) {
       console.error('Erro ao criar usuário:', error);
       return { success: false, message: 'Erro de conexão' };
