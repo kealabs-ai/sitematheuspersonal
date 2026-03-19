@@ -70,24 +70,27 @@ const Checkout = () => {
     setError(null);
 
     try {
+      const paymentMethodMap = { credit: 'credit_card', debit: 'debit_card', pix: 'pix' };
+
       const orderData = {
-        userId: userData.userId,
+        id_user: userData.userId,
+        payment_method: paymentMethodMap[formData.paymentMethod] || formData.paymentMethod,
+        id_coupon: null,
         items: [{
-          name: plan.name,
-          price: plan.price,
-          frequency: plan.frequency
-        }],
-        subtotal: parseFloat(plan.price),
-        discountAmount: 0,
-        totalAmount: parseFloat(plan.price),
-        paymentMethod: formData.paymentMethod,
-        couponId: null
+          plan_name: `Plano ${plan.name}`,
+          plan_price: parseFloat(plan.price),
+          plan_frequency: plan.frequency || 'monthly',
+          quantity: 1
+        }]
       };
 
       const result = await api.createOrder(orderData);
 
-      if (result.success) {
-        const last4Digits = formData.paymentMethod !== 'pix' 
+      const isSuccess = result?.success === true || result?.status === 'success';
+      const orderId = result?.orderId || result?.id;
+
+      if (isSuccess) {
+        const last4Digits = formData.paymentMethod !== 'pix'
           ? formData.cardNumber.replace(/\s/g, '').slice(-4)
           : null;
 
@@ -100,12 +103,12 @@ const Checkout = () => {
               last4Digits,
               recurringPayment: formData.recurringPayment
             },
-            orderId: result.orderId,
-            orderNumber: result.orderNumber
+            orderId,
+            orderNumber: result?.orderNumber
           }
         });
       } else {
-        setError(result.message || 'Erro ao criar pedido');
+        setError(result?.message || 'Erro ao criar pedido');
       }
     } catch (err) {
       console.error('Erro ao processar pagamento:', err);
