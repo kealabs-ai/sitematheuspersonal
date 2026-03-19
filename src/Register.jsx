@@ -89,7 +89,7 @@ const Register = () => {
       }
       // Não envia confirmPassword e não loga senha
       const result = await api.createUser(userBody);
-      if (result.success) {
+      if (result && result.success && result.userId) {
         navigate('/checkout', { 
           state: { 
             plan, 
@@ -97,7 +97,10 @@ const Register = () => {
           } 
         });
       } else {
-        setError(result.message || 'Erro ao criar usuário');
+        let msg = 'Erro ao criar usuário';
+        if (result && result.message) msg = result.message;
+        if (result && result.detail) msg = JSON.stringify(result.detail);
+        setError(msg);
       }
     } catch (err) {
       setError('Erro ao conectar com o servidor');
