@@ -89,19 +89,17 @@ const Register = () => {
       }
       // Não envia confirmPassword e não loga senha
       const result = await api.createUser(userBody);
-      console.log('Resposta da API:', JSON.stringify(result));
-      if (result && result.success && result.userId) {
+      const userId = result?.userId || result?.id;
+      const isSuccess = result?.success === true || result?.status === 'success';
+      if (isSuccess && userId) {
         navigate('/checkout', { 
           state: { 
             plan, 
-            userData: { ...userBody, userId: result.userId } 
+            userData: { ...userBody, userId } 
           } 
         });
       } else {
-        let msg = 'Erro ao criar usuário';
-        if (result && result.message) msg = result.message;
-        if (result && result.detail) msg = JSON.stringify(result.detail);
-        setError(msg);
+        setError(result?.message || 'Erro ao criar usuário');
       }
     } catch (err) {
       setError('Erro ao conectar com o servidor');
