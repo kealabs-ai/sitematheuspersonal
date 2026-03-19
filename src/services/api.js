@@ -118,7 +118,7 @@ const api = {
   // Orders
   async createOrder(orderData) {
     try {
-      const res = await post(`${BASE}/orders/orders`, orderData);
+      const res = await post(`${BASE}/orders`, orderData);
       return res.json();
     } catch (error) {
       console.error('Erro ao criar pedido:', error);
@@ -128,7 +128,7 @@ const api = {
 
   async getOrderById(orderId) {
     try {
-      const res = await get(`${BASE}/orders/orders/${orderId}`);
+      const res = await get(`${BASE}/orders/${orderId}`);
       return res.json();
     } catch (error) {
       console.error('Erro ao buscar pedido:', error);
@@ -138,7 +138,7 @@ const api = {
 
   async getOrdersByUser(userId) {
     try {
-      const res = await get(`${BASE}/orders/orders/user/${userId}`);
+      const res = await get(`${BASE}/orders/user/${userId}`);
       return res.json();
     } catch (error) {
       console.error('Erro ao buscar pedidos do usuário:', error);
@@ -210,7 +210,7 @@ const api = {
   // Coupons
   async validateCoupon(code, amount) {
     try {
-      const res = await get(`${BASE}/coupons/coupons/${code}`);
+      const res = await get(`${BASE}/coupons/validate`);
       return res.json();
     } catch (error) {
       console.error('Erro ao validar cupom:', error);
@@ -220,7 +220,7 @@ const api = {
 
   async useCoupon(couponId, data) {
     try {
-      const res = await post(`${BASE}/coupons/coupons/${couponId}/use`, data);
+      const res = await post(`${BASE}/coupons/${couponId}/use`, data);
       return res.json();
     } catch (error) {
       console.error('Erro ao usar cupom:', error);
@@ -231,7 +231,7 @@ const api = {
   // Leads
   async createLead(leadData) {
     try {
-      const res = await post(`${BASE}/leads/leads`, leadData);
+      const res = await post(`${BASE}/leads`, leadData);
       return res.json();
     } catch (error) {
       console.error('Erro ao criar lead:', error);
@@ -241,7 +241,7 @@ const api = {
 
   async getLeadById(leadId) {
     try {
-      const res = await get(`${BASE}/leads/leads/${leadId}`);
+      const res = await get(`${BASE}/leads/${leadId}`);
       return res.json();
     } catch (error) {
       console.error('Erro ao buscar lead:', error);
