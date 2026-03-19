@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 exports.createUser = async (req, res) => {
   let connection;
   try {
-    const { name, email, phone, cpf, username, password, countryCode } = req.body;
+    const { name, email, phone, cpf, username, password, countryCode, birth_date } = req.body;
     
     if (!name || !email || !phone || !cpf || !username || !password) {
       return res.status(400).json({ success: false, message: 'Campos obrigatórios faltando' });
@@ -15,8 +15,8 @@ exports.createUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     
     const [result] = await connection.query(
-      'INSERT INTO users (name, email, phone, cpf, username, password, country_code, birth_date, cep, address, number, neighborhood, city, state) VALUES (?, ?, ?, ?, ?, ?, ?, CURDATE(), "", "", "", "", "", "")',
-      [name, email, phone, cpf, username, hashedPassword, countryCode || '+55']
+      'INSERT INTO users (name, email, phone, cpf, username, password, country_code, birth_date, cep, address, number, neighborhood, city, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "", "", "", "", "", "")',
+      [name, email, phone, cpf, username, hashedPassword, countryCode || '+55', birth_date || null]
     );
     
     res.status(201).json({ 
