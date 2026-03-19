@@ -89,6 +89,7 @@ const Register = () => {
       }
       // Não envia confirmPassword e não loga senha
       const result = await api.createUser(userBody);
+      console.log('Resposta da API:', JSON.stringify(result));
       if (result && result.success && result.userId) {
         navigate('/checkout', { 
           state: { 
