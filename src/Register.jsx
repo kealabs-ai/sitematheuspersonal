@@ -4,6 +4,45 @@ import { ArrowLeft, User } from 'lucide-react';
 import ProgressIndicator from './ProgressIndicator';
 import api from './services/api';
 
+const COUNTRY_CODES = [
+  { code: '+55',  flag: '🇧🇷', name: 'Brasil' },
+  { code: '+1',   flag: '🇺🇸', name: 'EUA/Canadá' },
+  { code: '+351', flag: '🇵🇹', name: 'Portugal' },
+  { code: '+54',  flag: '🇦🇷', name: 'Argentina' },
+  { code: '+56',  flag: '🇨🇱', name: 'Chile' },
+  { code: '+57',  flag: '🇨🇴', name: 'Colômbia' },
+  { code: '+52',  flag: '🇲🇽', name: 'México' },
+  { code: '+598', flag: '🇺🇾', name: 'Uruguai' },
+  { code: '+595', flag: '🇵🇾', name: 'Paraguai' },
+  { code: '+51',  flag: '🇵🇪', name: 'Peru' },
+  { code: '+58',  flag: '🇻🇪', name: 'Venezuela' },
+  { code: '+593', flag: '🇪🇨', name: 'Equador' },
+  { code: '+591', flag: '🇧🇴', name: 'Bolívia' },
+  { code: '+44',  flag: '🇬🇧', name: 'Reino Unido' },
+  { code: '+49',  flag: '🇩🇪', name: 'Alemanha' },
+  { code: '+33',  flag: '🇫🇷', name: 'França' },
+  { code: '+34',  flag: '🇪🇸', name: 'Espanha' },
+  { code: '+39',  flag: '🇮🇹', name: 'Itália' },
+  { code: '+81',  flag: '🇯🇵', name: 'Japão' },
+  { code: '+86',  flag: '🇨🇳', name: 'China' },
+  { code: '+61',  flag: '🇦🇺', name: 'Austrália' },
+];
+
+const validateCPF = (cpf) => {
+  const nums = cpf.replace(/\D/g, '');
+  if (nums.length !== 11 || /^(\d)\1{10}$/.test(nums)) return false;
+  let sum = 0;
+  for (let i = 0; i < 9; i++) sum += parseInt(nums[i]) * (10 - i);
+  let rest = (sum * 10) % 11;
+  if (rest === 10 || rest === 11) rest = 0;
+  if (rest !== parseInt(nums[9])) return false;
+  sum = 0;
+  for (let i = 0; i < 10; i++) sum += parseInt(nums[i]) * (11 - i);
+  rest = (sum * 10) % 11;
+  if (rest === 10 || rest === 11) rest = 0;
+  return rest === parseInt(nums[10]);
+};
+
 const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -53,6 +92,10 @@ const Register = () => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
       setError('As senhas não coincidem!');
+      return;
+    }
+    if (!validateCPF(formData.cpf)) {
+      setError('CPF inválido. Verifique o número digitado.');
       return;
     }
     
@@ -207,11 +250,11 @@ const Register = () => {
                     name="countryCode"
                     value={formData.countryCode}
                     onChange={handleChange}
-                    className="w-32 p-4 bg-black border border-dark-border text-white text-sm focus:outline-none focus:border-lime-green transition-colors"
+                    className="w-44 p-4 bg-black border border-dark-border text-white text-sm focus:outline-none focus:border-lime-green transition-colors"
                   >
-                    <option value="+55">🇧🇷 +55</option>
-                    <option value="+1">🇺🇸 +1</option>
-                    <option value="+351">🇵🇹 +351</option>
+                    {COUNTRY_CODES.map(({ code, flag, name }) => (
+                      <option key={code} value={code}>{flag} {code} {name}</option>
+                    ))}
                   </select>
                   <input
                     type="text"
