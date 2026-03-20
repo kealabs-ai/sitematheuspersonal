@@ -349,7 +349,7 @@ const Register = () => {
               </div>
 
               {error && (
-                <div className="bg-red-500/10 border border-red-500 p-4 text-red-400 text-sm">
+                 <div className="bg-red-500/10 border border-red-500 p-4 text-red-400 text-sm">
                   {error}
                   {error.includes('Faça o login') && (
                     <a href="/login" className="block mt-2 text-lime-green font-bold underline hover:text-neon-green">
