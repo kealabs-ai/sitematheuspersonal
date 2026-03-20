@@ -134,7 +134,7 @@ const Register = () => {
           }
         });
       } else {
-        const msg = (result?.message || result?.error || '');
+        const msg = (result?.message || result?.error || result?.detail || '');
         const msgLower = msg.toLowerCase();
         const isDuplicate =
           result?.code === 'DUPLICATE' ||
