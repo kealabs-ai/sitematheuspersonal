@@ -17,6 +17,7 @@ const App = () => {
         <HeroSection />
         <AboutSection />
         <ServicesSection />
+        <PersonalSection />
         <PricingSection />
         <TestimonialsSection />
         <ResultsSection />
@@ -58,10 +59,10 @@ const Header = () => {
         </div>
 
         <ul className="hidden md:flex space-x-8 font-semibold items-center">
-          {['Início', 'Sobre', 'Serviços', 'Consultoria', 'Resultados', 'Contato'].map(item => (
-            <li key={item}>
-              <a href={`#${item.toLowerCase()}`} className="hover:text-lime-green transition-colors uppercase text-sm tracking-wide">
-                {item}
+          {[['Início', 'início'], ['Sobre', 'sobre'], ['Serviços', 'serviços'], ['Consultoria Online', 'consultoria'], ['Resultados', 'resultados'], ['Contato', 'contato']].map(([label, anchor]) => (
+            <li key={anchor}>
+              <a href={`#${anchor}`} className="hover:text-lime-green transition-colors uppercase text-sm tracking-wide">
+                {label}
               </a>
             </li>
           ))}
@@ -101,14 +102,14 @@ const Header = () => {
             style={{ zIndex: 50 }}
           >
           <ul className="flex flex-col space-y-6">
-            {['Início', 'Sobre', 'Serviços', 'Consultoria', 'Resultados', 'Contato'].map(item => (
-              <li key={item}>
+            {[['Início', 'início'], ['Sobre', 'sobre'], ['Serviços', 'serviços'], ['Consultoria Online', 'consultoria'], ['Resultados', 'resultados'], ['Contato', 'contato']].map(([label, anchor]) => (
+              <li key={anchor}>
                 <a 
-                  href={`#${item.toLowerCase()}`} 
+                  href={`#${anchor}`} 
                   onClick={() => setIsOpen(false)}
                   className="text-xl hover:text-lime-green transition-colors block uppercase font-semibold"
                 >
-                  {item}
+                  {label}
                 </a>
               </li>
             ))}
@@ -156,10 +157,10 @@ const HeroSection = () => {
               Ver Consultoria <ArrowRight className="ml-2" size={24} />
             </a>
             <a 
-              href="#contato"
+              href="#personal"
               className="inline-flex items-center justify-center border-2 border-lime-green text-lime-green font-bold py-4 px-10 rounded-none uppercase hover:bg-lime-green hover:text-black transition-all text-lg"
             >
-              Agendar Avaliação
+              Plano Personal
             </a>
           </div>
         </motion.div>
@@ -281,42 +282,94 @@ const ServicesSection = () => {
   );
 };
 
+const personalPlans = [
+  { frequency: '2x na semana', pricePerClass: '75,00', total: '600,00', classes: 8 },
+  { frequency: '3x na semana', pricePerClass: '70,00', total: '840,00', classes: 12 },
+  { frequency: '4x na semana', pricePerClass: '65,00', total: '1.040,00', classes: 16 },
+  { frequency: '5x na semana', pricePerClass: '60,00', total: '1.200,00', classes: 20 },
+];
+
+const PersonalSection = () => {
+  return (
+    <section id="personal" className="py-20 px-4">
+      <div className="container mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
+        >
+          <h3 className="text-5xl md:text-6xl font-bebas uppercase mb-4">
+            Plano <span className="text-lime-green">Personal</span>
+          </h3>
+          <p className="text-gray-400 text-lg">Treinamento online em tempo real com acompanhamento individual</p>
+        </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          {personalPlans.map((plan, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
+              className="relative bg-black border-2 border-dark-border p-6"
+            >
+              <h4 className="text-xl font-bebas mb-1 text-center text-lime-green uppercase">{plan.frequency}</h4>
+              <p className="text-center text-gray-500 text-xs mb-4">{plan.classes} aulas/mês</p>
+              <div className="text-center mb-4 pb-4 border-b border-dark-border">
+                <div className="flex items-end justify-center gap-1">
+                  <span className="text-gray-400 text-sm mb-1">R$</span>
+                  <span className="text-5xl font-bebas text-white leading-none">{plan.pricePerClass}</span>
+                  <span className="text-gray-400 text-sm mb-1">/aula</span>
+                </div>
+                <p className="text-gray-500 text-xs mt-2">
+                  Total mensal: <span className="text-lime-green font-semibold">R$ {plan.total}</span>
+                </p>
+              </div>
+              <a
+                href="#contato"
+                className="block w-full text-center py-3 px-4 font-bold uppercase transition-all text-sm border-2 border-lime-green text-lime-green hover:bg-lime-green hover:text-black"
+              >
+                Contratar
+              </a>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const pricingPlans = [
   { 
     name: 'BRONZE', 
-    frequency: '2x na semana',
-    classes: '8 aulas/mês',
-    price: '240', 
+    price: '79,00',
+    monthlyTotal: null,
     description: 'Ideal para quem quer consistência e um acompanhamento próximo para garantir o progresso',
     popular: false,
-    pricePerClass: '30'
   },
   { 
     name: 'PRATA', 
-    frequency: '3x na semana',
-    classes: '12 aulas/mês',
-    price: '300', 
-    description: 'Para quem está totalmente focado e quer uma transformação corporal mais rápida e intensa',
-    popular: true,
-    pricePerClass: '25'
+    price: '69,90',
+    monthlyTotal: '209,70',
+    description: 'Para quem está focado e quer acelerar sua transformação corporal com mais frequência',
+    popular: false,
   },
   { 
     name: 'OURO', 
-    frequency: '4x na semana',
-    classes: '16 aulas/mês',
-    price: '320', 
-    description: 'Para quem está totalmente focado e quer uma transformação corporal mais rápida e intensa',
-    popular: false,
-    pricePerClass: '20'
+    price: '49,90',
+    monthlyTotal: '149,70',
+    description: 'O melhor custo-benefício. Máximo comprometimento para uma transformação completa',
+    popular: true,
   },
   { 
-    name: 'PLUS', 
-    frequency: '5x na semana',
-    classes: '20 aulas/mês',
-    price: '360', 
-    description: 'O acompanhamento definitivo. Máximo comprometimento para uma transformação completa de corpo e mente',
+    name: 'DIAMANTE', 
+    price: '99,99',
+    monthlyTotal: null,
+    description: 'A experiência definitiva para resultados máximos',
     popular: false,
-    pricePerClass: '18'
+    diamond: true,
   },
 ];
 
@@ -344,7 +397,7 @@ const PricingSection = () => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
           {pricingPlans.map((plan, index) => (
             <motion.div
               key={index}
@@ -352,28 +405,55 @@ const PricingSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className={`relative bg-black border-2 p-6 ${plan.popular ? 'border-lime-green scale-105' : 'border-dark-border'}`}
+              className={`relative bg-black border-2 p-6 ${
+                plan.diamond ? 'border-purple-400 scale-105' :
+                plan.popular ? 'border-lime-green scale-105' : 'border-dark-border'
+              }`}
             >
               {plan.popular && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-lime-green text-black px-4 py-1 font-bold text-xs uppercase">
-                  Mais Escolhido
+                  Mais Vendido
                 </div>
               )}
-              <h4 className="text-3xl font-bebas mb-1 text-center text-lime-green">{plan.name}</h4>
-              <p className="text-center text-gray-400 text-sm mb-4">{plan.frequency}</p>
+              {plan.diamond && (
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-purple-400 text-black px-4 py-1 font-bold text-xs uppercase">
+                  💎 Premium
+                </div>
+              )}
+              <h4 className={`text-3xl font-bebas mb-4 text-center ${plan.diamond ? 'text-purple-400' : 'text-lime-green'}`}>{plan.name}</h4>
               <div className="text-center mb-4 pb-4 border-b border-dark-border">
-                <span className="text-4xl font-bebas text-white">R${plan.pricePerClass}</span>
-                <span className="text-gray-400 text-sm">/aula</span>
-                <p className="text-lime-green text-xs mt-1 font-semibold">{plan.classes}</p>
-                <p className="text-gray-400 text-xs mt-1">R${plan.price}/mês</p>
+                <div className="flex items-end justify-center gap-1">
+                  <span className="text-gray-400 text-sm mb-1">R$</span>
+                  <span className="text-5xl font-bebas text-white leading-none">{plan.price}</span>
+                  <span className="text-gray-400 text-sm mb-1">/mês</span>
+                </div>
+                {plan.monthlyTotal && (
+                  <p className="text-gray-500 text-xs mt-2">
+                    3 meses: <span className="text-lime-green font-semibold">R$ {plan.monthlyTotal}</span>
+                  </p>
+                )}
+                {plan.diamond && (
+                  <div className="mt-3 space-y-1">
+                    <div className="flex items-center justify-center gap-2 bg-purple-400/10 border border-purple-400/30 px-3 py-1.5">
+                      <span className="text-purple-400 text-xs">🏋️</span>
+                      <span className="text-purple-300 text-xs font-bold uppercase tracking-wide">Treino Personalizado</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2 bg-purple-400/10 border border-purple-400/30 px-3 py-1.5">
+                      <span className="text-purple-400 text-xs">🥗</span>
+                      <span className="text-purple-300 text-xs font-bold uppercase tracking-wide">Plano Nutricional</span>
+                    </div>
+                  </div>
+                )}
               </div>
-              <p className="text-gray-300 text-sm leading-relaxed mb-6 min-h-[80px]">
+              <p className="text-gray-300 text-sm leading-relaxed mb-6 min-h-[60px]">
                 {plan.description}
               </p>
               <button 
                 onClick={() => handlePlanClick(plan)}
                 className={`w-full text-center py-3 px-4 font-bold uppercase transition-all text-sm ${
-                  plan.popular 
+                  plan.diamond
+                    ? 'bg-purple-400 text-black hover:bg-purple-300'
+                    : plan.popular 
                     ? 'bg-lime-green text-black hover:bg-neon-green' 
                     : 'border-2 border-lime-green text-lime-green hover:bg-lime-green hover:text-black'
                 }`}
@@ -630,10 +710,10 @@ const Footer = () => {
           <div className="text-center md:text-right">
             <h4 className="text-lime-green font-bebas text-xl mb-3 uppercase tracking-wider">Navegação</h4>
             <ul className="space-y-2 text-sm">
-              {['Início', 'Sobre', 'Serviços', 'Consultoria', 'Resultados', 'Contato'].map(item => (
-                <li key={item}>
-                  <a href={`#${item.toLowerCase()}`} className="text-gray-400 hover:text-lime-green transition-colors uppercase text-xs tracking-wide">
-                    {item}
+              {[['Início', 'início'], ['Sobre', 'sobre'], ['Serviços', 'serviços'], ['Consultoria Online', 'consultoria'], ['Resultados', 'resultados'], ['Contato', 'contato']].map(([label, anchor]) => (
+                <li key={anchor}>
+                  <a href={`#${anchor}`} className="text-gray-400 hover:text-lime-green transition-colors uppercase text-xs tracking-wide">
+                    {label}
                   </a>
                 </li>
               ))}
