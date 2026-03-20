@@ -134,19 +134,35 @@ const Register = () => {
           }
         });
       } else {
-        const msg = result?.message || '';
-        if (msg.includes('Duplicate entry') || msg.includes('1062') || msg.includes('23000')) {
-          const field = msg.includes('email') ? 'E-mail'
-            : msg.includes('cpf') ? 'CPF'
-            : msg.includes('username') ? 'Nome de usuário'
-            : msg.includes('phone') ? 'Telefone'
-            : null;
-          setError(field
-            ? `${field} já cadastrado. Utilize outro ou faça login.`
-            : 'Esses dados já estão cadastrados. Verifique e-mail, CPF ou nome de usuário.'
+        const msg = (result?.message || result?.error || '').toLowerCase();
+        const isDuplicate =
+          result?.code === 'DUPLICATE' ||
+          result?.status === 409 ||
+          msg.includes('duplicate entry') ||
+          msg.includes('er_dup_entry') ||
+          msg.includes('1062') ||
+          msg.includes('already exists') ||
+          msg.includes('já cadastrado');
+
+        if (isDuplicate) {
+          const fieldMap = [
+            { keys: ['email'],    label: 'E-mail' },
+            { keys: ['cpf'],      label: 'CPF' },
+            { keys: ['username'], label: 'Nome de usuário' },
+            { keys: ['phone', 'telefone'], label: 'Telefone' },
+          ];
+          const matched = fieldMap.find(({ keys }) => keys.some(k => msg.includes(k)));
+          const fieldLabel = result?.field
+            ? ({ email: 'E-mail', cpf: 'CPF', username: 'Nome de usuário', phone: 'Telefone' }[result.field] || result.field)
+            : matched?.label;
+
+          setError(
+            fieldLabel
+              ? `Já existe um ${fieldLabel} cadastrado. Faça o login.`
+              : 'Já existe uma conta com esses dados. Faça o login.'
           );
         } else {
-          setError(msg || 'Erro ao criar usuário');
+          setError(result?.message || 'Erro ao criar usuário');
         }
       }
     } catch (err) {
@@ -333,8 +349,13 @@ const Register = () => {
               </div>
 
               {error && (
-                <div className="bg-red-500/10 border border-red-500 p-4 text-red-500 text-sm">
+                <div className="bg-red-500/10 border border-red-500 p-4 text-red-400 text-sm">
                   {error}
+                  {error.includes('Faça o login') && (
+                    <a href="/login" className="block mt-2 text-lime-green font-bold underline hover:text-neon-green">
+                      Ir para o Login →
+                    </a>
+                  )}
                 </div>
               )}
 
