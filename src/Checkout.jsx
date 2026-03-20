@@ -70,7 +70,7 @@ const Checkout = () => {
     setError(null);
 
     try {
-      const paymentMethodMap = { credit: 'credit', debit: 'debit', pix: 'pix' };
+      const paymentMethodMap = { credit: 'credit_card', debit: 'debit_card', pix: 'pix' };
 
       const orderData = {
         id_user: userData.userId,

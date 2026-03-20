@@ -60,14 +60,23 @@ const Register = () => {
     setError('');
     
     try {
+      const now = new Date().toISOString().slice(0, 19);
       const userBody = {
         name: formData.name,
         email: formData.email,
-        phone: formData.phone.replace(/\D/g, ''),
-        cpf: formData.cpf.replace(/\D/g, ''),
+        phone: formData.phone,
+        cpf: formData.cpf,
+        cep: '',
+        address: '',
+        number: '',
+        neighborhood: '',
+        city: '',
+        state: '',
         country_code: formData.countryCode,
         username: formData.username,
         password: formData.password,
+        created_at: now,
+        updated_at: now
       };
 
       const result = await api.createUser(userBody);
