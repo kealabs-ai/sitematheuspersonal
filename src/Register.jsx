@@ -60,46 +60,42 @@ const Register = () => {
     setError('');
     
     try {
-      // Monta o body conforme solicitado
-      const now = new Date();
-      const isoDate = now.toISOString().slice(0, 19);
-      // Ajusta birth_date para YYYY-MM-dd
-      let userBody = {
+      const userBody = {
         name: formData.name,
         email: formData.email,
-        phone: formData.phone,
-        cpf: formData.cpf,
-        cep: formData.cep || '',
-        address: formData.address || '',
-        number: formData.number || '',
-        neighborhood: formData.neighborhood || '',
-        city: formData.city || '',
-        state: formData.state || '',
+        phone: formData.phone.replace(/\D/g, ''),
+        cpf: formData.cpf.replace(/\D/g, ''),
         country_code: formData.countryCode,
         username: formData.username,
         password: formData.password,
-        created_at: isoDate,
-        updated_at: isoDate
       };
-      if (formData.birth_date) {
-        const d = new Date(formData.birth_date);
-        if (!isNaN(d)) {
-          userBody.birth_date = d.toISOString().slice(0, 10);
-        }
-      }
-      // Não envia confirmPassword e não loga senha
+
       const result = await api.createUser(userBody);
       const userId = result?.userId || result?.id;
       const isSuccess = result?.success === true || result?.status === 'success';
+
       if (isSuccess && userId) {
-        navigate('/checkout', { 
-          state: { 
-            plan, 
-            userData: { ...userBody, userId } 
-          } 
+        navigate('/checkout', {
+          state: {
+            plan,
+            userData: { ...userBody, userId }
+          }
         });
       } else {
-        setError(result?.message || 'Erro ao criar usuário');
+        const msg = result?.message || '';
+        if (msg.includes('Duplicate entry') || msg.includes('1062') || msg.includes('23000')) {
+          const field = msg.includes('email') ? 'E-mail'
+            : msg.includes('cpf') ? 'CPF'
+            : msg.includes('username') ? 'Nome de usuário'
+            : msg.includes('phone') ? 'Telefone'
+            : null;
+          setError(field
+            ? `${field} já cadastrado. Utilize outro ou faça login.`
+            : 'Esses dados já estão cadastrados. Verifique e-mail, CPF ou nome de usuário.'
+          );
+        } else {
+          setError(msg || 'Erro ao criar usuário');
+        }
       }
     } catch (err) {
       setError('Erro ao conectar com o servidor');
