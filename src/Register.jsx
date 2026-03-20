@@ -134,15 +134,16 @@ const Register = () => {
           }
         });
       } else {
-        const msg = (result?.message || result?.error || '').toLowerCase();
+        const msg = (result?.message || result?.error || '');
+        const msgLower = msg.toLowerCase();
         const isDuplicate =
           result?.code === 'DUPLICATE' ||
           result?.status === 409 ||
-          msg.includes('duplicate entry') ||
-          msg.includes('er_dup_entry') ||
+          msgLower.includes('duplicate entry') ||
+          msgLower.includes('er_dup_entry') ||
           msg.includes('1062') ||
-          msg.includes('already exists') ||
-          msg.includes('já cadastrado');
+          msgLower.includes('already exists') ||
+          msgLower.includes('já cadastrado');
 
         if (isDuplicate) {
           const fieldMap = [
@@ -151,7 +152,7 @@ const Register = () => {
             { keys: ['username'], label: 'Nome de usuário' },
             { keys: ['phone', 'telefone'], label: 'Telefone' },
           ];
-          const matched = fieldMap.find(({ keys }) => keys.some(k => msg.includes(k)));
+          const matched = fieldMap.find(({ keys }) => keys.some(k => msgLower.includes(k)));
           const fieldLabel = result?.field
             ? ({ email: 'E-mail', cpf: 'CPF', username: 'Nome de usuário', phone: 'Telefone' }[result.field] || result.field)
             : matched?.label;
