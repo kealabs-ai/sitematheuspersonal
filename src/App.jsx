@@ -344,7 +344,7 @@ const PersonalSection = () => {
 const pricingPlans = [
   { 
     name: 'BRONZE', 
-    price: '79,00',
+    price: '79,90',
     monthlyTotal: null,
     description: 'Ideal para quem quer consistência e um acompanhamento próximo para garantir o progresso',
     popular: false,
