@@ -20,3 +20,8 @@ ProxyPreserveHost Off
 # Responder preflight OPTIONS
 RewriteCond %{REQUEST_METHOD} OPTIONS
 RewriteRule ^(.*)$ $1 [R=200,L]
+
+# SPA fallback - redireciona rotas do React para index.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(?!api/)(.*)$ /index.html [L,QSA]
