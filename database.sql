@@ -123,8 +123,19 @@ CREATE TABLE payments (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Tabela de Endereços (Fase 2 - após pagamento)
-CREATE TABLE user_addresses (
+-- Tabela de Feedbacks / Depoimentos
+CREATE TABLE feedbacks (
+    id_feedback INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    age TINYINT UNSIGNED NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    testimonial TEXT NOT NULL,
+    rating TINYINT UNSIGNED NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
     id_address INT PRIMARY KEY AUTO_INCREMENT,
     id_user INT NOT NULL,
     cep VARCHAR(9) NOT NULL,

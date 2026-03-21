@@ -10,6 +10,7 @@ import Checkout from './Checkout.jsx';
 import Confirmation from './Confirmation.jsx';
 import Terms from './Terms.jsx';
 import Privacy from './Privacy.jsx';
+import Feedback from './Feedback.jsx';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -25,6 +26,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/confirmation" element={<Confirmation />} />
         <Route path="/termos" element={<Terms />} />
         <Route path="/privacidade" element={<Privacy />} />
+        <Route path="/feedback" element={<Feedback />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>
