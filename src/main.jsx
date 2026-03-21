@@ -26,7 +26,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/confirmation" element={<Confirmation />} />
         <Route path="/termos" element={<Terms />} />
         <Route path="/privacidade" element={<Privacy />} />
-        <Route path="/feedback" element={<Feedback />} />
+        <Route path="/feedbacks" element={<Feedback />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>
