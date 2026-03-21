@@ -3,7 +3,7 @@ import { Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 import matheusLogo from './assets/logotipo_matheus_personal.png';
 
-const FEEDBACK_API = 'https://srv1023256.hstgr.cloud/api/feedback';
+const FEEDBACK_API = 'https://srv1023256.hstgr.cloud/api/feedbacks';
 
 const Feedback = () => {
   const [form, setForm] = useState({ name: '', age: '', city: '', title: '', testimonial: '', rating: 0 });
