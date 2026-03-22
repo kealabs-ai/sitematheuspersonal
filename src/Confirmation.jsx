@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { CheckCircle, Mail, Phone } from 'lucide-react';
+import { CheckCircle, Mail } from 'lucide-react';
 import ProgressIndicator from './ProgressIndicator';
 
 const Confirmation = () => {
@@ -64,10 +64,6 @@ const Confirmation = () => {
               <li className="flex items-start gap-3">
                 <Mail className="text-lime-green mt-1 flex-shrink-0" size={20} />
                 <span>Você receberá um email de confirmação em <strong className="text-white">{userData.email}</strong> com todos os detalhes</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <Phone className="text-lime-green mt-1 flex-shrink-0" size={20} />
-                <span>Entraremos em contato via WhatsApp no número <strong className="text-white">{userData.phone}</strong> para agendar sua primeira aula</span>
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle className="text-lime-green mt-1 flex-shrink-0" size={20} />
