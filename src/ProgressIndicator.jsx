@@ -16,13 +16,13 @@ const ProgressIndicator = ({ currentStep }) => {
           <React.Fragment key={step.id}>
             <div className="flex flex-col items-center flex-1">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
-                step.id < currentStep 
+                step.id < currentStep || (step.id === currentStep && currentStep === steps.length)
                   ? 'bg-lime-green border-lime-green' 
                   : step.id === currentStep 
                   ? 'border-lime-green bg-lime-green/20 text-lime-green' 
                   : 'border-dark-border text-gray-600'
               }`}>
-                {step.id < currentStep ? (
+                {step.id < currentStep || (step.id === currentStep && currentStep === steps.length) ? (
                   <Check size={20} className="text-black" />
                 ) : (
                   <span className="font-bold">{step.id}</span>
