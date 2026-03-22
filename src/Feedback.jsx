@@ -39,16 +39,16 @@ const Feedback = () => {
 
   if (status === 'success') {
     return (
-      <div className="min-h-screen bg-dark-bg flex items-center justify-center px-4">
+      <div className="min-h-screen bg-dark-bg flex items-center justify-center px-6 py-12">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="text-center max-w-md"
+          className="text-center w-full max-w-sm"
         >
-          <img src={matheusLogo} alt="Matheus Personal" className="h-14 mx-auto mb-8 brightness-0 invert" />
-          <div className="text-6xl mb-6">🙏</div>
+          <img src={matheusLogo} alt="Matheus Personal" className="h-12 mx-auto mb-8 brightness-0 invert" />
+          <div className="text-7xl mb-6">🙏</div>
           <h2 className="text-4xl font-bebas text-lime-green mb-4">Obrigado pelo Depoimento!</h2>
-          <p className="text-gray-300 leading-relaxed">
+          <p className="text-gray-300 text-base leading-relaxed">
             Sua contribuição é muito importante para nós. Em breve você verá seu depoimento no site!
           </p>
         </motion.div>
@@ -57,7 +57,7 @@ const Feedback = () => {
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg text-white font-inter py-12 px-4">
+    <div className="min-h-screen bg-dark-bg text-white font-inter py-8 px-4">
       <div className="max-w-xl mx-auto">
 
         {/* Logo */}
@@ -86,15 +86,15 @@ const Feedback = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-dark-card border border-dark-border p-8"
+          className="bg-dark-card border border-dark-border p-5 sm:p-8"
         >
-          <h1 className="text-4xl font-bebas uppercase mb-6 text-center">
+          <h1 className="text-3xl sm:text-4xl font-bebas uppercase mb-6 text-center">
             Deixe seu <span className="text-lime-green">Depoimento</span>
           </h1>
 
           <form onSubmit={handleSubmit} className="space-y-5">
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs text-gray-400 uppercase tracking-wide mb-2">Nome *</label>
                 <input
@@ -162,7 +162,7 @@ const Feedback = () => {
             {/* Rating */}
             <div>
               <label className="block text-xs text-gray-400 uppercase tracking-wide mb-3">Avaliação *</label>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     key={star}
@@ -170,10 +170,10 @@ const Feedback = () => {
                     onClick={() => setForm({ ...form, rating: star })}
                     onMouseEnter={() => setHover(star)}
                     onMouseLeave={() => setHover(0)}
-                    className="transition-transform hover:scale-110"
+                    className="p-1 transition-transform active:scale-95"
                   >
                     <Star
-                      size={36}
+                      size={40}
                       className="transition-colors"
                       fill={(hover || form.rating) >= star ? '#00B4D8' : 'transparent'}
                       stroke={(hover || form.rating) >= star ? '#00B4D8' : '#4a4a4a'}
@@ -181,7 +181,7 @@ const Feedback = () => {
                   </button>
                 ))}
                 {form.rating > 0 && (
-                  <span className="ml-2 text-lime-green text-sm self-center font-semibold">
+                  <span className="ml-1 text-lime-green text-sm self-center font-semibold">
                     {['', 'Ruim', 'Regular', 'Bom', 'Ótimo', 'Excelente!'][form.rating]}
                   </span>
                 )}
