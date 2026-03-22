@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Lock, Shield, CreditCard, Copy, Check } from 'lucide-react';
 import ProgressIndicator from './ProgressIndicator';
 import { QRCodeSVG } from 'qrcode.react';
-import { generatePixCode } from './services/pixService';
 import api from './services/api';
 
 const Checkout = () => {
@@ -64,52 +63,116 @@ const Checkout = () => {
     setFormData({ ...formData, [name]: value });
   };
 
+  const parsePlanPrice = (price) => {
+    if (typeof price === 'number') return price;
+    return parseFloat(String(price).replace(/\./g, '').replace(',', '.'));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      const paymentMethodMap = { credit: 'credit', debit: 'debit', pix: 'pix' };
+      const planPrice = parsePlanPrice(plan.price);
+      const cpfClean = (userData.cpf || '').replace(/\D/g, '');
 
+      // 1. Cria o pedido
       const orderData = {
         id_user: userData.userId,
-        payment_method: paymentMethodMap[formData.paymentMethod] || formData.paymentMethod,
+        payment_method: formData.paymentMethod === 'credit' ? 'CREDIT_CARD' : 'PIX',
         id_coupon: null,
         items: [{
           plan_name: `Plano ${plan.name}`,
-          plan_price: parseFloat(plan.price),
+          plan_price: planPrice,
           plan_frequency: plan.frequency || 'monthly',
           quantity: 1
         }]
       };
 
-      const result = await api.createOrder(orderData);
+      const orderResult = await api.createOrder(orderData);
+      console.log('Order result completo:', JSON.stringify(orderResult, null, 2));
 
-      const isSuccess = result?.success === true || result?.status === 'success';
-      const orderId = result?.orderId || result?.id;
+      const orderId =
+        orderResult?.id_order ||
+        orderResult?.orderId ||
+        orderResult?.order_id ||
+        orderResult?.id ||
+        orderResult?.data?.id_order ||
+        orderResult?.data?.id;
 
-      if (isSuccess) {
-        const last4Digits = formData.paymentMethod !== 'pix'
-          ? formData.cardNumber.replace(/\s/g, '').slice(-4)
-          : null;
+      const isOrderSuccess =
+        orderResult?.success === true ||
+        orderResult?.status === 'success' ||
+        orderResult?.status === 'created' ||
+        (!!orderId && !orderResult?.error);
 
-        navigate('/confirmation', {
-          state: {
-            plan,
-            userData: {
-              ...userData,
-              paymentMethod: formData.paymentMethod,
-              last4Digits,
-              recurringPayment: formData.recurringPayment
-            },
-            orderId,
-            orderNumber: result?.orderNumber
-          }
-        });
-      } else {
-        setError(result?.message || 'Erro ao criar pedido');
+      if (!orderId) {
+        setError(orderResult?.message || orderResult?.error || 'Erro ao criar pedido: ID não retornado');
+        return;
       }
+
+      // 2. Chama o checkout Asaas
+      const billingType = formData.paymentMethod === 'pix' ? 'PIX' : 'CREDIT_CARD';
+      const checkoutBody = {
+        id_order: orderId,
+        id_user: userData.userId,
+        payment_id: orderId,
+        customer_name: userData.name,
+        customer_email: userData.email,
+        customer_cpf_cnpj: cpfClean,
+        amount: planPrice,
+        billing_type: billingType,
+        ...(formData.paymentMethod !== 'pix' && {
+          card_number: formData.cardNumber.replace(/\s/g, ''),
+          card_name: formData.cardName,
+          card_expiry: formData.cardExpiry,
+          card_cvv: formData.cardCvv,
+          installments: parseInt(formData.installments),
+        }),
+      };
+
+      console.log('Checkout body:', JSON.stringify(checkoutBody, null, 2));
+
+      const checkoutRes = await fetch('https://srv1023256.hstgr.cloud/api/asaas/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(checkoutBody),
+      });
+
+      const checkoutData = await checkoutRes.json();
+      console.log('Checkout response:', JSON.stringify(checkoutData, null, 2));
+
+      if (!checkoutRes.ok) {
+        const errMsg = checkoutData?.message || checkoutData?.detail || checkoutData?.error;
+        setError(typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg) || 'Erro ao processar pagamento');
+        return;
+      }
+
+      // 3. PIX: exibe QR code retornado pela API
+      if (formData.paymentMethod === 'pix' && checkoutData?.pix_code) {
+        setPixCode(checkoutData.pix_code);
+        setLoading(false);
+        return;
+      }
+
+      // 4. Cartão: navega para confirmação
+      navigate('/confirmation', {
+        state: {
+          plan,
+          userData: {
+            ...userData,
+            paymentMethod: formData.paymentMethod,
+            last4Digits: formData.cardNumber.replace(/\s/g, '').slice(-4),
+            recurringPayment: formData.recurringPayment
+          },
+          orderId,
+          asaasId: checkoutData?.asaas_id,
+          status: checkoutData?.status,
+          invoiceUrl: checkoutData?.invoice_url,
+        }
+      });
+
     } catch (err) {
       console.error('Erro ao processar pagamento:', err);
       setError('Erro ao processar pagamento. Tente novamente.');
@@ -125,14 +188,9 @@ const Checkout = () => {
 
   useEffect(() => {
     if (formData.paymentMethod === 'pix') {
-      generatePixCodeForPayment();
+      setPixCode('');
     }
   }, [formData.paymentMethod]);
-
-  const generatePixCodeForPayment = () => {
-    const code = generatePixCode('22410655874', parseFloat(plan.price), `Plano ${plan.name}`);
-    setPixCode(code);
-  };
 
   const copyPixCode = () => {
     navigator.clipboard.writeText(pixCode);
@@ -189,7 +247,7 @@ const Checkout = () => {
                   <h3 className="text-2xl font-bebas uppercase mb-4 text-lime-green">
                     Método de Pagamento
                   </h3>
-                  <div className="grid grid-cols-3 gap-4 mb-6">
+                  <div className="grid grid-cols-2 gap-4 mb-6">
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, paymentMethod: 'credit' })}
@@ -204,20 +262,7 @@ const Checkout = () => {
                         <span className="text-xs text-white">Crédito</span>
                       </div>
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, paymentMethod: 'debit' })}
-                      className={`p-4 border-2 transition-all ${
-                        formData.paymentMethod === 'debit'
-                          ? 'border-lime-green bg-lime-green/10'
-                          : 'border-dark-border hover:border-lime-green/50'
-                      }`}
-                    >
-                      <div className="text-center">
-                        <CreditCard size={32} className="mx-auto mb-2 text-lime-green" />
-                        <span className="text-xs text-white">Débito</span>
-                      </div>
-                    </button>
+
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, paymentMethod: 'pix' })}
@@ -297,12 +342,11 @@ const Checkout = () => {
                           required
                           className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
                         >
-                          <option value="1">1x de R$ {plan.price} sem juros</option>
-                          <option value="2">2x de R$ {(parseFloat(plan.price) / 2).toFixed(2)} sem juros</option>
-                          <option value="3">3x de R$ {(parseFloat(plan.price) / 3).toFixed(2)} sem juros</option>
-                          <option value="4">4x de R$ {(parseFloat(plan.price) / 4).toFixed(2)} sem juros</option>
-                          <option value="5">5x de R$ {(parseFloat(plan.price) / 5).toFixed(2)} sem juros</option>
-                          <option value="6">6x de R$ {(parseFloat(plan.price) / 6).toFixed(2)} sem juros</option>
+                          {[1,2,3,4,5,6].map(n => (
+                            <option key={n} value={String(n)}>
+                              {n}x de R$ {(parsePlanPrice(plan.price) / n).toFixed(2).replace('.', ',')} sem juros
+                            </option>
+                          ))}
                         </select>
                       </div>
                     )}
@@ -316,12 +360,20 @@ const Checkout = () => {
                     Pagamento via PIX
                   </h3>
                   <div className="bg-black border border-lime-green/30 p-6">
+                    {pixCode && (
                     <div className="text-center mb-6">
                       <p className="text-gray-300 mb-4">Escaneie o QR Code para pagar</p>
                       <div className="bg-white p-4 inline-block rounded">
                         <QRCodeSVG value={pixCode} size={200} />
                       </div>
                     </div>
+                    )}
+                    {!pixCode && (
+                    <div className="text-center mb-6 text-gray-400">
+                      <p>Clique em "Confirmar Pagamento" para gerar o QR Code PIX</p>
+                    </div>
+                    )}
+                    {pixCode && (
                     <div className="mt-4">
                       <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
                         Código PIX Copia e Cola
@@ -343,6 +395,7 @@ const Checkout = () => {
                         </button>
                       </div>
                     </div>
+                    )}
                     <div className="mt-4 bg-lime-green/10 border border-lime-green/30 p-4 text-sm text-gray-300">
                       <p className="mb-2 font-bold text-lime-green">Como pagar:</p>
                       <ol className="list-decimal list-inside space-y-1">

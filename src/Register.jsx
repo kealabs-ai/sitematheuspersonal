@@ -57,7 +57,16 @@ const Register = () => {
     password: '',
     confirmPassword: '',
     countryCode: '+55',
+    cep: '',
+    address: '',
+    number: '',
+    complement: '',
+    neighborhood: '',
+    city: '',
+    state: '',
   });
+
+  const [cepLoading, setCepLoading] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -74,6 +83,32 @@ const Register = () => {
         value = value.replace(/(\d{2})(\d)/, '($1) $2');
         value = value.replace(/(\d{5})(\d)/, '$1-$2');
       }
+    }
+
+    if (name === 'cep') {
+      value = value.replace(/\D/g, '');
+      if (value.length <= 8) {
+        value = value.replace(/(\d{5})(\d)/, '$1-$2');
+      }
+      setFormData(prev => ({ ...prev, cep: value }));
+      if (value.replace(/\D/g, '').length === 8) {
+        setCepLoading(true);
+        fetch(`https://viacep.com.br/ws/${value.replace(/\D/g, '')}/json/`)
+          .then(r => r.json())
+          .then(d => {
+            if (!d.erro) {
+              setFormData(prev => ({
+                ...prev,
+                address: d.logradouro || '',
+                neighborhood: d.bairro || '',
+                city: d.localidade || '',
+                state: d.uf || '',
+              }));
+            }
+          })
+          .finally(() => setCepLoading(false));
+      }
+      return;
     }
 
     if (name === 'cpf') {
@@ -109,12 +144,13 @@ const Register = () => {
         email: formData.email,
         phone: formData.phone,
         cpf: formData.cpf,
-        cep: '',
-        address: '',
-        number: '',
-        neighborhood: '',
-        city: '',
-        state: '',
+        cep: formData.cep,
+        address: formData.address,
+        number: formData.number,
+        complement: formData.complement,
+        neighborhood: formData.neighborhood,
+        city: formData.city,
+        state: formData.state,
         country_code: formData.countryCode,
         username: formData.username,
         password: formData.password,
@@ -196,10 +232,7 @@ const Register = () => {
             <span className="text-lime-green">Cadastro</span> de Usuário
           </h1>
 
-          <div className="bg-lime-green/10 border-l-4 border-lime-green p-6 mb-8">
-            <h2 className="text-xl font-bold text-lime-green mb-3">Cadastro Simplificado</h2>
-            <p className="text-gray-300">Precisamos apenas de algumas informações básicas. Dados de endereço serão solicitados após a confirmação do pagamento.</p>
-          </div>
+
 
           <div className="bg-dark-card border border-dark-border p-8">
             <div className="flex items-center gap-3 mb-6">
@@ -283,6 +316,127 @@ const Register = () => {
                     className="flex-1 p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
                     placeholder="(00) 00000-0000"
                   />
+                </div>
+              </div>
+
+              <div className="border-t border-dark-border pt-6 mt-6">
+                <h3 className="text-xl font-bebas uppercase mb-4 text-lime-green">
+                  Endereço
+                </h3>
+
+                <div className="space-y-6">
+                  <div className="grid md:grid-cols-3 gap-6">
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                        CEP *
+                      </label>
+                      <input
+                        type="text"
+                        name="cep"
+                        value={formData.cep}
+                        onChange={handleChange}
+                        required
+                        maxLength="9"
+                        className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
+                        placeholder="00000-000"
+                      />
+                      {cepLoading && <p className="text-xs text-gray-400 mt-1">Buscando endereço...</p>}
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                        Endereço *
+                      </label>
+                      <input
+                        type="text"
+                        name="address"
+                        value={formData.address}
+                        onChange={handleChange}
+                        required
+                        className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
+                        placeholder="Rua, Avenida..."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                        Número *
+                      </label>
+                      <input
+                        type="text"
+                        name="number"
+                        value={formData.number}
+                        onChange={handleChange}
+                        required
+                        className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
+                        placeholder="123"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                        Complemento
+                      </label>
+                      <input
+                        type="text"
+                        name="complement"
+                        value={formData.complement}
+                        onChange={handleChange}
+                        className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
+                        placeholder="Apto, Bloco..."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-3 gap-6">
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                        Bairro *
+                      </label>
+                      <input
+                        type="text"
+                        name="neighborhood"
+                        value={formData.neighborhood}
+                        onChange={handleChange}
+                        required
+                        className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
+                        placeholder="Bairro"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                        Cidade *
+                      </label>
+                      <input
+                        type="text"
+                        name="city"
+                        value={formData.city}
+                        onChange={handleChange}
+                        required
+                        className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
+                        placeholder="Cidade"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                        Estado *
+                      </label>
+                      <input
+                        type="text"
+                        name="state"
+                        value={formData.state}
+                        onChange={handleChange}
+                        required
+                        maxLength="2"
+                        className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
+                        placeholder="SP"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 

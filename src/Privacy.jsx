@@ -34,7 +34,7 @@ const Privacy = () => {
 
             <section>
               <h2 className="text-2xl font-bebas text-lime-green mb-3">3. Segurança</h2>
-              <p>Utilizamos criptografia SSL e não armazenamos dados de cartão de crédito. Pagamentos são processados via InfinitePay.</p>
+              <p>Utilizamos criptografia SSL e não armazenamos dados de cartão de crédito. Pagamentos são processados de forma segura.</p>
             </section>
 
             <section>

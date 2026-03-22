@@ -186,26 +186,6 @@ const api = {
     }
   },
 
-  async createInfinitePayPayment(paymentData) {
-    try {
-      const res = await post(`${BASE}/payments/payments/infinitepay/create`, paymentData);
-      return res.json();
-    } catch (error) {
-      console.error('Erro ao criar pagamento InfinitePay:', error);
-      return { success: false, message: 'Erro de conexão' };
-    }
-  },
-
-  async updatePaymentTransaction(paymentId, data) {
-    try {
-      const res = await post(`${BASE}/payments/payments/${paymentId}/update-transaction`, data);
-      return res.json();
-    } catch (error) {
-      console.error('Erro ao atualizar transação:', error);
-      return { success: false, message: 'Erro de conexão' };
-    }
-  },
-
   // Coupons
   async validateCoupon(code, amount) {
     try {
