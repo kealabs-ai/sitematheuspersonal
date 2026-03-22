@@ -206,15 +206,13 @@ const AboutSection = () => {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="mb-6"
+              className="mb-4"
             >
-              <div className="w-[350px] h-[350px] rounded-full overflow-hidden">
-                <motion.img
+              <div className="w-[300px] h-[300px] rounded-full overflow-hidden">
+                <img
                   src={matheusPhoto}
                   alt="Matheus Castro"
-                  className="w-full h-full object-cover object-top"
-                  whileHover={{ scale: 1.1 }}
-                  transition={{ duration: 0.3 }}
+                  className="w-full h-full object-cover" style={{ objectPosition: '15% 20%' }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
               </div>
