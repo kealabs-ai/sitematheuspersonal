@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useAnimation } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ArrowRight, Menu, X, Dumbbell, Target, TrendingUp, Award, Instagram, Phone } from 'lucide-react';
@@ -531,36 +531,16 @@ const OnlineSection = () => {
 };
 
 const TestimonialsSection = () => {
-  const testimonials = [
-    {
-      name: 'Ana Paula Silva',
-      age: '32 anos',
-      result: 'Perdeu 15kg em 4 meses',
-      text: 'O Matheus mudou completamente minha relação com o treino. Além de perder peso, ganhei confiança e disposição. O acompanhamento dele é impecável!',
-      rating: 5
-    },
-    {
-      name: 'Carlos Eduardo',
-      age: '28 anos',
-      result: 'Ganhou 8kg de massa muscular',
-      text: 'Treino com o Matheus há 1 ano e os resultados são incríveis. Ele sabe exatamente como extrair o máximo de cada treino. Recomendo demais!',
-      rating: 5
-    },
-    {
-      name: 'Juliana Costa',
-      age: '35 anos',
-      result: 'Definiu o corpo em 6 meses',
-      text: 'A consultoria online do Matheus é perfeita pra quem tem rotina corrida. Consigo treinar no meu tempo e ele sempre me dá todo suporte necessário!',
-      rating: 5
-    },
-    {
-      name: 'Ricardo Mendes',
-      age: '42 anos',
-      result: 'Melhorou condicionamento físico',
-      text: 'Depois dos 40 achei que não conseguiria mais evoluir, mas o Matheus provou o contrário. Estou mais forte e saudável do que nunca!',
-      rating: 5
-    },
-  ];
+  const [testimonials, setTestimonials] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('https://srv1023256.hstgr.cloud/api/feedbacks')
+      .then(r => r.json())
+      .then(data => setTestimonials(Array.isArray(data) ? data : (data?.feedbacks ?? [])))
+      .catch(() => setTestimonials([]))
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <section id="depoimentos" className="py-20 px-4 bg-dark-card">
@@ -577,33 +557,40 @@ const TestimonialsSection = () => {
           <p className="text-gray-400 text-lg">Depoimentos reais de quem transformou o corpo e a vida</p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
-          {testimonials.map((testimonial, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className="bg-black border border-dark-border p-6 relative"
-            >
-              <div className="absolute top-4 right-4 text-6xl text-lime-green/20 font-serif">”</div>
-              <div className="mb-4">
-                <h4 className="text-xl font-bold text-white">{testimonial.name}</h4>
-                <p className="text-sm text-gray-500">{testimonial.age}</p>
-                <p className="text-lime-green text-sm font-semibold mt-1">{testimonial.result}</p>
-              </div>
-              <p className="text-gray-300 text-sm leading-relaxed mb-4 italic">
-                “{testimonial.text}”
-              </p>
-              <div className="flex gap-1">
-                {[...Array(testimonial.rating)].map((_, i) => (
-                  <span key={i} className="text-lime-green text-lg">★</span>
-                ))}
-              </div>
-            </motion.div>
-          ))}
-        </div>
+        {loading ? (
+          <p className="text-center text-gray-500">Carregando depoimentos...</p>
+        ) : testimonials.length === 0 ? (
+          <p className="text-center text-gray-500">Nenhum depoimento ainda.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
+            {testimonials.map((t, index) => (
+              <motion.div
+                key={t.id ?? index}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: (index % 4) * 0.1 }}
+                className="bg-black border border-dark-border p-6 relative"
+              >
+                <div className="absolute top-4 right-4 text-6xl text-lime-green/20 font-serif">&ldquo;</div>
+                <div className="mb-4">
+                  <h4 className="text-xl font-bold text-white">{t.name}</h4>
+                  {t.age && <p className="text-sm text-gray-500">{t.age} anos</p>}
+                  {t.city && <p className="text-gray-500 text-xs">{t.city}</p>}
+                  {t.title && <p className="text-lime-green text-sm font-semibold mt-1">{t.title}</p>}
+                </div>
+                <p className="text-gray-300 text-sm leading-relaxed mb-4 italic">
+                  &ldquo;{t.testimonial}&rdquo;
+                </p>
+                <div className="flex gap-1">
+                  {[...Array(Number(t.rating) || 5)].map((_, i) => (
+                    <span key={i} className="text-lime-green text-lg">&#9733;</span>
+                  ))}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
