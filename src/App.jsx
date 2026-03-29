@@ -110,6 +110,15 @@ const Header = () => {
               </li>
             ))}
             <li>
+              <a
+                href="#depoimentos"
+                onClick={() => setIsOpen(false)}
+                className="text-xl hover:text-lime-green transition-colors block uppercase font-semibold"
+              >
+                Depoimentos
+              </a>
+            </li>
+            <li>
               <a 
                 href="/login"
                 onClick={() => setIsOpen(false)}
