@@ -1,7 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useAnimation } from 'framer-motion';
-import { ChevronLeft, ChevronRight, ArrowRight, Menu, X, Dumbbell, Target, TrendingUp, Award, Instagram, Phone } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowRight, Menu, X, Dumbbell, Target, TrendingUp, Award, Instagram, Phone, MessageSquare } from 'lucide-react';
 import kealabsLogo from './assets/kealabs_logo_strategic_white.png';
 import matheusLogo from './assets/logotipo_matheus_personal.png';
 import matheusPhoto from './assets/matheus_personal.jpg';
@@ -44,16 +44,7 @@ const Header = () => {
         <img src={matheusLogo} alt="Matheus Personal" className="h-10 md:h-12 brightness-0 invert" />
         
         <div className="flex items-center gap-4">
-          <a 
-            href="https://instagram.com/matheusc_personal" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-lime-green hover:text-neon-green transition-colors"
-            aria-label="Instagram"
-          >
-            <Instagram size={28} />
-          </a>
-          <button onClick={() => setIsOpen(!isOpen)} className="md:hidden text-lime-green">
+                    <button onClick={() => setIsOpen(!isOpen)} className="md:hidden text-lime-green">
             {isOpen ? <X size={32} /> : <Menu size={32} />}
           </button>
         </div>
@@ -66,6 +57,11 @@ const Header = () => {
               </a>
             </li>
           ))}
+          <li>
+            <a href="#depoimentos" className="text-lime-green hover:text-neon-green transition-colors" aria-label="Depoimentos" title="Depoimentos">
+              <MessageSquare size={24} />
+            </a>
+          </li>
           <li>
             <a 
               href="/login"
