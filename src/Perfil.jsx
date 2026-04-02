@@ -145,7 +145,7 @@ export default function Perfil() {
               {planEmoji[user.plan]} Plano {user.plan} — Ativo
             </p>
             <button
-              onClick={() => navigate('/consultoria')}
+              onClick={() => window.open('https://www.matheuspersonal.com.br/#consultoria', '_blank')}
               className={`text-xs border ${pc.border} ${pc.text} px-3 py-1 hover:opacity-80 transition-opacity`}
             >
               Upgrade
