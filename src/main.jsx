@@ -11,6 +11,11 @@ import Confirmation from './Confirmation.jsx';
 import Terms from './Terms.jsx';
 import Privacy from './Privacy.jsx';
 import Feedback from './Feedback.jsx';
+import Dashboard from './Dashboard.jsx';
+import Treinos from './Treinos.jsx';
+import Evolucao from './Evolucao.jsx';
+import Nutricao from './Nutricao.jsx';
+import Perfil from './Perfil.jsx';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -27,6 +32,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/termos" element={<Terms />} />
         <Route path="/privacidade" element={<Privacy />} />
         <Route path="/feedbacks" element={<Feedback />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard/treinos" element={<Treinos />} />
+        <Route path="/dashboard/evolucao" element={<Evolucao />} />
+        <Route path="/dashboard/nutricao" element={<Nutricao />} />
+        <Route path="/dashboard/perfil" element={<Perfil />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>

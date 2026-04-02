@@ -1,14 +1,22 @@
 import React, { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import matheusLogo from './assets/logotipo_matheus_personal.png';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Login:', { email, password });
+    setLoading(true);
+    // TODO: integrar com API de autenticação
+    setTimeout(() => {
+      setLoading(false);
+      navigate('/dashboard');
+    }, 800);
   };
 
   return (
@@ -65,9 +73,10 @@ const Login = () => {
 
             <button
               type="submit"
-              className="w-full bg-lime-green text-black font-bold py-4 uppercase hover:bg-neon-green transition-all transform hover:scale-105 flex items-center justify-center"
+              disabled={loading}
+              className="w-full bg-lime-green text-black font-bold py-4 uppercase hover:bg-neon-green transition-all transform hover:scale-105 flex items-center justify-center disabled:opacity-70"
             >
-              Entrar <ArrowRight className="ml-2" size={20} />
+              {loading ? 'Entrando...' : <> Entrar <ArrowRight className="ml-2" size={20} /> </>}
             </button>
           </form>
 
