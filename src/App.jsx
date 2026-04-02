@@ -376,11 +376,12 @@ const pricingPlans = [
   },
 ];
 
-const PricingSection = () => {
-  const navigate = useNavigate();
+const WHATSAPP = '5535998572602';
 
+const PricingSection = () => {
   const handlePlanClick = (plan) => {
-    navigate('/cart', { state: { plan } });
+    const msg = encodeURIComponent(`Olá Matheus! Tenho interesse no Plano ${plan.name} de R$ ${plan.price}/mês. Pode me passar mais informações?`);
+    window.open(`https://wa.me/${WHATSAPP}?text=${msg}`, '_blank');
   };
 
   return (
