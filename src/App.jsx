@@ -88,13 +88,13 @@ const Header = () => {
         <>
           <div 
             className="fixed inset-0 bg-black/50 md:hidden"
-            style={{ zIndex: 45 }}
+            style={{ zIndex: 45, backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.85)' }}
             onClick={() => setIsOpen(false)}
           ></div>
           <motion.div 
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
-            className="fixed top-0 right-0 h-screen w-72 bg-black/98 backdrop-blur-lg md:hidden pt-20 px-6 border-l border-lime-green/20"
+            className="fixed top-0 right-0 h-screen w-72 bg-black/95 backdrop-blur-xl md:hidden pt-20 px-6 border-l border-lime-green/20"
             style={{ zIndex: 50 }}
           >
           <ul className="flex flex-col space-y-6">
