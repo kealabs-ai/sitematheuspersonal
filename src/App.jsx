@@ -331,7 +331,9 @@ const PersonalSection = () => {
                 </p>
               </div>
               <a
-                href="#contato"
+                href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(`Olá Matheus! Tenho interesse no plano Personal ${plan.frequency}. Pode me passar mais informações?`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="block w-full text-center py-3 px-4 font-bold uppercase transition-all text-sm border-2 border-lime-green text-lime-green hover:bg-lime-green hover:text-black"
               >
                 Contratar
@@ -379,9 +381,10 @@ const pricingPlans = [
 const WHATSAPP = '5535998572602';
 
 const PricingSection = () => {
+  const navigate = useNavigate();
+
   const handlePlanClick = (plan) => {
-    const msg = encodeURIComponent(`Olá Matheus! Tenho interesse no Plano ${plan.name} de R$ ${plan.price}/mês. Pode me passar mais informações?`);
-    window.open(`https://wa.me/${WHATSAPP}?text=${msg}`, '_blank');
+    navigate('/cart', { state: { plan } });
   };
 
   return (
