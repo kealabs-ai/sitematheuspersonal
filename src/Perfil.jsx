@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { users as usersApi, auth, clearSession } from './services/alunoApi';
 import BottomNav from './BottomNav';
+import AppFooter from './AppFooter';
 
 const GOALS = [
   { value: 'Hipertrofia',   icon: <Dumbbell size={28} />, color: 'border-lime-green text-lime-green bg-lime-green/10' },
@@ -556,6 +557,7 @@ export default function Perfil() {
           </button>
         </p>
       </main>
+      <AppFooter />
       <BottomNav />
     </div>
   );

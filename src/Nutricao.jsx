@@ -5,6 +5,7 @@ import { Salad, ChevronDown, ChevronUp, MessageSquare, Clock, Flame, Beef, Wheat
 import { nutrition as nutritionApi } from './services/alunoApi';
 import { getUser } from './services/alunoApi';
 import BottomNav from './BottomNav';
+import AppFooter from './AppFooter';
 
 export default function Nutricao() {
   const navigate = useNavigate();
@@ -260,6 +261,7 @@ export default function Nutricao() {
           </button>
         </p>
       </main>
+      <AppFooter />
       <BottomNav />
     </div>
   );

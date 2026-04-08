@@ -8,6 +8,7 @@ import {
 import { dashboard, getUser } from './services/alunoApi';
 import OnboardingModal from './OnboardingModal';
 import BottomNav from './BottomNav';
+import AppFooter from './AppFooter';
 
 const modules = [
   { icon: <Dumbbell size={28} />, label: 'Treinos', path: '/dashboard/treinos', color: 'border-lime-green text-lime-green', desc: 'Ver plano da semana' },
@@ -223,6 +224,7 @@ export default function Dashboard() {
         </p>
       </main>
 
+      <AppFooter />
       <BottomNav />
     </div>
   );

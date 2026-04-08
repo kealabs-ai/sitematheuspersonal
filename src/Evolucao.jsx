@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { progress as progressApi } from './services/alunoApi';
 import BottomNav from './BottomNav';
+import AppFooter from './AppFooter';
 
 // Formata qualquer string de data para pt-BR
 const fmtDate = (raw) => {
@@ -566,6 +567,7 @@ export default function Evolucao() {
         )}
       </AnimatePresence>
 
+      <AppFooter />
       <BottomNav />
     </div>
   );

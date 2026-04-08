@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, CheckCircle, Circle, Dumbbell, Clock, Zap } from 'lucide-react';
 import { workouts as workoutsApi } from './services/alunoApi';
 import BottomNav from './BottomNav';
+import AppFooter from './AppFooter';
 
 const statusConfig = {
   done:     { border: 'border-lime-green/30', dot: 'bg-lime-green' },
@@ -324,6 +325,7 @@ export default function Treinos() {
           </button>
         </p>
       </main>
+      <AppFooter />
       <BottomNav />
     </div>
   );
