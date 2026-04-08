@@ -12,6 +12,8 @@ import {
 import { progress as progressApi } from './services/alunoApi';
 import BottomNav from './BottomNav';
 import AppFooter from './AppFooter';
+import { ShimmerButton } from './components/magicui/shimmer-button';
+import { AnimatedGradientText } from './components/magicui/animated-gradient-text';
 
 // Formata qualquer string de data para pt-BR
 const fmtDate = (raw) => {
@@ -88,13 +90,37 @@ export default function Evolucao() {
         setWeightSummary(d.summary ?? null);
       } else if (t === 'Força') {
         const d = await progressApi.strength();
-        setRecords(d.records ?? []);
-        if (d.records?.length && !selectedExercise) {
-          setSelectedExercise(d.records[0].exercise_name);
+        // API pode retornar { records: [...] } ou array direto
+        const list = d.records ?? d.personal_records ?? (Array.isArray(d) ? d : []);
+        setRecords(list);
+        if (list.length && !selectedExercise) {
+          setSelectedExercise(list[0].exercise_name);
         }
       } else if (t === 'Medidas') {
         const d = await progressApi.measurements();
-        setMeasurements(d.measurements ?? []);
+        // API retorna array de body_metrics ou { measurements: [...] }
+        const raw = d.measurements ?? d.metrics ?? d.history ?? (Array.isArray(d) ? d : []);
+        // Normaliza para { label, value, unit, recorded_at, prev, diff }
+        const LABELS = { weight: 'Peso', height: 'Altura', body_fat: '% Gordura', waist: 'Cintura', arm: 'Braço', leg: 'Perna', chest: 'Peito' };
+        const UNITS  = { weight: 'kg', height: 'cm', body_fat: '%', waist: 'cm', arm: 'cm', leg: 'cm', chest: 'cm' };
+        if (raw.length > 0 && ('weight' in raw[0] || 'waist' in raw[0])) {
+          // Formato body_metrics: cada item é uma medição completa
+          const latest = raw[raw.length - 1];
+          const first  = raw[0];
+          const normalized = Object.keys(LABELS)
+            .filter(k => latest[k] != null)
+            .map(k => ({
+              label: LABELS[k],
+              unit:  UNITS[k],
+              value: latest[k],
+              prev:  first[k] ?? null,
+              diff:  first[k] != null ? `${(latest[k] - first[k]) >= 0 ? '+' : ''}${(latest[k] - first[k]).toFixed(1)} ${UNITS[k]}` : null,
+              recorded_at: latest.recorded_at,
+            }));
+          setMeasurements(normalized);
+        } else {
+          setMeasurements(raw);
+        }
       } else if (t === 'Fotos') {
         const d = await progressApi.photos();
         setPhotos(d.photos ?? []);
@@ -109,7 +135,13 @@ export default function Evolucao() {
   const loadStrengthByEx = async (ex) => {
     if (strengthData[ex]) return;
     const d = await progressApi.strengthByEx(ex).catch(() => ({ data: [] }));
-    setStrengthData(prev => ({ ...prev, [ex]: d }));
+    // Normaliza: data pode ser array de { date, weight } ou { date, weight_kg }
+    const raw = d.data ?? d.history ?? (Array.isArray(d) ? d : []);
+    const normalized = raw.map(r => ({
+      date:   r.date ?? r.recorded_at ?? '',
+      weight: parseFloat(r.weight ?? r.weight_kg ?? 0),
+    }));
+    setStrengthData(prev => ({ ...prev, [ex]: { ...d, data: normalized } }));
   };
 
   const savePeso = async () => {
@@ -203,14 +235,10 @@ export default function Evolucao() {
         {/* Tab: Peso */}
         {tab === 'Peso' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-            {/* Botão registrar peso */}
-            <button
-              onClick={() => setModalPeso(true)}
-              className="w-full flex items-center justify-center gap-2 bg-lime-green text-black font-bold py-3 uppercase text-sm tracking-wider hover:bg-neon-green transition-all"
-            >
+            <ShimmerButton onClick={() => setModalPeso(true)} className="w-full justify-center" shimmerColor="#ffffff" background="rgba(0,180,216,1)">
               <Scale size={16} /> Registrar Peso
-            </button>
-            <div className="bg-dark-card border border-dark-border p-4">
+            </ShimmerButton>
+            <div className="relative bg-dark-card border border-dark-border p-4 overflow-hidden">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-sm font-semibold text-white">Evolução do Peso (kg)</p>
                 <div className="flex gap-1">
@@ -222,7 +250,6 @@ export default function Evolucao() {
                   ))}
                 </div>
               </div>
-              {/* Stats rápidos acima do gráfico */}
               {weightData.length > 0 && (() => {
                 const atual  = weightData[weightData.length - 1].weight;
                 const inicio = weightData[0].weight;
@@ -247,24 +274,24 @@ export default function Evolucao() {
                 );
               })()}
               {loading ? <p className="text-center text-gray-600 text-xs py-8">Carregando...</p> : (
-              <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={weightData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="weightGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#00B4D8" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#00B4D8" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1f1f1f" />
-                  <XAxis dataKey="date" tickFormatter={fmtDate} tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-                  <YAxis domain={['dataMin - 1', 'dataMax + 1']} tickFormatter={v => fmt2(v)} tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} width={45} />
-                  <Tooltip content={<CustomTooltip unit=" kg" />} />
-                  <Area type="monotone" dataKey="weight" stroke="#00B4D8" strokeWidth={2} fill="url(#weightGrad)" dot={{ fill: '#00B4D8', r: 3 }} activeDot={{ r: 5 }} />
-                </AreaChart>
-              </ResponsiveContainer>
+                <ResponsiveContainer width="100%" height={200}>
+                  <AreaChart data={weightData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="weightGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#00B4D8" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#00B4D8" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1f1f1f" />
+                    <XAxis dataKey="date" tickFormatter={fmtDate} tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                    <YAxis domain={['dataMin - 1', 'dataMax + 1']} tickFormatter={v => fmt2(v)} tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} width={45} />
+                    <Tooltip content={<CustomTooltip unit=" kg" />} />
+                    <Area type="monotone" dataKey="weight" stroke="#00B4D8" strokeWidth={2} fill="url(#weightGrad)" dot={{ fill: '#00B4D8', r: 3 }} activeDot={{ r: 5 }} />
+                  </AreaChart>
+                </ResponsiveContainer>
               )}
             </div>
-            <div className="bg-dark-card border border-dark-border p-4">
+            <div className="relative bg-dark-card border border-dark-border p-4 overflow-hidden">
               <p className="text-xs text-gray-400 uppercase tracking-widest mb-3">Histórico de Pesagem</p>
               {loading ? (
                 <p className="text-center text-gray-600 text-xs py-6">Carregando...</p>
@@ -304,75 +331,111 @@ export default function Evolucao() {
         {/* Tab: Força */}
         {tab === 'Força' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-            <div className="relative">
-              <button onClick={() => setShowExSelect(!showExSelect)}
-                className="w-full bg-dark-card border border-dark-border p-3 flex items-center justify-between text-sm text-white hover:border-lime-green/50 transition-colors"
-              >
-                <span>{selectedExercise ?? 'Selecione um exercício'}</span>
-                <ChevronDown size={16} className={`text-gray-400 transition-transform ${showExSelect ? 'rotate-180' : ''}`} />
-              </button>
-              {showExSelect && (
-                <div className="absolute top-full left-0 right-0 bg-black border border-dark-border z-10">
-                  {records.map(r => (
-                    <button key={r.exercise_name} onClick={() => handleSelectExercise(r.exercise_name)}
-                      className="w-full text-left px-4 py-3 text-sm hover:bg-lime-green/10 hover:text-lime-green transition-colors border-b border-dark-border last:border-0"
-                    >{r.exercise_name}</button>
-                  ))}
-                </div>
-              )}
-            </div>
-            {selectedExercise && (
-              <div className="bg-dark-card border border-dark-border p-4">
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-sm font-semibold text-white">{selectedExercise}</p>
-                  <span className="text-lime-green font-bebas text-xl">+{exGain} kg</span>
-                </div>
-                <p className="text-gray-500 text-xs mb-4">Recorde: {exRecord} kg</p>
-                {loading ? <p className="text-center text-gray-600 text-xs py-8">Carregando...</p> : (
-                <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={exData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1f1f1f" />
-                    <XAxis dataKey="date" tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <Tooltip content={<CustomTooltip unit=" kg" />} />
-                    <Line type="monotone" dataKey="weight" stroke="#60a5fa" strokeWidth={2} dot={{ fill: '#60a5fa', r: 4 }} activeDot={{ r: 6 }} />
-                  </LineChart>
-                </ResponsiveContainer>
-                )}
+            {loading ? (
+              <p className="text-center text-gray-600 text-xs py-8">Carregando...</p>
+            ) : records.length === 0 ? (
+              <div className="text-center py-10">
+                <TrendingUp size={40} className="text-gray-700 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm">Nenhum recorde registrado</p>
+                <p className="text-gray-600 text-xs mt-1">Complete treinos para registrar sua evolução de carga</p>
               </div>
-            )}
-            <div className="bg-dark-card border border-dark-border p-4">
-              <p className="text-xs text-gray-400 uppercase tracking-widest mb-3">Recordes Pessoais</p>
-              <div className="space-y-2">
-                {records.map((r, i) => (
-                  <div key={i} className="flex items-center justify-between py-2 border-b border-dark-border last:border-0">
-                    <span className="text-gray-300 text-sm">{r.exercise_name}</span>
-                    <span className="text-blue-400 font-bold">{r.weight_kg} kg</span>
+            ) : (
+              <>
+                <div className="relative">
+                  <button onClick={() => setShowExSelect(!showExSelect)}
+                    className="w-full bg-dark-card border border-dark-border p-3 flex items-center justify-between text-sm text-white hover:border-lime-green/50 transition-colors"
+                  >
+                    <span>{selectedExercise ?? 'Selecione um exercício'}</span>
+                    <ChevronDown size={16} className={`text-gray-400 transition-transform ${showExSelect ? 'rotate-180' : ''}`} />
+                  </button>
+                  {showExSelect && (
+                    <div className="absolute top-full left-0 right-0 bg-black border border-dark-border z-10 max-h-48 overflow-y-auto">
+                      {records.map(r => (
+                        <button key={r.exercise_name} onClick={() => handleSelectExercise(r.exercise_name)}
+                          className="w-full text-left px-4 py-3 text-sm hover:bg-lime-green/10 hover:text-lime-green transition-colors border-b border-dark-border last:border-0"
+                        >{r.exercise_name}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {selectedExercise && (
+                  <div className="relative bg-dark-card border border-dark-border p-4 overflow-hidden">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-sm font-semibold text-white">{selectedExercise}</p>
+                      <span className="text-lime-green font-bebas text-xl">+{exGain} kg</span>
+                    </div>
+                    <p className="text-gray-500 text-xs mb-4">Recorde: <span className="text-white font-bold">{exRecord} kg</span></p>
+                    {exData.length === 0 ? (
+                      <p className="text-center text-gray-600 text-xs py-6">Sem histórico de carga para este exercício</p>
+                    ) : (
+                      <ResponsiveContainer width="100%" height={200}>
+                        <LineChart data={exData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#1f1f1f" />
+                          <XAxis dataKey="date" tickFormatter={fmtDate} tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                          <YAxis tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} width={40} />
+                          <Tooltip content={<CustomTooltip unit=" kg" />} />
+                          <Line type="monotone" dataKey="weight" stroke="#60a5fa" strokeWidth={2} dot={{ fill: '#60a5fa', r: 4 }} activeDot={{ r: 6 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    )}
                   </div>
-                ))}
-              </div>
-            </div>
+                )}
+                <div className="relative bg-dark-card border border-dark-border p-4 overflow-hidden">
+                  <p className="text-xs text-gray-400 uppercase tracking-widest mb-3">Recordes Pessoais</p>
+                  <div className="divide-y divide-dark-border">
+                    {records.map((r, i) => (
+                      <button key={i} onClick={() => handleSelectExercise(r.exercise_name)}
+                        className={`w-full flex items-center justify-between py-3 hover:bg-white/5 transition-colors ${
+                          selectedExercise === r.exercise_name ? 'text-lime-green' : ''
+                        }`}>
+                        <span className="text-sm">{r.exercise_name}</span>
+                        <span className="text-blue-400 font-bold text-sm">{r.weight_kg ?? r.record ?? '—'} kg</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
           </motion.div>
         )}
 
         {/* Tab: Medidas */}
         {tab === 'Medidas' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
-            {loading ? <p className="text-center text-gray-600 text-xs py-8">Carregando...</p> :
-            measurements.map((m, i) => (
-              <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.07 }}
-                className="bg-dark-card border border-dark-border p-4 flex items-center justify-between"
-              >
-                <div>
-                  <p className="text-white font-semibold text-sm capitalize">{m.label ?? m.type}</p>
-                  <p className="text-gray-500 text-xs">Início: {m.prev ?? '—'}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-white font-bebas text-2xl">{m.value}</p>
-                  <p className="text-lime-green text-xs font-bold">{m.diff}</p>
-                </div>
-              </motion.div>
-            ))}
+            <ShimmerButton onClick={() => setModalMedida(true)} className="w-full justify-center" shimmerColor="#ffffff" background="rgba(0,180,216,1)">
+              <Ruler size={16} /> Registrar Medida
+            </ShimmerButton>
+            {loading ? (
+              <p className="text-center text-gray-600 text-xs py-8">Carregando...</p>
+            ) : measurements.length === 0 ? (
+              <div className="text-center py-10">
+                <Ruler size={40} className="text-gray-700 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm">Nenhuma medida registrada</p>
+                <p className="text-gray-600 text-xs mt-1">Registre suas medidas para acompanhar a evolução</p>
+              </div>
+            ) : (
+              <div className="bg-dark-card border border-dark-border divide-y divide-dark-border">
+                {measurements.map((m, i) => (
+                  <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
+                    className="flex items-center justify-between px-4 py-3.5"
+                  >
+                    <div>
+                      <p className="text-white text-sm font-semibold">{m.label ?? m.type ?? '—'}</p>
+                      {m.recorded_at && <p className="text-gray-600 text-xs mt-0.5">{fmtDate(m.recorded_at)}</p>}
+                      {m.prev != null && <p className="text-gray-500 text-xs">Inicial: {m.prev} {m.unit ?? ''}</p>}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-white font-bebas text-2xl">{m.value} <span className="text-gray-500 text-sm font-inter">{m.unit ?? ''}</span></p>
+                      {m.diff && (
+                        <p className={`text-xs font-bold ${
+                          m.diff.startsWith('-') ? 'text-lime-green' : m.diff.startsWith('+') && m.diff !== '+0.0' ? 'text-red-400' : 'text-gray-500'
+                        }`}>{m.diff}</p>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
           </motion.div>
         )}
 

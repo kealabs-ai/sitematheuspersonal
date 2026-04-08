@@ -9,6 +9,8 @@ import {
 import { users as usersApi, auth, clearSession } from './services/alunoApi';
 import BottomNav from './BottomNav';
 import AppFooter from './AppFooter';
+import { ShimmerButton } from './components/magicui/shimmer-button';
+import { AnimatedGradientText } from './components/magicui/animated-gradient-text';
 
 const GOALS = [
   { value: 'Hipertrofia',   icon: <Dumbbell size={28} />, color: 'border-lime-green text-lime-green bg-lime-green/10' },
@@ -210,7 +212,7 @@ export default function Perfil() {
             <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
           </div>
           <div className="flex-1">
-            <h2 className="text-2xl font-bebas text-white">{user.name}</h2>
+            <h2 className="text-2xl font-bebas"><AnimatedGradientText>{user.name}</AnimatedGradientText></h2>
             <p className="text-gray-400 text-sm">{user.email}</p>
             <div className={`inline-flex items-center gap-1.5 mt-1 border px-2 py-0.5 text-xs font-bold ${pc.border} ${pc.text} ${pc.bg}`}>
               {planEmoji[user.plan]} Plano {user.plan}
@@ -219,16 +221,14 @@ export default function Perfil() {
           {/* Botão editar inline */}
           <div className="flex-shrink-0">
             {!editing ? (
-              <button onClick={() => setEditing(true)}
-                className="flex items-center gap-1.5 text-xs text-lime-green border border-lime-green/40 px-3 py-1.5 hover:bg-lime-green/10 transition-colors">
-                <Edit3 size={13} /> Editar
-              </button>
+              <ShimmerButton onClick={() => setEditing(true)} className="px-3 py-1.5 text-xs" shimmerColor="#00B4D8" background="rgba(26,26,26,1)">
+                <span className="text-lime-green flex items-center gap-1"><Edit3 size={13} /> Editar</span>
+              </ShimmerButton>
             ) : (
               <div className="flex flex-col gap-1.5">
-                <button onClick={saveEdit} disabled={saving}
-                  className="flex items-center gap-1 text-xs text-black bg-lime-green px-3 py-1.5 font-bold hover:bg-neon-green transition-colors disabled:opacity-60">
+                <ShimmerButton onClick={saveEdit} disabled={saving} className="px-3 py-1.5 text-xs" shimmerColor="#ffffff" background="rgba(0,180,216,1)">
                   <Save size={13} /> {saving ? 'Salvando...' : 'Salvar'}
-                </button>
+                </ShimmerButton>
                 <button onClick={() => { setDraft(user); setEditing(false); }}
                   className="flex items-center gap-1 text-xs text-gray-400 border border-dark-border px-3 py-1.5 hover:border-gray-400 transition-colors">
                   <X size={13} /> Cancelar
@@ -240,7 +240,7 @@ export default function Perfil() {
 
         {/* Card do plano */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-          className={`border ${pc.border} ${pc.bg} p-4`}>
+          className={`relative border ${pc.border} ${pc.bg} p-4 overflow-hidden`}>
           <div className="flex items-center justify-between mb-3">
             <p className={`text-xs font-bold uppercase tracking-widest ${pc.text}`}>
               {planEmoji[user.plan]} Plano {user.plan} — Ativo
@@ -325,7 +325,7 @@ export default function Perfil() {
 
         {/* Métricas físicas */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-          className="bg-dark-card border border-dark-border p-4 space-y-4">
+          className="relative bg-dark-card border border-dark-border p-4 space-y-4 overflow-hidden">
           <div className="flex items-center justify-between">
             <p className="text-xs text-gray-400 uppercase tracking-widest">Métricas Físicas</p>
             <button onClick={openMetrics}
@@ -410,10 +410,9 @@ export default function Perfil() {
                   </div>
                 ))}
               </div>
-              <button onClick={saveMetrics} disabled={metricsSaving}
-                className="w-full mt-5 bg-lime-green text-black font-bold py-3 uppercase text-sm hover:bg-neon-green transition-all disabled:opacity-40">
+              <ShimmerButton onClick={saveMetrics} disabled={metricsSaving} className="w-full mt-5 justify-center" shimmerColor="#ffffff" background="rgba(0,180,216,1)">
                 {metricsSaving ? 'Salvando...' : 'Salvar Métricas'}
-              </button>
+              </ShimmerButton>
             </motion.div>
           </motion.div>
         )}
@@ -454,10 +453,9 @@ export default function Perfil() {
                 ))}
                 {pwError && <p className="text-red-400 text-xs">{pwError}</p>}
               </div>
-              <button onClick={savePassword} disabled={pwSaving || !pwDraft.current || !pwDraft.next}
-                className="w-full mt-5 bg-lime-green text-black font-bold py-3 uppercase text-sm hover:bg-neon-green transition-all disabled:opacity-40">
+              <ShimmerButton onClick={savePassword} disabled={pwSaving || !pwDraft.current || !pwDraft.next} className="w-full mt-5 justify-center" shimmerColor="#ffffff" background="rgba(0,180,216,1)">
                 {pwSaving ? 'Salvando...' : 'Alterar Senha'}
-              </button>
+              </ShimmerButton>
             </motion.div>
           </motion.div>
         )}
@@ -501,10 +499,9 @@ export default function Perfil() {
                   ))}
                 </div>
               )}
-              <button onClick={saveNotif} disabled={notifSaving || !notifPrefs}
-                className="w-full mt-5 bg-lime-green text-black font-bold py-3 uppercase text-sm hover:bg-neon-green transition-all disabled:opacity-40">
+              <ShimmerButton onClick={saveNotif} disabled={notifSaving || !notifPrefs} className="w-full mt-5 justify-center" shimmerColor="#ffffff" background="rgba(0,180,216,1)">
                 {notifSaving ? 'Salvando...' : 'Salvar Preferências'}
-              </button>
+              </ShimmerButton>
             </motion.div>
           </motion.div>
         )}
@@ -533,10 +530,9 @@ export default function Perfil() {
                     placeholder="Como está sendo sua experiência? Dúvidas, sugestões, resultados..."
                     className="w-full bg-black border border-dark-border text-white text-sm p-3 focus:outline-none focus:border-lime-green transition-colors resize-none mb-4"
                   />
-                  <button onClick={sendFeedback} disabled={!feedback.trim()}
-                    className="w-full bg-lime-green text-black font-bold py-3 uppercase text-sm hover:bg-neon-green transition-all disabled:opacity-40">
+                  <ShimmerButton onClick={sendFeedback} disabled={!feedback.trim()} className="w-full justify-center" shimmerColor="#ffffff" background="rgba(0,180,216,1)">
                     Enviar Feedback
-                  </button>
+                  </ShimmerButton>
                 </>
               )}
             </motion.div>

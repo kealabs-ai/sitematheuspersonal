@@ -5,6 +5,7 @@ import { ChevronDown, ChevronUp, CheckCircle, Circle, Dumbbell, Clock, Zap } fro
 import { workouts as workoutsApi } from './services/alunoApi';
 import BottomNav from './BottomNav';
 import AppFooter from './AppFooter';
+import { ShimmerButton } from './components/magicui/shimmer-button';
 
 const statusConfig = {
   done:     { border: 'border-lime-green/30', dot: 'bg-lime-green' },
@@ -76,6 +77,7 @@ export default function Treinos() {
   };
 
   const toggleExpand = (day) => {
+    if (day.status === 'upcoming') return;
     const next = expanded === day.id ? null : day.id;
     setExpanded(next);
     if (next && day.status !== 'rest') loadExercises(day.id);
@@ -152,12 +154,9 @@ export default function Treinos() {
                 <Clock size={12} /> {todayPlan.duration_min} min · {todayPlan.exercises_count} exercícios
               </p>
             </div>
-            <button
-              onClick={() => startWorkout(todayPlan)}
-              className="bg-lime-green text-black font-bold px-4 py-2 uppercase text-sm hover:bg-neon-green transition-all"
-            >
+            <ShimmerButton onClick={() => startWorkout(todayPlan)} shimmerColor="#ffffff" background="rgba(0,180,216,1)" className="px-4 py-2 text-sm">
               Iniciar ▶
-            </button>
+            </ShimmerButton>
           </motion.div>
         )}
 
@@ -180,9 +179,9 @@ export default function Treinos() {
               >
                 {/* Cabeçalho do dia */}
                 <button
-                  onClick={() => day.status !== 'rest' && toggleExpand(day)}
+                  onClick={() => day.status !== 'rest' && day.status !== 'upcoming' && toggleExpand(day)}
                   className="w-full flex items-center justify-between p-4 text-left"
-                  disabled={day.status === 'rest'}
+                  disabled={day.status === 'rest' || day.status === 'upcoming'}
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-2 h-2 rounded-full ${cfg.dot}`} />
@@ -210,7 +209,8 @@ export default function Treinos() {
                         {isOpen ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
                       </>
                     )}
-                    {day.status === 'rest' && <span className="text-blue-400 text-xs">😴 Recuperação</span>}
+                    {day.status === 'rest'     && <span className="text-blue-400 text-xs">😴 Recuperação</span>}
+                    {day.status === 'upcoming'  && <span className="text-gray-600 text-xs uppercase tracking-wide">Bloqueado</span>}
                   </div>
                 </button>
 
@@ -294,19 +294,16 @@ export default function Treinos() {
                         })}
 
                         {isActive ? (
-                          <button
-                            onClick={() => finishWorkout(day.id)}
-                            className="w-full mt-2 bg-lime-green text-black font-bold py-3 uppercase text-sm hover:bg-neon-green transition-all"
-                          >
+                          <ShimmerButton onClick={() => finishWorkout(day.id)} className="w-full mt-2 justify-center" shimmerColor="#ffffff" background="rgba(0,180,216,1)">
                             {doneCount === dayExercises.length ? '✓ Finalizar Treino' : `Salvar Progresso (${doneCount}/${dayExercises.length})`}
-                          </button>
+                          </ShimmerButton>
                         ) : (
-                          day.status !== 'done' && day.status !== 'rest' && (
+                          (day.status === 'today' || day.status === 'done') && (
                             <button
                               onClick={() => startWorkout(day)}
                               className="w-full mt-2 border-2 border-lime-green text-lime-green font-bold py-3 uppercase text-sm hover:bg-lime-green hover:text-black transition-all"
                             >
-                              Iniciar Treino ▶
+                              {day.status === 'done' ? 'Refazer Treino ↺' : 'Iniciar Treino ▶'}
                             </button>
                           )
                         )}
