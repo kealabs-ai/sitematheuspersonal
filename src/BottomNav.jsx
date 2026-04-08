@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Dumbbell, TrendingUp, Salad, LayoutDashboard, LogOut } from 'lucide-react';
+import { Dumbbell, TrendingUp, Salad, LayoutDashboard, LogOut, Settings } from 'lucide-react';
 import { auth, clearSession, getUser } from './services/alunoApi';
 import matheusLogo from './assets/logotipo_matheus_personal.png';
 
@@ -41,6 +41,15 @@ export default function AppNav() {
     if (item.diamanteOnly && user.plan !== 'DIAMANTE') return;
     navigate(item.path);
   };
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const handleLogout = async () => {
     await auth.logout(localStorage.getItem('refresh_token')).catch(() => {});
@@ -131,8 +140,8 @@ export default function AppNav() {
           <img src={matheusLogo} alt="MP" className="h-7 brightness-0 invert opacity-90" />
         </button>
 
-        {/* Avatar + info + sair */}
-        <div className="flex items-center gap-2">
+        {/* Avatar + menu */}
+        <div className="relative flex items-center gap-2" ref={menuRef}>
           <div className="text-right">
             <p className="text-white text-xs font-semibold leading-tight">{firstName}</p>
             <span className={`inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 border rounded-sm mt-0.5 ${pb}`}>
@@ -140,18 +149,32 @@ export default function AppNav() {
             </span>
           </div>
           <button
-            onClick={() => navigate('/dashboard/perfil')}
-            className={`w-9 h-9 rounded-full border-2 flex items-center justify-center text-xs font-bold bg-dark-card ring-2 ring-offset-1 ring-offset-black transition-all hover:scale-105 ${pc.border} ${pc.text} ${pc.ring}`}
+            onClick={() => setMenuOpen(v => !v)}
+            className={`w-9 h-9 rounded-full border-2 flex items-center justify-center text-xs font-bold bg-dark-card ring-2 ring-offset-1 ring-offset-black transition-all active:scale-95 ${pc.border} ${pc.text} ${pc.ring}`}
           >
             {initials}
           </button>
-          <button
-            onClick={handleLogout}
-            title="Sair"
-            className="w-8 h-8 flex items-center justify-center rounded-sm border border-white/10 text-gray-500 hover:border-red-500/50 hover:text-red-400 active:bg-red-500/10 transition-all"
-          >
-            <LogOut size={15} />
-          </button>
+
+          {/* Dropdown */}
+          {menuOpen && (
+            <div className="absolute top-12 right-0 w-44 bg-[#111] border border-white/10 shadow-xl z-[60] overflow-hidden">
+              <button
+                onClick={() => { setMenuOpen(false); navigate('/dashboard/perfil'); }}
+                className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+              >
+                <Settings size={15} className="text-gray-400" />
+                Configurações
+              </button>
+              <div className="border-t border-white/10" />
+              <button
+                onClick={() => { setMenuOpen(false); handleLogout(); }}
+                className="flex items-center gap-3 w-full px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+              >
+                <LogOut size={15} />
+                Sair
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
