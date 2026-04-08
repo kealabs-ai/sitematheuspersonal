@@ -2,32 +2,43 @@ import React, { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import matheusLogo from './assets/logotipo_matheus_personal.png';
+import { auth, saveSession } from './services/alunoApi';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    // TODO: integrar com API de autenticação
-    setTimeout(() => {
+    setError('');
+    try {
+      const data = await auth.login(email, password);
+      if (data.access_token) {
+        saveSession(data);
+        navigate('/dashboard');
+      } else {
+        setError(data.message ?? 'Credenciais inválidas.');
+      }
+    } catch {
+      setError('Erro de conexão. Tente novamente.');
+    } finally {
       setLoading(false);
-      navigate('/dashboard');
-    }, 800);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-dark-bg flex items-center justify-center px-4">
+    <div className="min-h-screen sport-bg flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <img 
+          <a href="/"><img 
             src={matheusLogo} 
             alt="Matheus Personal" 
             className="h-16 mx-auto mb-4 brightness-0 invert"
-          />
+          /></a>
           <p className="text-gray-400 text-sm uppercase tracking-wider">Área do Aluno</p>
         </div>
 
@@ -70,6 +81,12 @@ const Login = () => {
                 Esqueci minha senha
               </a>
             </div>
+
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/40 text-red-400 text-sm p-3">
+                {error}
+              </div>
+            )}
 
             <button
               type="submit"

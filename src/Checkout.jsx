@@ -68,13 +68,18 @@ const Checkout = () => {
     return parseFloat(String(price).replace(/\./g, '').replace(',', '.'));
   };
 
+  const totalPrice = parsePlanPrice(plan?.price) * (plan?.months ?? 1);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
+    console.log('%c[JORNADA 3/4] Plano recebido no Checkout', 'color:#a78bfa;font-weight:bold', plan);
+    console.log('%c[JORNADA 3/4] userData recebido no Checkout', 'color:#a78bfa;font-weight:bold', { ...userData, password: '[HIDDEN]' });
+
     try {
-      const planPrice = parsePlanPrice(plan.price);
+      const planPrice = totalPrice;
       const cpfClean = (userData.cpf || '').replace(/\D/g, '');
 
       // 1. Cria o pedido
@@ -90,8 +95,10 @@ const Checkout = () => {
         }]
       };
 
+      console.log('%c[JORNADA 3/4] POST /orders body', 'color:#a78bfa;font-weight:bold', orderData);
+
       const orderResult = await api.createOrder(orderData);
-      console.log('Order result completo:', JSON.stringify(orderResult, null, 2));
+      console.log('%c[JORNADA 3/4] POST /orders response', 'color:#a78bfa;font-weight:bold', orderResult);
 
       const orderId =
         orderResult?.id_order ||
@@ -132,7 +139,7 @@ const Checkout = () => {
         }),
       };
 
-      console.log('Checkout body:', JSON.stringify(checkoutBody, null, 2));
+      console.log('%c[JORNADA 3/4] POST /asaas/checkout body', 'color:#a78bfa;font-weight:bold', { ...checkoutBody, card_number: checkoutBody.card_number ? '[HIDDEN]' : undefined, card_cvv: checkoutBody.card_cvv ? '[HIDDEN]' : undefined });
 
       const checkoutRes = await fetch('https://srv1023256.hstgr.cloud/api/asaas/checkout', {
         method: 'POST',
@@ -141,7 +148,7 @@ const Checkout = () => {
       });
 
       const checkoutData = await checkoutRes.json();
-      console.log('Checkout response:', JSON.stringify(checkoutData, null, 2));
+      console.log('%c[JORNADA 3/4] POST /asaas/checkout response', 'color:#a78bfa;font-weight:bold', checkoutData);
 
       if (!checkoutRes.ok) {
         const errMsg = checkoutData?.message || checkoutData?.detail || checkoutData?.error;
@@ -157,6 +164,7 @@ const Checkout = () => {
       }
 
       // 4. Cartão: navega para confirmação
+      console.log('%c[JORNADA 4/4] Navegando para /confirmation', 'color:#facc15;font-weight:bold', { plan, orderId, status: checkoutData?.status });
       navigate('/confirmation', {
         state: {
           plan,
@@ -344,7 +352,7 @@ const Checkout = () => {
                         >
                           {[1,2,3,4,5,6].map(n => (
                             <option key={n} value={String(n)}>
-                              {n}x de R$ {(parsePlanPrice(plan.price) / n).toFixed(2).replace('.', ',')} sem juros
+                              {n}x de R$ {(totalPrice / n).toFixed(2).replace('.', ',')} sem juros
                             </option>
                           ))}
                         </select>
@@ -402,7 +410,7 @@ const Checkout = () => {
                         <li>Abra o app do seu banco</li>
                         <li>Escolha pagar com PIX</li>
                         <li>Escaneie o QR Code ou cole o código</li>
-                        <li>Confirme o pagamento de R$ {plan.price}</li>
+                        <li>Confirme o pagamento de R$ {totalPrice.toFixed(2).replace('.', ',')}</li>
                       </ol>
                     </div>
                   </div>
@@ -490,13 +498,12 @@ const Checkout = () => {
                     <h4 className="text-xl font-bebas text-white mb-1">
                       Plano {plan.name}
                     </h4>
-                    <p className="text-sm text-gray-400">{plan.frequency}</p>
-                    <p className="text-sm text-gray-400">{plan.classes}</p>
+                    <p className="text-sm text-gray-400">{plan.duration}</p>
                   </div>
                   <div className="border-t border-dark-border pt-4">
                     <div className="flex justify-between text-gray-400 mb-2">
-                      <span>Subtotal:</span>
-                      <span>R$ {plan.price}</span>
+                      <span>R$ {plan.price}/mês × {plan.months ?? 1} {(plan.months ?? 1) > 1 ? 'meses' : 'mês'}:</span>
+                      <span>R$ {totalPrice.toFixed(2).replace('.', ',')}</span>
                     </div>
                     <div className="flex justify-between text-gray-400 mb-4">
                       <span>Taxa de adesão:</span>
@@ -505,8 +512,7 @@ const Checkout = () => {
                     <div className="flex justify-between items-center border-t border-dark-border pt-4">
                       <span className="text-lg font-bebas uppercase">Total:</span>
                       <span className="text-3xl font-bebas text-lime-green">
-                        R$ {plan.price}
-                        <span className="text-sm text-gray-400">/mês</span>
+                        R$ {totalPrice.toFixed(2).replace('.', ',')}
                       </span>
                     </div>
                   </div>

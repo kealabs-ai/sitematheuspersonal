@@ -74,6 +74,7 @@ const Cart = () => {
   };
 
   const handleCheckout = () => {
+    console.log('%c[JORNADA 0/4] Cart → Register, plano selecionado', 'color:#38bdf8;font-weight:bold', cartItems[0]);
     navigate('/register', { 
       state: { 
         plan: cartItems[0],

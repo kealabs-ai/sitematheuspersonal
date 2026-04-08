@@ -1,164 +1,143 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChevronDown, ChevronUp, CheckCircle, Circle, Dumbbell, Clock, Zap } from 'lucide-react';
-
-// Mock — substituir por dados reais da API
-const MOCK_WEEK_PLAN = [
-  {
-    id: 1,
-    day: 'Segunda',
-    label: 'Seg',
-    name: 'Peito + Tríceps',
-    status: 'done', // done | today | upcoming | rest
-    duration: '55 min',
-    exercises: [
-      { id: 1, name: 'Supino Reto', sets: 4, reps: '8-12', rest: '90s', muscle: 'Peito', loggedWeight: '70kg' },
-      { id: 2, name: 'Supino Inclinado', sets: 3, reps: '10-12', rest: '90s', muscle: 'Peito', loggedWeight: '60kg' },
-      { id: 3, name: 'Crucifixo', sets: 3, reps: '12-15', rest: '60s', muscle: 'Peito', loggedWeight: '' },
-      { id: 4, name: 'Tríceps Pulley', sets: 4, reps: '10-12', rest: '60s', muscle: 'Tríceps', loggedWeight: '' },
-      { id: 5, name: 'Tríceps Francês', sets: 3, reps: '10-12', rest: '60s', muscle: 'Tríceps', loggedWeight: '' },
-      { id: 6, name: 'Mergulho', sets: 3, reps: 'Falha', rest: '90s', muscle: 'Tríceps', loggedWeight: '' },
-    ],
-  },
-  {
-    id: 2,
-    day: 'Terça',
-    label: 'Ter',
-    name: 'Costas + Bíceps',
-    status: 'done',
-    duration: '60 min',
-    exercises: [
-      { id: 1, name: 'Puxada Frontal', sets: 4, reps: '8-12', rest: '90s', muscle: 'Costas', loggedWeight: '65kg' },
-      { id: 2, name: 'Remada Curvada', sets: 4, reps: '8-10', rest: '90s', muscle: 'Costas', loggedWeight: '80kg' },
-      { id: 3, name: 'Remada Unilateral', sets: 3, reps: '10-12', rest: '60s', muscle: 'Costas', loggedWeight: '' },
-      { id: 4, name: 'Rosca Direta', sets: 4, reps: '10-12', rest: '60s', muscle: 'Bíceps', loggedWeight: '' },
-      { id: 5, name: 'Rosca Martelo', sets: 3, reps: '12', rest: '60s', muscle: 'Bíceps', loggedWeight: '' },
-    ],
-  },
-  {
-    id: 3,
-    day: 'Quarta',
-    label: 'Qua',
-    name: 'Pernas',
-    status: 'today',
-    duration: '65 min',
-    exercises: [
-      { id: 1, name: 'Agachamento Livre', sets: 4, reps: '8-10', rest: '120s', muscle: 'Quadríceps', loggedWeight: '' },
-      { id: 2, name: 'Leg Press 45°', sets: 4, reps: '10-12', rest: '90s', muscle: 'Quadríceps', loggedWeight: '' },
-      { id: 3, name: 'Cadeira Extensora', sets: 3, reps: '12-15', rest: '60s', muscle: 'Quadríceps', loggedWeight: '' },
-      { id: 4, name: 'Mesa Flexora', sets: 4, reps: '10-12', rest: '60s', muscle: 'Posterior', loggedWeight: '' },
-      { id: 5, name: 'Stiff', sets: 3, reps: '10-12', rest: '90s', muscle: 'Posterior', loggedWeight: '' },
-      { id: 6, name: 'Panturrilha em Pé', sets: 4, reps: '15-20', rest: '45s', muscle: 'Panturrilha', loggedWeight: '' },
-    ],
-  },
-  {
-    id: 4,
-    day: 'Quinta',
-    label: 'Qui',
-    name: 'Ombro + Trapézio',
-    status: 'upcoming',
-    duration: '50 min',
-    exercises: [
-      { id: 1, name: 'Desenvolvimento', sets: 4, reps: '8-12', rest: '90s', muscle: 'Ombro', loggedWeight: '' },
-      { id: 2, name: 'Elevação Lateral', sets: 4, reps: '12-15', rest: '60s', muscle: 'Ombro', loggedWeight: '' },
-      { id: 3, name: 'Elevação Frontal', sets: 3, reps: '12', rest: '60s', muscle: 'Ombro', loggedWeight: '' },
-      { id: 4, name: 'Encolhimento', sets: 4, reps: '12-15', rest: '60s', muscle: 'Trapézio', loggedWeight: '' },
-    ],
-  },
-  {
-    id: 5,
-    day: 'Sexta',
-    label: 'Sex',
-    name: 'Peito + Costas',
-    status: 'upcoming',
-    duration: '60 min',
-    exercises: [
-      { id: 1, name: 'Supino Reto', sets: 4, reps: '8-12', rest: '90s', muscle: 'Peito', loggedWeight: '' },
-      { id: 2, name: 'Puxada Frontal', sets: 4, reps: '8-12', rest: '90s', muscle: 'Costas', loggedWeight: '' },
-      { id: 3, name: 'Crucifixo', sets: 3, reps: '12-15', rest: '60s', muscle: 'Peito', loggedWeight: '' },
-      { id: 4, name: 'Remada Curvada', sets: 3, reps: '10', rest: '90s', muscle: 'Costas', loggedWeight: '' },
-    ],
-  },
-  {
-    id: 6,
-    day: 'Sábado',
-    label: 'Sáb',
-    name: 'Cardio + Core',
-    status: 'upcoming',
-    duration: '40 min',
-    exercises: [
-      { id: 1, name: 'Esteira HIIT', sets: 1, reps: '20 min', rest: '—', muscle: 'Cardio', loggedWeight: '' },
-      { id: 2, name: 'Prancha', sets: 4, reps: '45s', rest: '30s', muscle: 'Core', loggedWeight: '' },
-      { id: 3, name: 'Abdominal Crunch', sets: 4, reps: '20', rest: '30s', muscle: 'Core', loggedWeight: '' },
-    ],
-  },
-  {
-    id: 7,
-    day: 'Domingo',
-    label: 'Dom',
-    name: 'Descanso',
-    status: 'rest',
-    duration: '—',
-    exercises: [],
-  },
-];
+import { ChevronDown, ChevronUp, CheckCircle, Circle, Dumbbell, Clock, Zap } from 'lucide-react';
+import { workouts as workoutsApi } from './services/alunoApi';
+import BottomNav from './BottomNav';
 
 const statusConfig = {
-  done: { label: 'Concluído', dot: 'bg-lime-green', text: 'text-lime-green', border: 'border-lime-green/40' },
-  today: { label: 'Hoje', dot: 'bg-lime-green animate-pulse', text: 'text-lime-green', border: 'border-lime-green' },
-  upcoming: { label: 'Próximo', dot: 'bg-gray-600', text: 'text-gray-400', border: 'border-dark-border' },
-  rest: { label: 'Descanso', dot: 'bg-blue-400/50', text: 'text-blue-400', border: 'border-blue-400/20' },
+  done:     { border: 'border-lime-green/30', dot: 'bg-lime-green' },
+  today:    { border: 'border-lime-green',    dot: 'bg-lime-green animate-pulse' },
+  rest:     { border: 'border-dark-border',   dot: 'bg-blue-400/40' },
+  upcoming: { border: 'border-dark-border',   dot: 'bg-gray-600' },
+  pending:  { border: 'border-dark-border',   dot: 'bg-gray-600' },
 };
 
+const WEEK_DAY_LABEL = { 1:'SEG', 2:'TER', 3:'QUA', 4:'QUI', 5:'SEX', 6:'SAB', 7:'DOM' };
+
+// Normaliza o objeto day vindo da API para o formato esperado pelo frontend
+const normalizeDay = (day) => ({
+  ...day,
+  day: day.day ?? WEEK_DAY_LABEL[day.week_day] ?? '?',
+  status: day.is_rest ? 'rest' : (day.status === 'pending' ? 'upcoming' : (day.status ?? 'upcoming')),
+});
+
 const muscleColors = {
-  Peito: 'bg-red-500/10 text-red-400 border-red-500/20',
-  Tríceps: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
-  Costas: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  Bíceps: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
-  Quadríceps: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-  Posterior: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-  Panturrilha: 'bg-pink-500/10 text-pink-400 border-pink-500/20',
-  Ombro: 'bg-lime-500/10 text-lime-400 border-lime-500/20',
-  Trapézio: 'bg-green-500/10 text-green-400 border-green-500/20',
-  Core: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-  Cardio: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+  'Peito':        'bg-red-500/10 text-red-400 border-red-500/20',
+  'Costas':       'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  'Pernas':       'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
+  'Quadríceps':   'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
+  'Posterior':    'bg-orange-500/10 text-orange-400 border-orange-500/20',
+  'Glúteos':      'bg-pink-500/10 text-pink-400 border-pink-500/20',
+  'Ombro':        'bg-purple-500/10 text-purple-400 border-purple-500/20',
+  'Tríceps':      'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+  'Bíceps':       'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
+  'Abdômen':      'bg-lime-500/10 text-lime-400 border-lime-500/20',
+  'Core':         'bg-lime-500/10 text-lime-400 border-lime-500/20',
+  'Panturrilha':  'bg-teal-500/10 text-teal-400 border-teal-500/20',
+  'Trapézio':     'bg-gray-500/10 text-gray-400 border-gray-500/20',
+  'Full Body':    'bg-white/10 text-white border-white/20',
+  'Cardio':       'bg-orange-500/10 text-orange-400 border-orange-500/20',
 };
 
 export default function Treinos() {
   const navigate = useNavigate();
-  const [expanded, setExpanded] = useState(3); // abre o treino de hoje por padrão
+  const [plan, setPlan] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(null);
+  const [exercises, setExercises] = useState({});
   const [checked, setChecked] = useState({});
   const [weights, setWeights] = useState({});
-  const [activeWorkout, setActiveWorkout] = useState(null);
+  const [activeLog, setActiveLog] = useState(null); // { logId, dayId }
 
-  const toggleExpand = (id) => setExpanded(expanded === id ? null : id);
+  useEffect(() => {
+    workoutsApi.plan()
+      .then(data => {
+        if (data.detail) return;
+        const normalized = {
+          ...data.plan,
+          days: (data.plan?.days ?? []).map(normalizeDay),
+        };
+        setPlan(normalized);
+        const today = normalized.days.find(d => d.status === 'today');
+        if (today) setExpanded(today.id);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const loadExercises = async (dayId) => {
+    if (exercises[dayId]) return;
+    const data = await workoutsApi.dayExercises(dayId).catch(() => ({}));
+    // API retorna { exercises: [...] } ou o objeto do dia com exercises dentro
+    const list = data.exercises ?? [];
+    setExercises(prev => ({ ...prev, [dayId]: list }));
+  };
+
+  const toggleExpand = (day) => {
+    const next = expanded === day.id ? null : day.id;
+    setExpanded(next);
+    if (next && day.status !== 'rest') loadExercises(day.id);
+  };
+
+  const startWorkout = async (day) => {
+    const data = await workoutsApi.startLog(day.id).catch(() => null);
+    if (data?.log_id) {
+      setActiveLog({ logId: data.log_id, dayId: day.id });
+    }
+  };
+
+  const finishWorkout = async (dayId) => {
+    if (!activeLog) return;
+    const exList = exercises[dayId] ?? [];
+    const payload = exList.map(ex => ({
+      exercise_id: ex.id,
+      weight_kg: parseFloat(weights[`${dayId}-${ex.id}`]) || null,
+      sets_done: ex.sets,
+      reps_done: null,
+      completed: !!checked[`${dayId}-${ex.id}`],
+    }));
+    await workoutsApi.saveExercises(activeLog.logId, payload).catch(() => {});
+    await workoutsApi.finishLog(activeLog.logId, true).catch(() => {});
+    setActiveLog(null);
+  };
+
   const toggleCheck = (dayId, exId) => {
     const key = `${dayId}-${exId}`;
     setChecked(prev => ({ ...prev, [key]: !prev[key] }));
   };
+
   const setWeight = (dayId, exId, val) => {
     setWeights(prev => ({ ...prev, [`${dayId}-${exId}`]: val }));
   };
 
-  const todayPlan = MOCK_WEEK_PLAN.find(d => d.status === 'today');
+  const days = plan?.days ?? [];
+  const todayPlan = days.find(d => d.status === 'today');
+
+  if (loading) return (
+    <div className="min-h-screen sport-bg flex items-center justify-center">
+      <p className="text-lime-green font-bebas text-2xl animate-pulse">Carregando...</p>
+    </div>
+  );
+
+  if (!plan) return (
+    <div className="min-h-screen sport-bg text-white font-inter pt-[60px] md:pt-[68px] pb-[60px] md:pb-6">
+      <div className="flex flex-col items-center justify-center py-24 px-4 text-center">
+        <Dumbbell size={48} className="text-gray-700 mb-4" />
+        <p className="text-gray-400 font-bebas text-2xl uppercase mb-2">Nenhum plano ativo</p>
+        <p className="text-gray-600 text-sm">Seu plano de treino ainda não foi configurado.<br />Entre em contato com o Matheus para começar.</p>
+      </div>
+      <BottomNav />
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-dark-bg text-white font-inter">
-
-      {/* Header */}
-      <header className="bg-black border-b border-dark-border px-4 py-3 flex items-center gap-3 sticky top-0 z-40">
-        <button onClick={() => navigate('/dashboard')} className="text-gray-400 hover:text-lime-green transition-colors">
-          <ArrowLeft size={22} />
-        </button>
-        <Dumbbell size={20} className="text-lime-green" />
-        <h1 className="text-xl font-bebas uppercase tracking-wide">Meus Treinos</h1>
-      </header>
+    <div className="min-h-screen sport-bg text-white font-inter pt-[60px] md:pt-[68px] pb-[60px] md:pb-6">
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-4">
 
         {/* Banner treino de hoje */}
-        {todayPlan && !activeWorkout && (
+        {todayPlan && !activeLog && (
           <motion.div
             initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
             className="bg-lime-green/10 border-2 border-lime-green p-4 flex items-center justify-between"
@@ -169,11 +148,11 @@ export default function Treinos() {
               </p>
               <p className="text-white font-bebas text-2xl mt-0.5">{todayPlan.name}</p>
               <p className="text-gray-400 text-xs flex items-center gap-1 mt-1">
-                <Clock size={12} /> {todayPlan.duration} · {todayPlan.exercises.length} exercícios
+                <Clock size={12} /> {todayPlan.duration_min} min · {todayPlan.exercises_count} exercícios
               </p>
             </div>
             <button
-              onClick={() => setActiveWorkout(todayPlan.id)}
+              onClick={() => startWorkout(todayPlan)}
               className="bg-lime-green text-black font-bold px-4 py-2 uppercase text-sm hover:bg-neon-green transition-all"
             >
               Iniciar ▶
@@ -183,11 +162,12 @@ export default function Treinos() {
 
         {/* Lista da semana */}
         <div className="space-y-2">
-          {MOCK_WEEK_PLAN.map((day, i) => {
-            const cfg = statusConfig[day.status];
+          {days.map((day, i) => {
+            const cfg = statusConfig[day.status] ?? statusConfig.upcoming;
             const isOpen = expanded === day.id;
-            const isActive = activeWorkout === day.id;
-            const doneCount = day.exercises.filter((_, ei) => checked[`${day.id}-${ei + 1}`]).length;
+            const isActive = activeLog?.dayId === day.id;
+            const dayExercises = exercises[day.id] ?? [];
+            const doneCount = dayExercises.filter(ex => checked[`${day.id}-${ex.id}`]).length;
 
             return (
               <motion.div
@@ -199,7 +179,7 @@ export default function Treinos() {
               >
                 {/* Cabeçalho do dia */}
                 <button
-                  onClick={() => day.status !== 'rest' && toggleExpand(day.id)}
+                  onClick={() => day.status !== 'rest' && toggleExpand(day)}
                   className="w-full flex items-center justify-between p-4 text-left"
                   disabled={day.status === 'rest'}
                 >
@@ -221,7 +201,7 @@ export default function Treinos() {
                     {day.status !== 'rest' && (
                       <>
                         <span className="text-gray-500 text-xs flex items-center gap-1">
-                          <Clock size={12} /> {day.duration}
+                          <Clock size={12} /> {day.duration_min} min
                         </span>
                         {day.status === 'done' && (
                           <span className="text-lime-green text-xs font-bold">✓ Feito</span>
@@ -235,7 +215,7 @@ export default function Treinos() {
 
                 {/* Exercícios expandidos */}
                 <AnimatePresence>
-                  {isOpen && day.exercises.length > 0 && (
+                  {isOpen && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
@@ -250,21 +230,25 @@ export default function Treinos() {
                           <div className="mb-4">
                             <div className="flex justify-between text-xs text-gray-400 mb-1">
                               <span>Progresso</span>
-                              <span className="text-lime-green font-bold">{doneCount}/{day.exercises.length}</span>
+                              <span className="text-lime-green font-bold">{doneCount}/{dayExercises.length}</span>
                             </div>
                             <div className="w-full bg-dark-border h-2">
                               <div
                                 className="bg-lime-green h-2 transition-all duration-500"
-                                style={{ width: `${(doneCount / day.exercises.length) * 100}%` }}
+                                style={{ width: `${dayExercises.length ? (doneCount / dayExercises.length) * 100 : 0}%` }}
                               />
                             </div>
                           </div>
                         )}
 
-                        {day.exercises.map((ex) => {
+                        {dayExercises.length === 0 && (
+                          <p className="text-gray-600 text-xs text-center py-4">Carregando exercícios...</p>
+                        )}
+
+                        {dayExercises.map((ex) => {
                           const key = `${day.id}-${ex.id}`;
                           const isDone = checked[key];
-                          const muscleClass = muscleColors[ex.muscle] ?? 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+                          const muscleClass = muscleColors[ex.muscle_group] ?? 'bg-gray-500/10 text-gray-400 border-gray-500/20';
 
                           return (
                             <div
@@ -287,8 +271,8 @@ export default function Treinos() {
                                     </p>
                                     <div className="flex items-center gap-3 mt-1 flex-wrap">
                                       <span className="text-gray-400 text-xs">{ex.sets} séries × {ex.reps}</span>
-                                      <span className="text-gray-600 text-xs">Descanso: {ex.rest}</span>
-                                      <span className={`text-[10px] border px-1.5 py-0.5 ${muscleClass}`}>{ex.muscle}</span>
+                                      <span className="text-gray-600 text-xs">Descanso: {ex.rest_seconds}s</span>
+                                      <span className={`text-[10px] border px-1.5 py-0.5 ${muscleClass}`}>{ex.muscle_group}</span>
                                     </div>
                                   </div>
                                 </div>
@@ -297,8 +281,8 @@ export default function Treinos() {
                                 <div className="flex-shrink-0">
                                   <input
                                     type="text"
-                                    placeholder={ex.loggedWeight || 'Carga'}
-                                    value={weights[key] ?? ex.loggedWeight}
+                                    placeholder="Carga"
+                                    value={weights[`${day.id}-${ex.id}`] ?? ''}
                                     onChange={(e) => setWeight(day.id, ex.id, e.target.value)}
                                     className="w-20 bg-dark-bg border border-dark-border text-white text-xs text-center p-2 focus:outline-none focus:border-lime-green transition-colors"
                                   />
@@ -308,18 +292,17 @@ export default function Treinos() {
                           );
                         })}
 
-                        {/* Botão finalizar */}
                         {isActive ? (
                           <button
-                            onClick={() => setActiveWorkout(null)}
+                            onClick={() => finishWorkout(day.id)}
                             className="w-full mt-2 bg-lime-green text-black font-bold py-3 uppercase text-sm hover:bg-neon-green transition-all"
                           >
-                            {doneCount === day.exercises.length ? '✓ Finalizar Treino' : `Salvar Progresso (${doneCount}/${day.exercises.length})`}
+                            {doneCount === dayExercises.length ? '✓ Finalizar Treino' : `Salvar Progresso (${doneCount}/${dayExercises.length})`}
                           </button>
                         ) : (
-                          day.status !== 'done' && (
+                          day.status !== 'done' && day.status !== 'rest' && (
                             <button
-                              onClick={() => setActiveWorkout(day.id)}
+                              onClick={() => startWorkout(day)}
                               className="w-full mt-2 border-2 border-lime-green text-lime-green font-bold py-3 uppercase text-sm hover:bg-lime-green hover:text-black transition-all"
                             >
                               Iniciar Treino ▶
@@ -341,6 +324,7 @@ export default function Treinos() {
           </button>
         </p>
       </main>
+      <BottomNav />
     </div>
   );
 }

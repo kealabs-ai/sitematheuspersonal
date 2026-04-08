@@ -30,3 +30,11 @@ body {
 .font-inter {
   font-family: 'Inter', sans-serif;
 }
+
+/* Background esportivo para área do aluno */
+.sport-bg {
+  background-color: #0a0a0a;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%2300B4D8' stroke-opacity='0.04' stroke-width='1.2'%3E%3C!-- Haltere --%3E%3Crect x='18' y='27' width='6' height='16' rx='2'/%3E%3Crect x='14' y='24' width='14' height='5' rx='1.5'/%3E%3Crect x='14' y='35' width='14' height='5' rx='1.5'/%3E%3Crect x='24' y='29' width='38' height='12' rx='2'/%3E%3Crect x='62' y='27' width='6' height='16' rx='2'/%3E%3Crect x='58' y='24' width='14' height='5' rx='1.5'/%3E%3Crect x='58' y='35' width='14' height='5' rx='1.5'/%3E%3C!-- Raio --%3E%3Cpolygon points='68,78 63,90 67,90 62,104 73,88 69,88'/%3E%3C!-- Circulo decorativo --%3E%3Ccircle cx='100' cy='30' r='10'/%3E%3Ccircle cx='100' cy='30' r='6'/%3E%3C!-- Linha diagonal --%3E%3Cline x1='88' y1='70' x2='112' y2='110' stroke-dasharray='3 4'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 120px 120px;
+}

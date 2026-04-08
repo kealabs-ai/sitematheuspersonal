@@ -41,7 +41,7 @@ const Header = () => {
   return (
     <header className={`fixed top-10 left-0 right-0 z-50 transition-all ${scrolled ? 'bg-black/95 backdrop-blur-lg shadow-lg' : 'bg-transparent'}`}>
       <nav className="container mx-auto flex justify-between items-center p-4">
-        <img src={matheusLogo} alt="Matheus Personal" className="h-10 md:h-12 brightness-0 invert" />
+        <a href="#início"><img src={matheusLogo} alt="Matheus Personal" className="h-10 md:h-12 brightness-0 invert" /></a>
         
         <div className="flex items-center gap-4">
                     <button onClick={() => setIsOpen(!isOpen)} className="md:hidden text-lime-green">
@@ -347,32 +347,38 @@ const PersonalSection = () => {
 };
 
 const pricingPlans = [
-  { 
-    name: 'BRONZE', 
+  {
+    name: 'BRONZE',
     price: '79,90',
-    monthlyTotal: null,
-    description: 'Ideal para quem quer consistência e um acompanhamento próximo para garantir o progresso',
+    duration: '1 mês',
+    months: 1,
+    description: 'Treino personalizado com acompanhamento completo por 1 mês.',
     popular: false,
   },
-  { 
-    name: 'PRATA', 
+  {
+    name: 'PRATA',
     price: '69,90',
+    duration: '3 meses',
+    months: 3,
     monthlyTotal: '209,70',
-    description: 'Para quem está focado e quer acelerar sua transformação corporal com mais frequência',
+    description: 'Treino personalizado com acompanhamento completo por 3 meses.',
     popular: false,
   },
-  { 
-    name: 'OURO', 
+  {
+    name: 'OURO',
     price: '49,90',
-    monthlyTotal: '149,70',
-    description: 'O melhor custo-benefício. Máximo comprometimento para uma transformação completa',
+    duration: '6 meses',
+    months: 6,
+    monthlyTotal: '299,40',
+    description: 'Treino personalizado com acompanhamento completo por 6 meses.',
     popular: true,
   },
-  { 
-    name: 'DIAMANTE', 
+  {
+    name: 'DIAMANTE',
     price: '99,99',
-    monthlyTotal: null,
-    description: 'A experiência definitiva para resultados máximos',
+    duration: '1 mês',
+    months: 1,
+    description: 'Tudo do plano mensal + Plano Nutricional personalizado.',
     popular: false,
     diamond: true,
   },
@@ -429,6 +435,7 @@ const PricingSection = () => {
               )}
               <h4 className={`text-3xl font-bebas mb-4 text-center ${plan.diamond ? 'text-purple-400' : 'text-lime-green'}`}>{plan.name}</h4>
               <div className="text-center mb-4 pb-4 border-b border-dark-border">
+                <p className="text-gray-500 text-xs uppercase tracking-widest mb-2">{plan.duration}</p>
                 <div className="flex items-end justify-center gap-1">
                   <span className="text-gray-400 text-sm mb-1">R$</span>
                   <span className="text-5xl font-bebas text-white leading-none">{plan.price}</span>
@@ -436,7 +443,7 @@ const PricingSection = () => {
                 </div>
                 {plan.monthlyTotal && (
                   <p className="text-gray-500 text-xs mt-2">
-                    3 meses: <span className="text-lime-green font-semibold">R$ {plan.monthlyTotal}</span>
+                    Total: <span className="text-lime-green font-semibold">R$ {plan.monthlyTotal}</span>
                   </p>
                 )}
                 {plan.diamond && (

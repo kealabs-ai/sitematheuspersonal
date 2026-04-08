@@ -53,6 +53,8 @@ const Register = () => {
     email: '',
     phone: '',
     cpf: '',
+    birth_date: '',
+    goal: '',
     username: '',
     password: '',
     confirmPassword: '',
@@ -79,10 +81,6 @@ const Register = () => {
 
     if (name === 'phone') {
       value = value.replace(/\D/g, '');
-      if (value.length <= 11) {
-        value = value.replace(/(\d{2})(\d)/, '($1) $2');
-        value = value.replace(/(\d{5})(\d)/, '$1-$2');
-      }
     }
 
     if (name === 'cep') {
@@ -136,14 +134,21 @@ const Register = () => {
     
     setLoading(true);
     setError('');
+
+    console.log('%c[JORNADA 1/4] Plano recebido no Register', 'color:#84cc16;font-weight:bold', plan);
     
     try {
       const now = new Date().toISOString().slice(0, 19);
+      const planName = plan?.name ?? null;
+
+      if (!planName) console.warn('[JORNADA] ATENÇÃO: plan.name está null/undefined! Objeto plan:', plan);
+
       const userBody = {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
         cpf: formData.cpf,
+        birth_date: formData.birth_date || null,
         cep: formData.cep,
         address: formData.address,
         number: formData.number,
@@ -154,11 +159,16 @@ const Register = () => {
         country_code: formData.countryCode,
         username: formData.username,
         password: formData.password,
-        created_at: now,
-        updated_at: now
+        plan: planName,
+        goal: formData.goal,
+        role: 'student',
       };
 
+      console.log('%c[JORNADA 2/4] POST /users body', 'color:#84cc16;font-weight:bold', { ...userBody, password: '[HIDDEN]' });
+
       const result = await api.createUser(userBody);
+      console.log('%c[JORNADA 2/4] POST /users response', 'color:#84cc16;font-weight:bold', result);
+
       const userId = result?.userId || result?.id;
       const isSuccess = result?.success === true || result?.status === 'success';
 
@@ -288,6 +298,41 @@ const Register = () => {
                     className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
                     placeholder="000.000.000-00"
                   />
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                    Data de Nascimento
+                  </label>
+                  <input
+                    type="date"
+                    name="birth_date"
+                    value={formData.birth_date}
+                    onChange={handleChange}
+                    className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                    Objetivo *
+                  </label>
+                  <select
+                    name="goal"
+                    value={formData.goal}
+                    onChange={handleChange}
+                    required
+                    className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
+                  >
+                    <option value="">Selecione seu objetivo</option>
+                    <option value="Hipertrofia">Hipertrofia</option>
+                    <option value="Emagrecimento">Emagrecimento</option>
+                    <option value="Qualidade de vida">Qualidade de vida</option>
+                    <option value="Condicionamento físico">Condicionamento físico</option>
+                    <option value="Reabilitação">Reabilitação</option>
+                  </select>
                 </div>
               </div>
 
