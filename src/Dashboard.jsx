@@ -60,7 +60,7 @@ export default function Dashboard() {
   const badgesTotal  = summary?.badges_total ?? 0;
 
   return (
-    <div className="min-h-screen sport-bg text-white font-inter pt-[60px] md:pt-[68px] pb-[60px] md:pb-6">
+    <div className="min-h-dvh sport-bg text-white font-inter pt-[60px] md:pt-[68px] pb-[60px] md:pb-6">
 
       {showOnboarding && (
         <OnboardingModal userName={user.name} onComplete={() => { setShowOnboarding(false); window.location.reload(); }} />

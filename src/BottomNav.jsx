@@ -131,8 +131,8 @@ export default function AppNav() {
           <img src={matheusLogo} alt="MP" className="h-7 brightness-0 invert opacity-90" />
         </button>
 
-        {/* Avatar + info */}
-        <div className="flex items-center gap-2.5">
+        {/* Avatar + info + sair */}
+        <div className="flex items-center gap-2">
           <div className="text-right">
             <p className="text-white text-xs font-semibold leading-tight">{firstName}</p>
             <span className={`inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 border rounded-sm mt-0.5 ${pb}`}>
@@ -144,6 +144,13 @@ export default function AppNav() {
             className={`w-9 h-9 rounded-full border-2 flex items-center justify-center text-xs font-bold bg-dark-card ring-2 ring-offset-1 ring-offset-black transition-all hover:scale-105 ${pc.border} ${pc.text} ${pc.ring}`}
           >
             {initials}
+          </button>
+          <button
+            onClick={handleLogout}
+            title="Sair"
+            className="w-8 h-8 flex items-center justify-center rounded-sm border border-white/10 text-gray-500 hover:border-red-500/50 hover:text-red-400 active:bg-red-500/10 transition-all"
+          >
+            <LogOut size={15} />
           </button>
         </div>
       </header>
