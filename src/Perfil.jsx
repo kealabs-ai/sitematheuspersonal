@@ -7,6 +7,7 @@ import {
   Star, ChevronRight, Shield, Bell, Lock, Eye, EyeOff, Camera, Flame
 } from 'lucide-react';
 import { users as usersApi, auth, clearSession } from './services/alunoApi';
+import { useBlockBack } from './hooks/useBlockBack';
 import BottomNav from './BottomNav';
 import AppFooter from './AppFooter';
 import { ShimmerButton } from './components/magicui/shimmer-button';
@@ -61,6 +62,7 @@ const nextRenewal = (start, renewal) => {
 };
 
 export default function Perfil() {
+  useBlockBack();
   const navigate = useNavigate();
   const [user, setUser]           = useState(null);
   const [metrics, setMetrics]     = useState(null);

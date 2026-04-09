@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, CheckCircle, Circle, Dumbbell, Clock, Zap } from 'lucide-react';
 import { workouts as workoutsApi } from './services/alunoApi';
+import { useBlockBack } from './hooks/useBlockBack';
 import BottomNav from './BottomNav';
 import AppFooter from './AppFooter';
 import { ShimmerButton } from './components/magicui/shimmer-button';
@@ -43,6 +44,7 @@ const muscleColors = {
 };
 
 export default function Treinos() {
+  useBlockBack();
   const navigate = useNavigate();
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);

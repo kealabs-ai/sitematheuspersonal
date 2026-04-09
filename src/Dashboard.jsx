@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Dumbbell, TrendingUp, Salad, User, Flame, Calendar, ChevronRight, Trophy, Zap } from 'lucide-react';
 import { dashboard, getUser } from './services/alunoApi';
+import { useBlockBack } from './hooks/useBlockBack';
 import OnboardingModal from './OnboardingModal';
 import BottomNav from './BottomNav';
 import AppFooter from './AppFooter';
@@ -27,6 +28,7 @@ const planColors = {
 };
 
 export default function Dashboard() {
+  useBlockBack();
   const navigate = useNavigate();
   const [summary, setSummary]           = useState(null);
   const [loading, setLoading]           = useState(true);

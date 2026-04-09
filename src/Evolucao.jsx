@@ -10,6 +10,7 @@ import {
   ResponsiveContainer, AreaChart, Area
 } from 'recharts';
 import { progress as progressApi } from './services/alunoApi';
+import { useBlockBack } from './hooks/useBlockBack';
 import BottomNav from './BottomNav';
 import AppFooter from './AppFooter';
 import { ShimmerButton } from './components/magicui/shimmer-button';
@@ -52,6 +53,7 @@ const CustomTooltip = ({ active, payload, label, unit }) => {
 const tabs = ['Peso', 'Força', 'Medidas', 'Fotos', 'Conquistas'];
 
 export default function Evolucao() {
+  useBlockBack();
   const navigate = useNavigate();
   const [tab, setTab] = useState('Peso');
   const [weightData, setWeightData] = useState([]);

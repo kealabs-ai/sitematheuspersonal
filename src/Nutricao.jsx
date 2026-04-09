@@ -4,10 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { Salad, ChevronDown, ChevronUp, MessageSquare, Clock, Flame, Beef, Wheat, Droplets } from 'lucide-react';
 import { nutrition as nutritionApi } from './services/alunoApi';
 import { getUser } from './services/alunoApi';
+import { useBlockBack } from './hooks/useBlockBack';
 import BottomNav from './BottomNav';
 import AppFooter from './AppFooter';
 
 export default function Nutricao() {
+  useBlockBack();
   const navigate = useNavigate();
   const [plan, setPlan] = useState(null);
   const [todayData, setTodayData] = useState(null);
