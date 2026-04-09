@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronUp, CheckCircle, Circle, Dumbbell, Clock, Zap } from 'lucide-react';
+import { ChevronDown, ChevronUp, CheckCircle, Circle, Dumbbell, Clock, Zap, PlayCircle } from 'lucide-react';
 import { workouts as workoutsApi } from './services/alunoApi';
 import { useBlockBack } from './hooks/useBlockBack';
 import BottomNav from './BottomNav';
@@ -280,8 +280,8 @@ export default function Treinos() {
                                   </div>
                                 </div>
 
-                                {/* Campo de carga */}
-                                <div className="flex-shrink-0">
+                                {/* Carga + Vídeo */}
+                                <div className="flex flex-col gap-1.5 flex-shrink-0">
                                   <input
                                     type="text"
                                     placeholder="Carga"
@@ -289,6 +289,16 @@ export default function Treinos() {
                                     onChange={(e) => setWeight(day.id, ex.id, e.target.value)}
                                     className="w-20 bg-dark-bg border border-dark-border text-white text-xs text-center p-2 focus:outline-none focus:border-lime-green transition-colors"
                                   />
+                                  {ex.video_url && (
+                                    <a
+                                      href={ex.video_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="w-20 flex items-center justify-center gap-1 bg-dark-bg border border-blue-500/40 text-blue-400 text-[10px] font-bold py-2 hover:bg-blue-500/10 hover:border-blue-400 transition-all"
+                                    >
+                                      <PlayCircle size={13} /> Vídeo
+                                    </a>
+                                  )}
                                 </div>
                               </div>
                             </div>

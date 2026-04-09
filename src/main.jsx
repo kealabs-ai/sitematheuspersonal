@@ -16,6 +16,7 @@ import Treinos from './Treinos.jsx';
 import Evolucao from './Evolucao.jsx';
 import Nutricao from './Nutricao.jsx';
 import Perfil from './Perfil.jsx';
+import NotFound from './NotFound.jsx';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -37,6 +38,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/dashboard/evolucao" element={<Evolucao />} />
         <Route path="/dashboard/nutricao" element={<Nutricao />} />
         <Route path="/dashboard/perfil" element={<Perfil />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>
