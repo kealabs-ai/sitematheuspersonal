@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Dumbbell, TrendingUp, Salad, LayoutDashboard, LogOut, Settings } from 'lucide-react';
 import { auth, clearSession, getUser } from './services/alunoApi';
@@ -44,12 +45,22 @@ export default function AppNav() {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const avatarRef = useRef(null);
+  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
 
   useEffect(() => {
-    const handler = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false); };
+    const handler = (e) => { if (menuRef.current && !menuRef.current.contains(e.target) && avatarRef.current && !avatarRef.current.contains(e.target)) setMenuOpen(false); };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  const openMenu = () => {
+    if (avatarRef.current) {
+      const rect = avatarRef.current.getBoundingClientRect();
+      setMenuPos({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+    }
+    setMenuOpen(v => !v);
+  };
 
   const handleLogout = async () => {
     await auth.logout(localStorage.getItem('refresh_token')).catch(() => {});
@@ -141,7 +152,7 @@ export default function AppNav() {
         </button>
 
         {/* Avatar + menu */}
-        <div className="relative flex items-center gap-2" ref={menuRef}>
+        <div className="relative flex items-center gap-2">
           <div className="text-right">
             <p className="text-white text-xs font-semibold leading-tight">{firstName}</p>
             <span className={`inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 border rounded-sm mt-0.5 ${pb}`}>
@@ -149,18 +160,26 @@ export default function AppNav() {
             </span>
           </div>
           <button
-            onClick={() => setMenuOpen(v => !v)}
+            ref={avatarRef}
+            onClick={openMenu}
             className={`w-9 h-9 rounded-full border-2 flex items-center justify-center text-xs font-bold bg-dark-card ring-2 ring-offset-1 ring-offset-black transition-all active:scale-95 ${pc.border} ${pc.text} ${pc.ring}`}
           >
             {initials}
           </button>
+        </div>
 
-          {/* Dropdown */}
-          {menuOpen && (
-            <div className="absolute top-12 right-0 w-44 bg-[#111] border border-white/10 shadow-xl z-[60] overflow-hidden">
+        {/* Dropdown via portal */}
+        {menuOpen && createPortal(
+          <>
+            <div className="fixed inset-0 z-[998]" onClick={() => setMenuOpen(false)} />
+            <div
+              ref={menuRef}
+              className="fixed z-[999] w-48 bg-[#111] border border-white/10 shadow-2xl overflow-hidden"
+              style={{ top: menuPos.top, right: menuPos.right }}
+            >
               <button
                 onClick={() => { setMenuOpen(false); navigate('/dashboard/perfil'); }}
-                className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+                className="flex items-center gap-3 w-full px-4 py-3.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
               >
                 <Settings size={15} className="text-gray-400" />
                 Configurações
@@ -168,14 +187,15 @@ export default function AppNav() {
               <div className="border-t border-white/10" />
               <button
                 onClick={() => { setMenuOpen(false); handleLogout(); }}
-                className="flex items-center gap-3 w-full px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                className="flex items-center gap-3 w-full px-4 py-3.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
               >
                 <LogOut size={15} />
                 Sair
               </button>
             </div>
-          )}
-        </div>
+          </>,
+          document.body
+        )}
       </header>
 
       {/* ─── MOBILE: BottomNav (< md) ──────────────────────────── */}
