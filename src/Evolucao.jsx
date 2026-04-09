@@ -196,9 +196,9 @@ export default function Evolucao() {
   const exGain = selectedExercise ? (strengthData[selectedExercise]?.gain ?? 0) : 0;
 
   return (
-    <div className="min-h-screen sport-bg text-white font-inter pt-[60px] md:pt-[68px] pb-[60px] md:pb-6">
+    <div className="min-h-screen sport-bg text-white font-inter pt-[60px] md:pt-[68px] pb-[60px] md:pb-10">
 
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+      <main className="max-w-2xl md:max-w-5xl mx-auto px-4 md:px-8 py-6 space-y-5">
 
         {/* Resumo rápido */}
         {weightSummary && (
@@ -276,7 +276,7 @@ export default function Evolucao() {
                 );
               })()}
               {loading ? <p className="text-center text-gray-600 text-xs py-8">Carregando...</p> : (
-                <ResponsiveContainer width="100%" height={200}>
+                <ResponsiveContainer width="100%" height={280}>
                   <AreaChart data={weightData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="weightGrad" x1="0" y1="0" x2="0" y2="1">
@@ -370,7 +370,7 @@ export default function Evolucao() {
                     {exData.length === 0 ? (
                       <p className="text-center text-gray-600 text-xs py-6">Sem histórico de carga para este exercício</p>
                     ) : (
-                      <ResponsiveContainer width="100%" height={200}>
+                      <ResponsiveContainer width="100%" height={260}>
                         <LineChart data={exData}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#1f1f1f" />
                           <XAxis dataKey="date" tickFormatter={fmtDate} tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />

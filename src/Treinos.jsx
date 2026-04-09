@@ -137,9 +137,9 @@ export default function Treinos() {
   );
 
   return (
-    <div className="min-h-screen sport-bg text-white font-inter pt-[60px] md:pt-[68px] pb-[60px] md:pb-6">
+    <div className="min-h-screen sport-bg text-white font-inter pt-[60px] md:pt-[68px] pb-[60px] md:pb-10">
 
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+      <main className="max-w-2xl md:max-w-5xl mx-auto px-4 md:px-8 py-6 space-y-4">
 
         {/* Banner treino de hoje */}
         {todayPlan && !activeLog && (

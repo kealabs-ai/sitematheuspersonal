@@ -76,7 +76,7 @@ export default function AppNav() {
 
         {/* Logo */}
         <button onClick={() => navigate('/dashboard')} className="flex-shrink-0 opacity-90 hover:opacity-100 transition-opacity">
-          <img src={matheusLogo} alt="Matheus Personal" className="h-8 brightness-0 invert" />
+          <img src={matheusLogo} alt="Matheus Personal" className="h-11 brightness-0 invert" />
         </button>
 
         {/* Divisor */}
@@ -148,7 +148,7 @@ export default function AppNav() {
 
         {/* Logo */}
         <button onClick={() => navigate('/dashboard')} className="flex-shrink-0">
-          <img src={matheusLogo} alt="MP" className="h-7 brightness-0 invert opacity-90" />
+          <img src={matheusLogo} alt="MP" className="h-9 brightness-0 invert opacity-90" />
         </button>
 
         {/* Avatar + menu */}

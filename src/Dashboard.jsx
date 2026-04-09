@@ -62,13 +62,16 @@ export default function Dashboard() {
   const badgesTotal  = summary?.badges_total ?? 0;
 
   return (
-    <div className="min-h-dvh sport-bg text-white font-inter pt-[60px] md:pt-[68px] pb-[60px] md:pb-6">
+    <div className="min-h-dvh sport-bg text-white font-inter pt-[60px] md:pt-[68px] pb-[60px] md:pb-10">
+      {/* Orbe IA pulsante */}
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(0,180,216,0.08)_0%,transparent_70%)] animate-ai-pulse pointer-events-none z-0" />
+      <div className="fixed bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(0,100,180,0.06)_0%,transparent_70%)] animate-ai-pulse pointer-events-none z-0" style={{ animationDelay: '2s' }} />
 
       {showOnboarding && (
         <OnboardingModal userName={user.name} onComplete={() => { setShowOnboarding(false); window.location.reload(); }} />
       )}
 
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-2xl md:max-w-5xl mx-auto px-4 md:px-8 py-6 space-y-6">
 
         {/* Saudação */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -86,7 +89,7 @@ export default function Dashboard() {
 
         {/* Stats rápidos com NumberTicker */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="grid grid-cols-3 gap-3">
+          className="grid grid-cols-3 md:grid-cols-3 gap-3">
           {[
             { icon: <Flame size={20} />,    value: stats.streak,              label: 'Dias seguidos',    color: 'text-orange-400', beam: ['#f97316','#fb923c'] },
             { icon: <Calendar size={20} />, value: stats.trainings_this_week, label: 'Treinos na semana', color: 'text-lime-green',  beam: ['#00B4D8','#0096C7'] },
@@ -153,7 +156,7 @@ export default function Dashboard() {
 
         {/* Módulos */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-          className="grid grid-cols-2 gap-3">
+          className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {modules.map((m, i) => {
             const locked = m.diamanteOnly && user.plan !== 'DIAMANTE';
             return locked ? (

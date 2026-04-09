@@ -41,7 +41,7 @@ const Header = () => {
   return (
     <header className={`fixed top-10 left-0 right-0 z-50 transition-all ${scrolled ? 'bg-black/95 backdrop-blur-lg shadow-lg' : 'bg-transparent'}`}>
       <nav className="container mx-auto flex justify-between items-center p-4">
-        <a href="#início"><img src={matheusLogo} alt="Matheus Personal" className="h-10 md:h-12 brightness-0 invert" /></a>
+        <a href="#início"><img src={matheusLogo} alt="Matheus Personal" className="h-14 md:h-16 brightness-0 invert" /></a>
         
         <div className="flex items-center gap-4">
                     <button onClick={() => setIsOpen(!isOpen)} className="md:hidden text-lime-green">

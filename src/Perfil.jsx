@@ -186,9 +186,9 @@ export default function Perfil() {
   );
 
   return (
-    <div className="min-h-screen sport-bg text-white font-inter pt-[60px] md:pt-[68px] pb-[60px] md:pb-6">
+    <div className="min-h-screen sport-bg text-white font-inter pt-[60px] md:pt-[68px] pb-[60px] md:pb-10">
 
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+      <main className="max-w-2xl md:max-w-4xl mx-auto px-4 md:px-8 py-6 space-y-5">
 
         {/* Avatar + nome */}
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-4">
@@ -277,92 +277,97 @@ export default function Perfil() {
           </div>
         </motion.div>
 
-        {/* Dados pessoais */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="bg-dark-card border border-dark-border p-4 space-y-4">
-          <p className="text-xs text-gray-400 uppercase tracking-widest">Dados Pessoais</p>
-          {[
-            { label: 'Nome completo',      field: 'name',      type: 'text',  icon: <User size={15} /> },
-            { label: 'E-mail',             field: 'email',     type: 'email', icon: <Shield size={15} /> },
-            { label: 'Telefone',           field: 'phone',     type: 'tel',   icon: <Bell size={15} /> },
-            { label: 'Data de nascimento', field: 'birthdate', type: 'date',  icon: <Calendar size={15} /> },
-          ].map(({ label, field, type, icon }) => (
-            <div key={field}>
-              <label className="flex items-center gap-1.5 text-[10px] text-gray-500 uppercase tracking-wide mb-1.5">
-                <span className="text-gray-600">{icon}</span> {label}
-              </label>
-              {editing ? (
-                <input type={type} value={draft[field] ?? ''}
-                  onChange={e => setDraft({ ...draft, [field]: e.target.value })}
-                  className="w-full bg-black border border-dark-border text-white text-sm p-2.5 focus:outline-none focus:border-lime-green transition-colors"
-                />
-              ) : (
-                <p className="text-white text-sm">
-                  {field === 'birthdate' && user[field]
-                    ? `${new Date(user[field]).toLocaleDateString('pt-BR')} (${calcAge(user[field])} anos)`
-                    : user[field] ?? '—'}
-                </p>
-              )}
-            </div>
-          ))}
-          <div>
-            <label className="text-[10px] text-gray-500 uppercase tracking-wide mb-2 block">Objetivo</label>
-            <div className="grid grid-cols-2 gap-3">
-              {GOALS.map(g => {
-                const active = (editing ? draft.goal : user.goal) === g.value;
-                return (
-                  <button key={g.value} type="button"
-                    onClick={() => editing && setDraft({ ...draft, goal: g.value })}
-                    className={`flex flex-col items-center gap-2 py-4 border-2 transition-all ${
-                      active ? g.color : 'border-dark-border text-gray-600 bg-transparent'
-                    } ${editing ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}>
-                    {g.icon}
-                    <span className="text-xs font-bold uppercase tracking-wide">{g.value}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </motion.div>
+        {/* Dados pessoais + Métricas: grid no desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-        {/* Métricas físicas */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-          className="relative bg-dark-card border border-dark-border p-4 space-y-4 overflow-hidden">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-gray-400 uppercase tracking-widest">Métricas Físicas</p>
-            <button onClick={openMetrics}
-              className="flex items-center gap-1 text-xs text-lime-green border border-lime-green/40 px-2.5 py-1 hover:bg-lime-green/10 transition-colors">
-              <Edit3 size={11} /> Editar
-            </button>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
+          {/* Dados pessoais */}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+            className="bg-dark-card border border-dark-border p-4 space-y-4">
+            <p className="text-xs text-gray-400 uppercase tracking-widest">Dados Pessoais</p>
             {[
-              { label: 'Peso',      key: 'weight',   unit: 'kg', icon: <Scale size={16} />,   color: 'text-lime-green'  },
-              { label: 'Altura',    key: 'height',   unit: 'cm', icon: <Ruler size={16} />,   color: 'text-blue-400'   },
-              { label: '% Gordura', key: 'body_fat', unit: '%',  icon: <Dumbbell size={16} />, color: 'text-orange-400' },
-            ].map(({ label, key, unit, icon, color }) => (
-              <div key={key} className="bg-black border border-dark-border p-3 text-center">
-                <div className={`flex justify-center mb-1 ${color}`}>{icon}</div>
-                <p className={`font-bebas text-2xl ${color}`}>{metrics?.[key] ?? '—'}</p>
-                <p className="text-gray-500 text-[10px] uppercase mt-0.5">{label} ({unit})</p>
+              { label: 'Nome completo',      field: 'name',      type: 'text',  icon: <User size={15} /> },
+              { label: 'E-mail',             field: 'email',     type: 'email', icon: <Shield size={15} /> },
+              { label: 'Telefone',           field: 'phone',     type: 'tel',   icon: <Bell size={15} /> },
+              { label: 'Data de nascimento', field: 'birthdate', type: 'date',  icon: <Calendar size={15} /> },
+            ].map(({ label, field, type, icon }) => (
+              <div key={field}>
+                <label className="flex items-center gap-1.5 text-[10px] text-gray-500 uppercase tracking-wide mb-1.5">
+                  <span className="text-gray-600">{icon}</span> {label}
+                </label>
+                {editing ? (
+                  <input type={type} value={draft[field] ?? ''}
+                    onChange={e => setDraft({ ...draft, [field]: e.target.value })}
+                    className="w-full bg-black border border-dark-border text-white text-sm p-2.5 focus:outline-none focus:border-lime-green transition-colors"
+                  />
+                ) : (
+                  <p className="text-white text-sm">
+                    {field === 'birthdate' && user[field]
+                      ? `${new Date(user[field]).toLocaleDateString('pt-BR')} (${calcAge(user[field])} anos)`
+                      : user[field] ?? '—'}
+                  </p>
+                )}
               </div>
             ))}
-          </div>
-          {imcVal && imcInfo && (
-            <div className="bg-black border border-dark-border p-3 flex items-center justify-between">
-              <div>
-                <p className="text-gray-500 text-[10px] uppercase tracking-wide">IMC</p>
-                <p className={`font-bebas text-3xl mt-0.5 ${imcInfo.color}`}>{imcVal}</p>
-              </div>
-              <div className="text-right">
-                <p className={`text-sm font-bold ${imcInfo.color}`}>{imcInfo.label}</p>
-                <p className="text-gray-600 text-xs mt-0.5">
-                  {metrics.weight}kg / {(metrics.height / 100).toFixed(2)}m²
-                </p>
+            <div>
+              <label className="text-[10px] text-gray-500 uppercase tracking-wide mb-2 block">Objetivo</label>
+              <div className="grid grid-cols-2 gap-3">
+                {GOALS.map(g => {
+                  const active = (editing ? draft.goal : user.goal) === g.value;
+                  return (
+                    <button key={g.value} type="button"
+                      onClick={() => editing && setDraft({ ...draft, goal: g.value })}
+                      className={`flex flex-col items-center gap-2 py-4 border-2 transition-all ${
+                        active ? g.color : 'border-dark-border text-gray-600 bg-transparent'
+                      } ${editing ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}>
+                      {g.icon}
+                      <span className="text-xs font-bold uppercase tracking-wide">{g.value}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
-          )}
-        </motion.div>
+          </motion.div>
+
+          {/* Métricas físicas */}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+            className="relative bg-dark-card border border-dark-border p-4 space-y-4 overflow-hidden">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-gray-400 uppercase tracking-widest">Métricas Físicas</p>
+              <button onClick={openMetrics}
+                className="flex items-center gap-1 text-xs text-lime-green border border-lime-green/40 px-2.5 py-1 hover:bg-lime-green/10 transition-colors">
+                <Edit3 size={11} /> Editar
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: 'Peso',      key: 'weight',   unit: 'kg', icon: <Scale size={16} />,    color: 'text-lime-green'  },
+                { label: 'Altura',    key: 'height',   unit: 'cm', icon: <Ruler size={16} />,    color: 'text-blue-400'   },
+                { label: '% Gordura', key: 'body_fat', unit: '%',  icon: <Dumbbell size={16} />, color: 'text-orange-400' },
+              ].map(({ label, key, unit, icon, color }) => (
+                <div key={key} className="bg-black border border-dark-border p-3 text-center">
+                  <div className={`flex justify-center mb-1 ${color}`}>{icon}</div>
+                  <p className={`font-bebas text-2xl ${color}`}>{metrics?.[key] ?? '—'}</p>
+                  <p className="text-gray-500 text-[10px] uppercase mt-0.5">{label} ({unit})</p>
+                </div>
+              ))}
+            </div>
+            {imcVal && imcInfo && (
+              <div className="bg-black border border-dark-border p-3 flex items-center justify-between">
+                <div>
+                  <p className="text-gray-500 text-[10px] uppercase tracking-wide">IMC</p>
+                  <p className={`font-bebas text-3xl mt-0.5 ${imcInfo.color}`}>{imcVal}</p>
+                </div>
+                <div className="text-right">
+                  <p className={`text-sm font-bold ${imcInfo.color}`}>{imcInfo.label}</p>
+                  <p className="text-gray-600 text-xs mt-0.5">
+                    {metrics.weight}kg / {(metrics.height / 100).toFixed(2)}m²
+                  </p>
+                </div>
+              </div>
+            )}
+          </motion.div>
+
+        </div>
 
         {/* Ações rápidas */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}

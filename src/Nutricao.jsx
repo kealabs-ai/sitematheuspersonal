@@ -79,9 +79,9 @@ export default function Nutricao() {
   ];
 
   return (
-    <div className="min-h-screen sport-bg text-white font-inter pt-[60px] md:pt-[68px] pb-[60px] md:pb-6">
+    <div className="min-h-screen sport-bg text-white font-inter pt-[60px] md:pt-[68px] pb-[60px] md:pb-10">
 
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+      <main className="max-w-2xl md:max-w-5xl mx-auto px-4 md:px-8 py-6 space-y-5">
 
         {loading && <p className="text-center text-gray-600 text-xs py-8 animate-pulse">Carregando...</p>}
 
@@ -116,6 +116,9 @@ export default function Nutricao() {
           </motion.div>
         )}
 
+        {/* Layout desktop: macros à esquerda, refeições à direita */}
+        <div className="md:grid md:grid-cols-[340px_1fr] md:gap-6 md:items-start space-y-5 md:space-y-0">
+          <div className="space-y-5">
         {/* Macros do dia */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           className="bg-dark-card border border-dark-border p-4 space-y-4"
@@ -148,8 +151,10 @@ export default function Nutricao() {
           ))}
         </motion.div>
 
-        {/* Refeições */}
-        <div className="space-y-2">
+          </div>
+
+          {/* Refeições */}
+          <div className="space-y-2">
           {meals.map((meal, i) => {
             const isOpen = expanded === meal.id;
             const isDone = meal.consumed;
@@ -242,9 +247,8 @@ export default function Nutricao() {
               </motion.div>
             );
           })}
+          </div>
         </div>
-
-        {/* Hidratação */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
           className="bg-blue-400/10 border border-blue-400/20 p-4 flex items-center gap-3"
         >

@@ -34,12 +34,17 @@ export default {
         gradient: {
           to: { 'background-position': '200% center' },
         },
+        'ai-pulse': {
+          '0%, 100%': { opacity: '0.5', transform: 'scale(1)' },
+          '50%': { opacity: '1', transform: 'scale(1.05)' },
+        },
       },
       animation: {
         'border-beam': 'border-beam calc(var(--duration)*1s) infinite linear',
         'meteor-effect': 'meteor-effect linear infinite',
         'shine-border': 'shine-border var(--duration) linear infinite',
         gradient: 'gradient 8s linear infinite',
+        'ai-pulse': 'ai-pulse 4s ease-in-out infinite',
       },
     },
   },
