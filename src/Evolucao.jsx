@@ -549,9 +549,10 @@ export default function Evolucao() {
       <AnimatePresence>
         {modalPeso && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 z-50 flex items-end md:items-center justify-center p-4"
+            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center px-4"
+            style={{ paddingBottom: 'calc(60px + env(safe-area-inset-bottom, 0px))' }}
             onClick={() => setModalPeso(false)}>
-            <motion.div initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
               className="bg-dark-card border border-lime-green/40 p-6 w-full max-w-sm"
               onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-5">
@@ -588,9 +589,10 @@ export default function Evolucao() {
       <AnimatePresence>
         {modalMedida && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 z-50 flex items-end md:items-center justify-center p-4"
+            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center px-4"
+            style={{ paddingBottom: 'calc(60px + env(safe-area-inset-bottom, 0px))' }}
             onClick={() => setModalMedida(false)}>
-            <motion.div initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
               className="bg-dark-card border border-blue-400/40 p-6 w-full max-w-sm"
               onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-5">
