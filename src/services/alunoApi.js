@@ -1,24 +1,29 @@
-const BASE = 'https://srv1023256.hstgr.cloud/api';
+const BASE = '/api';
 
 // --- Helpers ---
 
 const getToken = () => localStorage.getItem('access_token');
 
+const safeJson = async (r) => {
+  const text = await r.text();
+  try { return JSON.parse(text); } catch { return { error: true, status: r.status, message: text.slice(0, 120) }; }
+};
+
 const post = (url, body = {}) => fetch(url, {
   method: 'POST',
-  headers: { 'Content-Type': 'application/json', 'authorization': `Bearer ${getToken()}` },
+  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
   body: JSON.stringify(body),
-}).then(r => r.json());
+}).then(safeJson);
 
 const get = (url) => fetch(url, {
-  headers: { 'authorization': `Bearer ${getToken()}` },
-}).then(r => r.json());
+  headers: { 'Authorization': `Bearer ${getToken()}` },
+}).then(safeJson);
 
 const postPublic = (url, body = {}) => fetch(url, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(body),
-}).then(r => r.json());
+}).then(safeJson);
 
 // --- Sessão ---
 
@@ -61,9 +66,9 @@ export const users = {
   feedback:       (message)                         => post(`${BASE}/aluno/users/me/feedback`, { message }),
   uploadAvatar:   (formData)                        => fetch(`${BASE}/aluno/users/me/avatar`, {
     method: 'POST',
-    headers: { 'authorization': `Bearer ${getToken()}` },
+    headers: { 'Authorization': `Bearer ${getToken()}` },
     body: formData,
-  }).then(r => r.json()),
+  }).then(safeJson),
   notifPrefs:     ()                                => get(`${BASE}/aluno/users/me/notification-preferences`),
   updateNotifPrefs: (data)                          => post(`${BASE}/aluno/users/me/notification-preferences`, data),
 };
