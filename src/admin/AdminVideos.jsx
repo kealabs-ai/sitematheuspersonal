@@ -71,7 +71,7 @@ export default function AdminVideos() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map(v => {
             const ytId = getYoutubeId(v.url ?? '');
-            const thumb = v.thumbnail_url || (ytId ? `https://img.youtube.com/vi/${ytId}/mqdefault.jpg` : null);
+            const thumb = v.thumbnail_url || (ytId ? `https://i.ytimg.com/vi/${ytId}/mqdefault.jpg` : null);
             return (
               <div key={v.id} className="bg-dark-card border border-dark-border overflow-hidden group">
                 <div className="relative aspect-video bg-black">
@@ -126,7 +126,7 @@ export default function AdminVideos() {
             {getYoutubeId(playVideo.url ?? '') ? (
               <div className="aspect-video">
                 <iframe
-                  src={`https://www.youtube.com/embed/${getYoutubeId(playVideo.url)}?autoplay=1&rel=0`}
+                  src={`https://www.youtube-nocookie.com/embed/${getYoutubeId(playVideo.url)}?autoplay=1&rel=0&modestbranding=1`}
                   className="w-full h-full"
                   title={playVideo.title}
                   allow="autoplay; clipboard-write; encrypted-media; picture-in-picture"
@@ -162,7 +162,7 @@ export default function AdminVideos() {
               {/* Preview YouTube */}
               {ytId && (
                 <div className="aspect-video bg-black border border-dark-border overflow-hidden">
-                  <img src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`} alt="preview" className="w-full h-full object-cover" />
+                  <img src={`https://i.ytimg.com/vi/${ytId}/mqdefault.jpg`} alt="preview" className="w-full h-full object-cover" />
                 </div>
               )}
 
