@@ -7,6 +7,7 @@ import {
 import { auth, clearSession, getUser, saveSession } from './services/alunoApi';
 import matheusLogo from './assets/logotipo_matheus_personal.png';
 import AdminAlunos     from './admin/AdminAlunos';
+import AdminAluno      from './admin/AdminAluno';
 import AdminVideos     from './admin/AdminVideos';
 import AdminTreinos    from './admin/AdminTreinos';
 import AdminNutricao   from './admin/AdminNutricao';
@@ -14,14 +15,16 @@ import AdminFinanceiro from './admin/AdminFinanceiro';
 
 // ─── Módulos do painel ────────────────────────────────────────────────────────
 const MODULES = [
-  { key: 'alunos',     label: 'Alunos',     icon: <Users size={18} />,      color: 'text-lime-green',  desc: 'Gerenciar alunos e planos' },
-  { key: 'videos',     label: 'Vídeos',     icon: <PlayCircle size={18} />, color: 'text-blue-400',    desc: 'Postar e organizar vídeos' },
-  { key: 'treinos',    label: 'Treinos',    icon: <Dumbbell size={18} />,   color: 'text-orange-400',  desc: 'Criar planos e exercícios' },
-  { key: 'nutricao',   label: 'Nutrição',   icon: <Salad size={18} />,      color: 'text-purple-400',  desc: 'Planos alimentares' },
-  { key: 'financeiro', label: 'Financeiro', icon: <DollarSign size={18} />, color: 'text-yellow-400',  desc: 'Receitas e pedidos' },
+  { key: 'aluno',      label: 'Área do Aluno', icon: <Users size={18} />,         color: 'text-lime-green',  desc: 'Configurar toda área do aluno' },
+  { key: 'alunos',     label: 'Alunos',        icon: <LayoutDashboard size={18} />,color: 'text-cyan-400',    desc: 'Lista e dados dos alunos' },
+  { key: 'videos',     label: 'Vídeos',        icon: <PlayCircle size={18} />,    color: 'text-blue-400',    desc: 'Postar e organizar vídeos' },
+  { key: 'treinos',    label: 'Treinos',       icon: <Dumbbell size={18} />,      color: 'text-orange-400',  desc: 'Criar planos e exercícios' },
+  { key: 'nutricao',   label: 'Nutrição',      icon: <Salad size={18} />,         color: 'text-purple-400',  desc: 'Planos alimentares' },
+  { key: 'financeiro', label: 'Financeiro',    icon: <DollarSign size={18} />,    color: 'text-yellow-400',  desc: 'Receitas e pedidos' },
 ];
 
 const MODULE_COMPONENTS = {
+  aluno:      () => <AdminAluno />,
   alunos:     () => <AdminAlunos />,
   videos:     () => <AdminVideos />,
   treinos:    () => <AdminTreinos />,
