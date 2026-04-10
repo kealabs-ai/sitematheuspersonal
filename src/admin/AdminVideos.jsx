@@ -7,7 +7,7 @@ const CATEGORIES = ['Aquecimento', 'Peito', 'Costas', 'Pernas', 'Ombro', 'Bícep
 const empty = { title: '', description: '', url: '', thumbnail_url: '', category: 'Geral', duration_min: '' };
 
 function getYoutubeId(url) {
-  const m = url.match(/(?:youtu\.be\/|v=|embed\/)([A-Za-z0-9_-]{11})/);
+  const m = url.match(/(?:youtu\.be\/|[?&]v=|embed\/|shorts\/)([A-Za-z0-9_-]{11})/);
   return m ? m[1] : null;
 }
 
@@ -126,9 +126,10 @@ export default function AdminVideos() {
             {getYoutubeId(playVideo.url ?? '') ? (
               <div className="aspect-video">
                 <iframe
-                  src={`https://www.youtube.com/embed/${getYoutubeId(playVideo.url)}?autoplay=1`}
+                  src={`https://www.youtube.com/embed/${getYoutubeId(playVideo.url)}?autoplay=1&rel=0`}
                   className="w-full h-full"
-                  allow="autoplay; encrypted-media"
+                  title={playVideo.title}
+                  allow="autoplay; clipboard-write; encrypted-media; picture-in-picture"
                   allowFullScreen
                 />
               </div>
