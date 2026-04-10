@@ -97,11 +97,9 @@ export default function AdminNutricao() {
       water_goal_ml: Number(planForm.water_goal_ml),
     };
     if (planModal === 'new') {
-      const res = await adminNutrition.createPlan(body).catch(() => null);
-      if (res?.id) {
-        const student = students.find(s => s.id === body.user_id || s.id_user === body.user_id);
-        setPlans(prev => [{ ...body, id: res.id, user_name: student?.name ?? '' }, ...prev]);
-      }
+      await adminNutrition.createPlan(body).catch(() => null);
+      const updated = await adminNutrition.plans().catch(() => null);
+      if (updated) setPlans(Array.isArray(updated) ? updated : (updated?.plans ?? []));
     } else {
       await adminNutrition.updatePlan(planModal.id, body).catch(() => {});
       setPlans(prev => prev.map(p => p.id === planModal.id ? { ...p, ...body } : p));
