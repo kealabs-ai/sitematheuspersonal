@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, X, Save, PlayCircle, ExternalLink } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Save, PlayCircle } from 'lucide-react';
 import { adminVideos } from '../services/adminApi';
 
 const CATEGORIES = ['Aquecimento', 'Peito', 'Costas', 'Pernas', 'Ombro', 'Bíceps', 'Tríceps', 'Abdômen', 'Cardio', 'Alongamento', 'Geral'];
@@ -18,6 +18,7 @@ export default function AdminVideos() {
   const [form, setForm]       = useState(empty);
   const [saving, setSaving]   = useState(false);
   const [search, setSearch]   = useState('');
+  const [playVideo, setPlayVideo] = useState(null);
 
   useEffect(() => {
     adminVideos.list()
@@ -81,12 +82,10 @@ export default function AdminVideos() {
                       <PlayCircle size={40} className="text-gray-700" />
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <a href={v.url} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 bg-white/10 border border-white/20 text-white text-xs font-bold px-3 py-1.5 hover:bg-white/20 transition-colors">
-                      <ExternalLink size={12} /> Abrir
-                    </a>
-                  </div>
+                  <button onClick={() => setPlayVideo(v)}
+                    className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                    <PlayCircle size={48} className="text-white drop-shadow-lg" />
+                  </button>
                   {v.duration_min && (
                     <span className="absolute bottom-2 right-2 bg-black/80 text-white text-[10px] px-1.5 py-0.5">{v.duration_min} min</span>
                   )}
@@ -116,7 +115,33 @@ export default function AdminVideos() {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Modal Player */}
+      {playVideo && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setPlayVideo(null)}>
+          <div className="w-full max-w-3xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-white font-semibold truncate pr-4">{playVideo.title}</p>
+              <button onClick={() => setPlayVideo(null)} className="text-gray-400 hover:text-white flex-shrink-0"><X size={22} /></button>
+            </div>
+            {getYoutubeId(playVideo.url ?? '') ? (
+              <div className="aspect-video">
+                <iframe
+                  src={`https://www.youtube.com/embed/${getYoutubeId(playVideo.url)}?autoplay=1`}
+                  className="w-full h-full"
+                  allow="autoplay; encrypted-media"
+                  allowFullScreen
+                />
+              </div>
+            ) : (
+              <div className="aspect-video bg-black flex items-center justify-center">
+                <video src={playVideo.url} controls autoPlay className="w-full h-full" />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal Editar/Criar */}
       {modal !== null && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setModal(null)}>
           <div className="bg-[#111] border border-dark-border w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
