@@ -1,4 +1,4 @@
-const BASE = '/api';
+const BASE = 'https://srv1023256.hstgr.cloud/api';
 
 const getToken = () => localStorage.getItem('access_token');
 
