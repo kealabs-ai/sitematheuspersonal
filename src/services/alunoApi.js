@@ -77,17 +77,15 @@ export const users = {
 // 🏋️ TREINOS
 // ─────────────────────────────────────────────
 export const workouts = {
-  plan:           ()                   => get(`${BASE}/aluno/workouts/plan`),
-  planDays:       (planId)             => get(`${BASE}/aluno/workouts/plan/${planId}/days`),
-  dayExercises:   (dayId)              => get(`${BASE}/aluno/workouts/days/${dayId}/exercises`),
-  startLog:       (day_id)             => post(`${BASE}/aluno/workouts/logs`, { day_id }),
-  finishLog:      (logId, completed)   => post(`${BASE}/aluno/workouts/logs/${logId}/finish`, { completed }),
-  saveExercises:  (logId, exercises)   => post(`${BASE}/aluno/workouts/logs/${logId}/exercises`, { exercises }),
-  history:        ()                   => get(`${BASE}/aluno/workouts/logs/history`),
-  streak:         ()                   => get(`${BASE}/aluno/workouts/streak`),
-  createPlan:     (data)               => post(`${BASE}/aluno/workouts/plans`, data),
-  createDay:      (planId, data)       => post(`${BASE}/aluno/workouts/plans/${planId}/days`, data),
-  createExercise: (dayId, data)        => post(`${BASE}/aluno/workouts/days/${dayId}/exercises`, data),
+  plan:           ()                   => get(`${BASE}/workouts/plan`),
+  planDays:       (planId)             => get(`${BASE}/workouts/plan/${planId}/days`),
+  dayExercises:   (dayId)              => get(`${BASE}/workouts/days/${dayId}/exercises`),
+  allExercises:   ()                   => get(`${BASE}/workouts/exercises/all`),
+  startLog:       (day_id)             => post(`${BASE}/workouts/logs`, { day_id }),
+  finishLog:      (logId, completed)   => post(`${BASE}/workouts/logs/${logId}/finish`, { completed }),
+  saveExercises:  (logId, exercises)   => post(`${BASE}/workouts/logs/${logId}/exercises`, { exercises }),
+  history:        ()                   => get(`${BASE}/workouts/logs/history`),
+  streak:         ()                   => get(`${BASE}/workouts/streak`),
 };
 
 // ─────────────────────────────────────────────
