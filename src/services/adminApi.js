@@ -37,19 +37,20 @@ export const adminVideos = {
 
 // ─── Treinos ──────────────────────────────────
 export const adminWorkouts = {
-  plans:          ()               => get(`${BASE}/aluno/workouts/admin/plans`),
-  createPlan:     (data)           => post(`${BASE}/aluno/workouts/admin/plans`, data),
-  updatePlan:     (id, data)       => post(`${BASE}/aluno/workouts/admin/plans/${id}/update`, data),
-  deletePlan:     (id)             => post(`${BASE}/aluno/workouts/admin/plans/${id}/delete`),
-  planDays:       (planId)         => get(`${BASE}/aluno/workouts/admin/plans/${planId}/days`),
-  createDay:      (planId, data)   => post(`${BASE}/aluno/workouts/admin/plans/${planId}/days`, data),
-  updateDay:      (dayId, data)    => post(`${BASE}/aluno/workouts/admin/days/${dayId}/update`, data),
-  deleteDay:      (dayId)          => post(`${BASE}/aluno/workouts/admin/days/${dayId}/delete`),
-  dayExercises:   (dayId)          => get(`${BASE}/aluno/workouts/admin/days/${dayId}/exercises`),
-  createExercise: (dayId, data)    => post(`${BASE}/aluno/workouts/admin/days/${dayId}/exercises`, data),
-  updateExercise: (exId, data)     => post(`${BASE}/aluno/workouts/admin/exercises/${exId}/update`, data),
-  deleteExercise: (exId)           => post(`${BASE}/aluno/workouts/admin/exercises/${exId}/delete`),
-  assignPlan:     (userId, planId) => post(`${BASE}/admin/workouts/assign`, { user_id: userId, plan_id: planId }),
+  plans:          ()               => get(`${BASE}/workouts/admin/plans`),
+  createPlan:     (data)           => post(`${BASE}/workouts/admin/plans`, data),
+  updatePlan:     (id, data)       => post(`${BASE}/workouts/admin/plans/${id}/update`, data),
+  deletePlan:     (id)             => post(`${BASE}/workouts/admin/plans/${id}/delete`),
+  planDays:       (planId)         => get(`${BASE}/workouts/plan/${planId}/days`),
+  createDay:      (planId, data)   => post(`${BASE}/workouts/admin/plans/${planId}/days`, data),
+  updateDay:      (dayId, data)    => post(`${BASE}/workouts/admin/days/${dayId}/update`, data),
+  deleteDay:      (dayId)          => post(`${BASE}/workouts/admin/days/${dayId}/delete`),
+  dayExercises:   (dayId)          => get(`${BASE}/workouts/days/${dayId}/exercises`),
+  createExercise: (dayId, data)    => post(`${BASE}/workouts/admin/days/${dayId}/exercises`, data),
+  updateExercise: (exId, data)     => post(`${BASE}/workouts/admin/exercises/${exId}/update`, data),
+  deleteExercise: (exId)           => post(`${BASE}/workouts/admin/exercises/${exId}/delete`),
+  assignPlan:     (userId, planId) => post(`${BASE}/workouts/admin/plans/assign`, { user_id: userId, plan_id: planId }),
+  allExercises:   ()               => get(`${BASE}/workouts/exercises/all`),
 };
 
 // ─── Nutrição ─────────────────────────────────
