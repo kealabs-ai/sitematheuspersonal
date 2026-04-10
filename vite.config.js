@@ -14,7 +14,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://srv1023256.hstgr.cloud',
+        target: process.env.VITE_PROXY_TARGET ?? 'http://localhost:3001',
         changeOrigin: true,
         secure: false
       }
