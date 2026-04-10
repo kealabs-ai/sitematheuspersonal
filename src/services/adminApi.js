@@ -67,7 +67,7 @@ export const adminNutrition = {
   updateItem:   (itemId, data)   => post(`${BASE}/aluno/nutrition/admin/items/${itemId}/update`, data),
   deleteItem:   (itemId)         => post(`${BASE}/aluno/nutrition/admin/items/${itemId}/delete`),
   saveNote:     (data)           => post(`${BASE}/aluno/nutrition/admin/notes`, data),
-  assignPlan:   (userId, planId) => post(`${BASE}/admin/nutrition/assign`, { user_id: userId, plan_id: planId }),
+  assignPlan:   (userId, planId) => post(`${BASE}/aluno/nutrition/admin/assign`, { user_id: userId, plan_id: planId }),
 };
 
 // ─── Financeiro ───────────────────────────────

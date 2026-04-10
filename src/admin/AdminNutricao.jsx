@@ -59,7 +59,8 @@ export default function AdminNutricao() {
     setExpanded(planId);
     if (!meals[planId]) {
       const d = await adminNutrition.planMeals(planId).catch(() => ({}));
-      setMeals(prev => ({ ...prev, [planId]: Array.isArray(d) ? d : (d?.meals ?? []) }));
+      const raw = Array.isArray(d) ? d : (d?.meals ?? []);
+      setMeals(prev => ({ ...prev, [planId]: raw.map(m => ({ ...m, name: m.name ?? m.meal_type })) }));
     }
   };
 
@@ -97,11 +98,12 @@ export default function AdminNutricao() {
   const saveMeal = async () => {
     setSaving(true);
     const { planId, meal } = mealModal;
+    const payload = { meal_type: mealForm.name, meal_time: mealForm.time_label };
     if (!meal) {
-      const res = await adminNutrition.createMeal(planId, mealForm).catch(() => null);
+      const res = await adminNutrition.createMeal(planId, payload).catch(() => null);
       if (res?.meal_id) setMeals(prev => ({ ...prev, [planId]: [...(prev[planId] ?? []), { ...mealForm, id: res.meal_id }] }));
     } else {
-      await adminNutrition.updateMeal(meal.id, mealForm).catch(() => {});
+      await adminNutrition.updateMeal(meal.id, payload).catch(() => {});
       setMeals(prev => ({ ...prev, [planId]: (prev[planId] ?? []).map(m => m.id === meal.id ? { ...m, ...mealForm } : m) }));
     }
     setSaving(false); setMealModal(null);
