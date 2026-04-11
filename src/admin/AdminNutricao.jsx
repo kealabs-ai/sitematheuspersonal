@@ -88,15 +88,16 @@ export default function AdminNutricao() {
     setSaving(true);
     const body = {
       user_id:        Number(planForm.user_id),
+      nutritionist_id: Number(planForm.nutritionist_id) || 1,
       name:           planForm.name,
-      ...(planForm.goal_calories  && { goal_calories:  Number(planForm.goal_calories)  }),
-      ...(planForm.goal_protein_g && { goal_protein_g: Number(planForm.goal_protein_g) }),
-      ...(planForm.goal_carbs_g   && { goal_carbs_g:   Number(planForm.goal_carbs_g)   }),
-      ...(planForm.goal_fat_g     && { goal_fat_g:     Number(planForm.goal_fat_g)     }),
-      ...(planForm.water_goal_ml  && { water_goal_ml:  Number(planForm.water_goal_ml)  }),
-      ...(planForm.valid_from     && { valid_from:     planForm.valid_from             }),
-      ...(planForm.valid_until    && { valid_until:    planForm.valid_until            }),
-      active: planForm.active,
+      goal_calories:  Number(planForm.goal_calories)  || 0,
+      goal_protein_g: Number(planForm.goal_protein_g) || 0,
+      goal_carbs_g:   Number(planForm.goal_carbs_g)   || 0,
+      goal_fat_g:     Number(planForm.goal_fat_g)     || 0,
+      water_goal_ml:  Number(planForm.water_goal_ml)  || 3000,
+      valid_from:     planForm.valid_from  || null,
+      valid_until:    planForm.valid_until || null,
+      active:         planForm.active,
     };
     if (planModal === 'new') {
       await adminNutrition.createPlan(body).catch(() => null);
@@ -313,6 +314,9 @@ export default function AdminNutricao() {
           </Field>
           <Field label="Nome do plano">
             <input className={inp} value={planForm.name} onChange={e => setPlanForm({ ...planForm, name: e.target.value })} placeholder="Ex: Plano Hipertrofia - Julho" />
+          </Field>
+          <Field label="ID do Nutricionista">
+            <input type="number" className={inp} value={planForm.nutritionist_id} onChange={e => setPlanForm({ ...planForm, nutritionist_id: e.target.value })} placeholder="1" />
           </Field>
           <div className="grid grid-cols-2 gap-3">
             {[['Meta de calorias (kcal)', 'goal_calories'], ['Proteína (g)', 'goal_protein_g'], ['Carboidratos (g)', 'goal_carbs_g'], ['Gorduras (g)', 'goal_fat_g']].map(([label, key]) => (
