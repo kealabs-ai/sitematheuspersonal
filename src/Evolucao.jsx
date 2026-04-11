@@ -41,22 +41,26 @@ const fmtDate = (raw) => {
 const fmt2 = (v) => (typeof v === 'number' ? v.toFixed(2) : parseFloat(v || 0).toFixed(2));
 
 // Garante src válido para imagem base64 vinda da API
+// A API armazena só o base64 puro (sem prefixo data:) — reconstrói aqui
 const toImgSrc = (raw) => {
   if (!raw) return null;
-  // Remove espaços, quebras de linha e caracteres inválidos que corrompem o base64
-  const clean = raw.replace(/[\s\r\n]/g, '');
-  if (clean.startsWith('data:')) return clean;
-  // API retornou só o base64 puro sem prefixo — detecta tipo pelo magic bytes
-  const head = clean.slice(0, 8);
-  let mime = 'image/jpeg';
-  if (head.startsWith('/9j/'))        mime = 'image/jpeg';
-  else if (head.startsWith('iVBOR')) mime = 'image/png';
-  else if (head.startsWith('R0lGO')) mime = 'image/gif';
-  else if (head.startsWith('UklGR')) mime = 'image/webp';
+  // Remove qualquer whitespace/newline que possa ter sido inserido
+  const clean = String(raw).replace(/[\s\r\n]/g, '');
+  // Se já tem prefixo data: correto, usa direto
+  if (clean.startsWith('data:image')) return clean;
+  // Se tem prefixo corrompido (ex: "data:image/jpeg" sem o resto), descarta e reconstrói
+  // Detecta mime pelo magic bytes do base64
+  let mime = 'image/jpeg'; // padrão
+  if (clean.startsWith('/9j/'))         mime = 'image/jpeg';  // JPEG
+  else if (clean.startsWith('iVBOR'))   mime = 'image/png';   // PNG
+  else if (clean.startsWith('R0lGO'))   mime = 'image/gif';   // GIF
+  else if (clean.startsWith('UklGR'))   mime = 'image/webp';  // WEBP
+  else if (clean.startsWith('AAABAA'))  mime = 'image/x-icon';
   return `data:${mime};base64,${clean}`;
 };
 
-// Redimensiona e comprime imagem antes do upload (max 1200px, qualidade 0.8)
+// Redimensiona, comprime e retorna SOMENTE o base64 puro (sem prefixo data:)
+// A API não aceita o prefixo data:image/...;base64, no campo photo_url
 const compressImage = (file) => new Promise((resolve) => {
   const MAX = 1200;
   const reader = new FileReader();
@@ -68,7 +72,9 @@ const compressImage = (file) => new Promise((resolve) => {
       canvas.width  = Math.round(img.width  * scale);
       canvas.height = Math.round(img.height * scale);
       canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL('image/jpeg', 0.8));
+      // toDataURL retorna "data:image/jpeg;base64,XXXX" — pega só o XXXX
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      resolve(dataUrl.split(',')[1]);
     };
     img.src = e.target.result;
   };
