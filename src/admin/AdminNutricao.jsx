@@ -39,6 +39,7 @@ export default function AdminNutricao() {
   const [plans, setPlans]         = useState([]);
   const [students, setStudents]   = useState([]);
   const [loading, setLoading]     = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [expanded, setExpanded]   = useState(null);
   const [meals, setMeals]         = useState({});
   const [items, setItems]         = useState({});
@@ -51,12 +52,28 @@ export default function AdminNutricao() {
   const [itemForm, setItemForm]   = useState(emptyItem);
   const [saving, setSaving]       = useState(false);
 
-  useEffect(() => {
+  const loadPlans = () => {
+    setLoading(true);
+    setLoadError(null);
     Promise.all([
-      adminNutrition.plans().then(d => setPlans(d?.plans ?? (Array.isArray(d) ? d : []))),
-      adminUsers.listAll().then(d => setStudents(Array.isArray(d) ? d : (d?.users ?? []))),
-    ]).finally(() => setLoading(false));
-  }, []);
+      adminNutrition.plans(),
+      adminUsers.listAll(),
+    ]).then(([plansData, usersData]) => {
+      // Aceita: { plans: [...] } | [...] | { data: [...] } | { results: [...] }
+      const p = plansData?.plans ?? plansData?.data ?? plansData?.results ?? (Array.isArray(plansData) ? plansData : null);
+      if (p === null) {
+        setLoadError(`Resposta inesperada da API: ${JSON.stringify(plansData).slice(0, 120)}`);
+        setPlans([]);
+      } else {
+        setPlans(p);
+      }
+      setStudents(Array.isArray(usersData) ? usersData : (usersData?.users ?? []));
+    }).catch(err => {
+      setLoadError(`Erro ao carregar: ${err?.message ?? err}`);
+    }).finally(() => setLoading(false));
+  };
+
+  useEffect(() => { loadPlans(); }, []);
 
   const togglePlan = async (planId) => {
     if (expanded === planId) { setExpanded(null); return; }
@@ -102,7 +119,10 @@ export default function AdminNutricao() {
     if (planModal === 'new') {
       await adminNutrition.createPlan(body).catch(() => null);
       const updated = await adminNutrition.plans().catch(() => null);
-      if (updated) setPlans(updated?.plans ?? (Array.isArray(updated) ? updated : []));
+      if (updated) {
+        const p = updated?.plans ?? updated?.data ?? updated?.results ?? (Array.isArray(updated) ? updated : []);
+        setPlans(p);
+      }
     } else {
       await adminNutrition.updatePlan(planModal.id, body).catch(() => {});
       setPlans(prev => prev.map(p => p.id === planModal.id ? { ...p, ...body } : p));
@@ -184,6 +204,14 @@ export default function AdminNutricao() {
 
       {loading ? (
         <p className="text-gray-500 text-sm animate-pulse">Carregando planos...</p>
+      ) : loadError ? (
+        <div className="border border-red-500/30 bg-red-500/5 p-4 space-y-2">
+          <p className="text-red-400 text-xs font-bold uppercase tracking-wide">Erro ao carregar planos</p>
+          <p className="text-red-300/70 text-xs font-mono break-all">{loadError}</p>
+          <button onClick={loadPlans} className="text-xs text-red-400 border border-red-500/30 px-3 py-1.5 hover:bg-red-500/10 transition-colors">
+            ↺ Tentar novamente
+          </button>
+        </div>
       ) : plans.length === 0 ? (
         <div className="text-center py-16 border border-dark-border">
           <Salad size={40} className="text-gray-700 mx-auto mb-3" />
