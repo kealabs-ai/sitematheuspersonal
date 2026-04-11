@@ -59,21 +59,28 @@ export default function AdminNutricao() {
       adminNutrition.plans(),
       adminUsers.listAll(),
     ]).then(([plansData, usersData]) => {
-      // Aceita: { plans: [...] } | [...] | { data: [...] } | { results: [...] }
-      const p = plansData?.plans ?? plansData?.data ?? plansData?.results ?? (Array.isArray(plansData) ? plansData : null);
+      console.log('[AdminNutricao] plans raw:', plansData);
+      // Aceita qualquer envelope: { plans } | { data } | { results } | array direto
+      const p =
+        Array.isArray(plansData) ? plansData :
+        Array.isArray(plansData?.plans)   ? plansData.plans   :
+        Array.isArray(plansData?.data)    ? plansData.data    :
+        Array.isArray(plansData?.results) ? plansData.results :
+        null;
       if (p === null) {
-        setLoadError(`Resposta inesperada da API: ${JSON.stringify(plansData).slice(0, 120)}`);
+        setLoadError(`Resposta inesperada: ${JSON.stringify(plansData).slice(0, 200)}`);
         setPlans([]);
       } else {
         setPlans(p);
       }
       setStudents(Array.isArray(usersData) ? usersData : (usersData?.users ?? []));
     }).catch(err => {
-      setLoadError(`Erro ao carregar: ${err?.message ?? err}`);
+      setLoadError(`Erro de rede: ${err?.message ?? String(err)}`);
     }).finally(() => setLoading(false));
   };
 
-  useEffect(() => { loadPlans(); }, []);
+  // Força reload toda vez que o componente monta (troca de aba no admin)
+  useEffect(() => { loadPlans(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const togglePlan = async (planId) => {
     if (expanded === planId) { setExpanded(null); return; }

@@ -23,15 +23,6 @@ const MODULES = [
   { key: 'financeiro', label: 'Financeiro',    icon: <DollarSign size={18} />,    color: 'text-yellow-400',  desc: 'Receitas e pedidos' },
 ];
 
-const MODULE_COMPONENTS = {
-  aluno:      () => <AdminAluno />,
-  alunos:     () => <AdminAlunos />,
-  videos:     () => <AdminVideos />,
-  treinos:    () => <AdminTreinos />,
-  nutricao:   () => <AdminNutricao />,
-  financeiro: () => <AdminFinanceiro />,
-};
-
 // ─── Tela de login admin ──────────────────────────────────────────────────────
 function AdminLogin({ onLogin }) {
   const [email, setEmail]       = useState('');
@@ -206,7 +197,12 @@ function AdminPanel({ user, onLogout }) {
               <motion.div key={active}
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.15 }}>
-                {MODULE_COMPONENTS[active]?.()}
+                {active === 'aluno'      && <AdminAluno      key="aluno" />}
+                {active === 'alunos'     && <AdminAlunos     key="alunos" />}
+                {active === 'videos'     && <AdminVideos     key="videos" />}
+                {active === 'treinos'    && <AdminTreinos    key="treinos" />}
+                {active === 'nutricao'   && <AdminNutricao   key="nutricao" />}
+                {active === 'financeiro' && <AdminFinanceiro key="financeiro" />}
               </motion.div>
             </AnimatePresence>
           </div>
