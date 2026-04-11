@@ -57,7 +57,8 @@ export default function Treinos() {
   useEffect(() => {
     workoutsApi.plan()
       .then(data => {
-        if (data.detail) return;
+        if (data.detail || data.error) return;
+        // API retorna { plan: { id, name, days: [{ id, week_day, name, duration_min, is_rest, exercises_count, status }] } }
         const normalized = {
           ...data.plan,
           days: (data.plan?.days ?? []).map(normalizeDay),
@@ -73,9 +74,8 @@ export default function Treinos() {
   const loadExercises = async (dayId) => {
     if (exercises[dayId]) return;
     const data = await workoutsApi.dayExercises(dayId).catch(() => ({}));
-    // API retorna { exercises: [...] } ou o objeto do dia com exercises dentro
-    const list = data.exercises ?? [];
-    setExercises(prev => ({ ...prev, [dayId]: list }));
+    // API retorna { id, name, week_day, exercises: [{ id, name, muscle_group, sets, reps, rest_seconds, video_url }] }
+    setExercises(prev => ({ ...prev, [dayId]: data.exercises ?? [] }));
   };
 
   const toggleExpand = (day) => {
@@ -86,21 +86,25 @@ export default function Treinos() {
   };
 
   const startWorkout = async (day) => {
+    // API retorna { log_id: 42, started_at: "..." }
     const data = await workoutsApi.startLog(day.id).catch(() => null);
     if (data?.log_id) {
       setActiveLog({ logId: data.log_id, dayId: day.id });
+      loadExercises(day.id);
+      setExpanded(day.id);
     }
   };
 
   const finishWorkout = async (dayId) => {
     if (!activeLog) return;
     const exList = exercises[dayId] ?? [];
+    // Monta payload conforme spec: { exercise_id, weight_kg, sets_done, reps_done, completed }
     const payload = exList.map(ex => ({
       exercise_id: ex.id,
-      weight_kg: parseFloat(weights[`${dayId}-${ex.id}`]) || null,
-      sets_done: ex.sets,
-      reps_done: null,
-      completed: !!checked[`${dayId}-${ex.id}`],
+      weight_kg:   parseFloat(weights[`${dayId}-${ex.id}`]) || null,
+      sets_done:   ex.sets,
+      reps_done:   null,
+      completed:   !!checked[`${dayId}-${ex.id}`],
     }));
     await workoutsApi.saveExercises(activeLog.logId, payload).catch(() => {});
     await workoutsApi.finishLog(activeLog.logId, true).catch(() => {});

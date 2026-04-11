@@ -50,7 +50,6 @@ export const adminWorkouts = {
   updateExercise: (exId, data)     => post(`${BASE}/workouts/admin/exercises/${exId}/update`, data),
   deleteExercise: (exId)           => post(`${BASE}/workouts/admin/exercises/${exId}/delete`),
   assignPlan:     (userId, planId) => post(`${BASE}/workouts/admin/plans/assign`, { user_id: userId, plan_id: planId }),
-  allExercises:   ()               => get(`${BASE}/workouts/exercises/all`),
 };
 
 // ─── Nutrição ─────────────────────────────────

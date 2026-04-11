@@ -76,16 +76,15 @@ export const users = {
 // ─────────────────────────────────────────────
 // 🏋️ TREINOS
 // ─────────────────────────────────────────────
+const W = 'https://srv1023256.hstgr.cloud';
 export const workouts = {
-  plan:           ()                   => get(`${BASE}/workouts/plan`),
-  planDays:       (planId)             => get(`${BASE}/workouts/plan/${planId}/days`),
-  dayExercises:   (dayId)              => get(`${BASE}/workouts/days/${dayId}/exercises`),
-  allExercises:   ()                   => get(`${BASE}/workouts/exercises/all`),
-  startLog:       (day_id)             => post(`${BASE}/workouts/logs`, { day_id }),
-  finishLog:      (logId, completed)   => post(`${BASE}/workouts/logs/${logId}/finish`, { completed }),
-  saveExercises:  (logId, exercises)   => post(`${BASE}/workouts/logs/${logId}/exercises`, { exercises }),
-  history:        ()                   => get(`${BASE}/workouts/logs/history`),
-  streak:         ()                   => get(`${BASE}/workouts/streak`),
+  plan:          ()                  => get(`${W}/workouts/plan`),
+  dayExercises:  (dayId)             => get(`${W}/workouts/days/${dayId}/exercises`),
+  startLog:      (day_id)            => post(`${W}/workouts/logs`, { day_id }),
+  saveExercises: (logId, exercises)  => post(`${W}/workouts/logs/${logId}/exercises`, { exercises }),
+  finishLog:     (logId, completed)  => post(`${W}/workouts/logs/${logId}/finish`, { completed }),
+  history:       ()                  => get(`${W}/workouts/logs/history`),
+  streak:        ()                  => get(`${W}/workouts/streak`),
 };
 
 // ─────────────────────────────────────────────
