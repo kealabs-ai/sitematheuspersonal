@@ -53,7 +53,7 @@ export default function AdminNutricao() {
 
   useEffect(() => {
     Promise.all([
-      adminNutrition.plans().then(d => setPlans(Array.isArray(d) ? d : (d?.plans ?? []))),
+      adminNutrition.plans().then(d => setPlans(d?.plans ?? (Array.isArray(d) ? d : []))),
       adminUsers.listAll().then(d => setStudents(Array.isArray(d) ? d : (d?.users ?? []))),
     ]).finally(() => setLoading(false));
   }, []);
@@ -102,7 +102,7 @@ export default function AdminNutricao() {
     if (planModal === 'new') {
       await adminNutrition.createPlan(body).catch(() => null);
       const updated = await adminNutrition.plans().catch(() => null);
-      if (updated) setPlans(Array.isArray(updated) ? updated : (updated?.plans ?? []));
+      if (updated) setPlans(updated?.plans ?? (Array.isArray(updated) ? updated : []));
     } else {
       await adminNutrition.updatePlan(planModal.id, body).catch(() => {});
       setPlans(prev => prev.map(p => p.id === planModal.id ? { ...p, ...body } : p));
@@ -211,11 +211,13 @@ export default function AdminNutricao() {
                     <div className="flex gap-3 mt-1 flex-wrap">
                       {plan.user_name         && <span className="text-[10px] text-lime-green flex items-center gap-1"><Users size={9} />{plan.user_name}</span>}
                       {plan.nutritionist_name && <span className="text-[10px] text-blue-400">🥗 {plan.nutritionist_name}</span>}
+                      {plan.crn               && <span className="text-[10px] text-gray-500">{plan.crn}</span>}
                       {plan.goal_calories     && <span className="text-[10px] text-orange-400">🔥 {plan.goal_calories} kcal</span>}
                       {plan.goal_protein_g    && <span className="text-[10px] text-red-400">🥩 {plan.goal_protein_g}g prot</span>}
                       {plan.goal_carbs_g      && <span className="text-[10px] text-yellow-500">🌾 {plan.goal_carbs_g}g carb</span>}
                       {plan.goal_fat_g        && <span className="text-[10px] text-gray-400">🫒 {plan.goal_fat_g}g gord</span>}
                       {plan.water_goal_ml     && <span className="text-[10px] text-blue-400">💧 {plan.water_goal_ml / 1000}L</span>}
+                      {plan.valid_from        && <span className="text-[10px] text-gray-500">📅 {plan.valid_from} → {plan.valid_until ?? '...'}</span>}
                     </div>
                   </div>
                 </button>
