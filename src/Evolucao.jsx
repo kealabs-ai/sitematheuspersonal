@@ -40,6 +40,39 @@ const fmtDate = (raw) => {
 
 const fmt2 = (v) => (typeof v === 'number' ? v.toFixed(2) : parseFloat(v || 0).toFixed(2));
 
+// Garante src válido para imagem base64 vinda da API
+const toImgSrc = (raw) => {
+  if (!raw) return null;
+  if (raw.startsWith('data:')) return raw;
+  // API retornou só o base64 puro sem prefixo — detecta tipo pelo magic bytes
+  const head = raw.slice(0, 8);
+  let mime = 'image/jpeg';
+  if (head.startsWith('/9j/'))          mime = 'image/jpeg';
+  else if (head.startsWith('iVBOR'))    mime = 'image/png';
+  else if (head.startsWith('R0lGOD'))   mime = 'image/gif';
+  else if (head.startsWith('UklGR'))    mime = 'image/webp';
+  return `data:${mime};base64,${raw}`;
+};
+
+// Redimensiona e comprime imagem antes do upload (max 1200px, qualidade 0.8)
+const compressImage = (file) => new Promise((resolve) => {
+  const MAX = 1200;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width  = Math.round(img.width  * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', 0.8));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
 const CustomTooltip = ({ active, payload, label, unit }) => {
   if (!active || !payload?.length) return null;
   return (
@@ -170,18 +203,11 @@ export default function Evolucao() {
     setUploadingPhoto(true);
     setUploadProgress(valid.map(f => ({ name: f.name, status: 'pending' })));
 
-    const toBase64 = (file) => new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload  = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-
     await Promise.all(valid.map(async (file, idx) => {
       try {
-        const photo_base64 = await toBase64(file);
+        const photo_url = await compressImage(file);
         await progressApi.addPhoto({
-          photo_url: photo_base64,
+          photo_url,
           label: file.name,
           recorded_at: new Date().toISOString().split('T')[0],
         });
@@ -530,12 +556,12 @@ export default function Evolucao() {
                     className="aspect-[3/4] bg-dark-card border border-dark-border overflow-hidden relative group"
                   >
                     {/* Imagem */}
-                    {(p.photo_url || p.photo_base64) ? (
+                    {toImgSrc(p.photo_url) ? (
                       <img
-                        src={p.photo_url ?? p.photo_base64}
+                        src={toImgSrc(p.photo_url)}
                         alt={p.label}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
-                        onClick={() => setPhotoPreview({ src: p.photo_url ?? p.photo_base64, label: p.label, date: p.recorded_at })}
+                        onClick={() => setPhotoPreview({ src: toImgSrc(p.photo_url), label: p.label, date: p.recorded_at })}
                       />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center gap-2">
