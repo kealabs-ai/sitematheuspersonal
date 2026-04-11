@@ -160,11 +160,20 @@ export default function Evolucao() {
     const files = Array.from(e.target.files);
     if (!files.length) return;
     setUploadingPhoto(true);
+    const toBase64 = (file) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result); // inclui prefixo data:image/...;base64,
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
     for (const file of files) {
-      const formData = new FormData();
-      formData.append('photo', file);
-      formData.append('recorded_at', new Date().toISOString().split('T')[0]);
-      await progressApi.uploadPhoto?.(formData).catch(() => {});
+      const photo_base64 = await toBase64(file).catch(() => null);
+      if (!photo_base64) continue;
+      await progressApi.addPhoto({
+        photo_base64,
+        label: file.name,
+        recorded_at: new Date().toISOString().split('T')[0],
+      }).catch(() => {});
     }
     setUploadingPhoto(false);
     e.target.value = '';
@@ -479,8 +488,8 @@ export default function Evolucao() {
                   <motion.div key={i} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.07 }}
                     className="aspect-[3/4] bg-dark-card border border-dark-border overflow-hidden cursor-pointer hover:border-lime-green/50 transition-colors group relative"
                   >
-                    {p.photo_url
-                      ? <img src={p.photo_url} alt={p.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    {(p.photo_url || p.photo_base64)
+                      ? <img src={p.photo_url ?? p.photo_base64} alt={p.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                       : <div className="w-full h-full flex flex-col items-center justify-center gap-2">
                           <Camera size={24} className="text-gray-600" />
                           <p className="text-gray-500 text-[10px] text-center px-2">{p.label}</p>

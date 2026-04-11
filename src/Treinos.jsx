@@ -1,28 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronUp, CheckCircle, Circle, Dumbbell, Clock, Zap, PlayCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, CheckCircle, Circle, Dumbbell, Clock, Zap, PlayCircle, BedDouble, RefreshCw } from 'lucide-react';
 import { workouts as workoutsApi } from './services/alunoApi';
 import { useBlockBack } from './hooks/useBlockBack';
 import BottomNav from './BottomNav';
 import AppFooter from './AppFooter';
 import { ShimmerButton } from './components/magicui/shimmer-button';
 
+const MAX_REST_DAYS = 3;
+
 const statusConfig = {
   done:     { border: 'border-lime-green/30', dot: 'bg-lime-green' },
   today:    { border: 'border-lime-green',    dot: 'bg-lime-green animate-pulse' },
-  rest:     { border: 'border-dark-border',   dot: 'bg-blue-400/40' },
+  rest:     { border: 'border-blue-400/30',   dot: 'bg-blue-400/40' },
   upcoming: { border: 'border-dark-border',   dot: 'bg-gray-600' },
   pending:  { border: 'border-dark-border',   dot: 'bg-gray-600' },
 };
 
 const WEEK_DAY_LABEL = { 1:'SEG', 2:'TER', 3:'QUA', 4:'QUI', 5:'SEX', 6:'SAB', 7:'DOM' };
 
-// Normaliza o objeto day vindo da API para o formato esperado pelo frontend
 const normalizeDay = (day) => ({
   ...day,
   day: day.day ?? WEEK_DAY_LABEL[day.week_day] ?? '?',
   status: day.is_rest ? 'rest' : (day.status === 'pending' ? 'upcoming' : (day.status ?? 'upcoming')),
+  isPast: !day.is_rest && (day.status === 'done'),
+  originalIsRest: day.is_rest ?? false,
 });
 
 const muscleColors = {
@@ -53,6 +56,8 @@ export default function Treinos() {
   const [checked, setChecked] = useState({});
   const [weights, setWeights] = useState({});
   const [activeLog, setActiveLog] = useState(null); // { logId, dayId }
+  // restOverrides: { [dayId]: true|false } — sobrescreve is_rest localmente para dias passados
+  const [restOverrides, setRestOverrides] = useState({});
 
   useEffect(() => {
     workoutsApi.plan()
@@ -120,7 +125,31 @@ export default function Treinos() {
     setWeights(prev => ({ ...prev, [`${dayId}-${exId}`]: val }));
   };
 
-  const days = plan?.days ?? [];
+  // Aplica overrides de descanso nos dias
+  const days = (plan?.days ?? []).map(d => {
+    if (restOverrides[d.id] === undefined) return d;
+    const isRest = restOverrides[d.id];
+    return { ...d, status: isRest ? 'rest' : 'done', is_rest: isRest };
+  });
+
+  // Alterna dia de descanso em dias passados, respeitando máximo de MAX_REST_DAYS
+  const toggleRestDay = (day) => {
+    const allDays = (plan?.days ?? []).map(d =>
+      restOverrides[d.id] === undefined ? d : { ...d, is_rest: restOverrides[d.id] }
+    );
+    const currentRestCount = allDays.filter(d => d.is_rest).length;
+    const isCurrentlyRest = day.status === 'rest';
+
+    if (!isCurrentlyRest && currentRestCount >= MAX_REST_DAYS) {
+      // Já tem 3 dias de descanso — não permite adicionar mais
+      return;
+    }
+
+    setRestOverrides(prev => ({ ...prev, [day.id]: !isCurrentlyRest }));
+    // Fecha o expand se estava aberto
+    if (expanded === day.id) setExpanded(null);
+  };
+
   const todayPlan = days.find(d => d.status === 'today');
 
   if (loading) return (
@@ -166,14 +195,33 @@ export default function Treinos() {
           </motion.div>
         )}
 
+        {/* Contador de descanso */}
+        {(() => {
+          const restCount = days.filter(d => d.status === 'rest').length;
+          const pastDays  = days.filter(d => d.status === 'done' || d.status === 'rest');
+          if (pastDays.length === 0) return null;
+          return (
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <BedDouble size={13} className="text-blue-400" />
+              <span>Dias de descanso: <span className={restCount >= MAX_REST_DAYS ? 'text-blue-400 font-bold' : 'text-gray-400'}>{restCount}/{MAX_REST_DAYS}</span></span>
+              {restCount >= MAX_REST_DAYS && <span className="text-blue-400/60">(limite atingido)</span>}
+            </div>
+          );
+        })()}
+
         {/* Lista da semana */}
         <div className="space-y-2">
           {days.map((day, i) => {
-            const cfg = statusConfig[day.status] ?? statusConfig.upcoming;
-            const isOpen = expanded === day.id;
-            const isActive = activeLog?.dayId === day.id;
+            const cfg        = statusConfig[day.status] ?? statusConfig.upcoming;
+            const isOpen     = expanded === day.id;
+            const isActive   = activeLog?.dayId === day.id;
             const dayExercises = exercises[day.id] ?? [];
-            const doneCount = dayExercises.filter(ex => checked[`${day.id}-${ex.id}`]).length;
+            const doneCount  = dayExercises.filter(ex => checked[`${day.id}-${ex.id}`]).length;
+            const isPast     = day.status === 'done' || day.status === 'rest';
+            const isFuture   = day.status === 'upcoming' || day.status === 'today';
+            const restCount  = days.filter(d => d.status === 'rest').length;
+            const canAddRest = restCount < MAX_REST_DAYS;
+            const isOverridden = restOverrides[day.id] !== undefined;
 
             return (
               <motion.div
@@ -184,12 +232,12 @@ export default function Treinos() {
                 className={`border ${cfg.border} bg-dark-card overflow-hidden`}
               >
                 {/* Cabeçalho do dia */}
-                <button
-                  onClick={() => day.status !== 'rest' && day.status !== 'upcoming' && toggleExpand(day)}
-                  className="w-full flex items-center justify-between p-4 text-left"
-                  disabled={day.status === 'rest' || day.status === 'upcoming'}
-                >
-                  <div className="flex items-center gap-3">
+                <div className="w-full flex items-center justify-between p-4">
+                  <button
+                    onClick={() => !isFuture && day.status !== 'rest' && toggleExpand(day)}
+                    className="flex items-center gap-3 flex-1 text-left"
+                    disabled={isFuture || day.status === 'rest'}
+                  >
                     <div className={`w-2 h-2 rounded-full ${cfg.dot}`} />
                     <div>
                       <div className="flex items-center gap-2">
@@ -197,14 +245,39 @@ export default function Treinos() {
                         {day.status === 'today' && (
                           <span className="bg-lime-green text-black text-[10px] font-bold px-2 py-0.5 uppercase">Hoje</span>
                         )}
+                        {isOverridden && (
+                          <span className="text-[10px] text-gray-600 border border-gray-700 px-1.5 py-0.5 flex items-center gap-1">
+                            <RefreshCw size={8} /> ajustado
+                          </span>
+                        )}
                       </div>
                       <p className={`font-bebas text-xl ${day.status === 'rest' ? 'text-gray-600' : 'text-white'}`}>
                         {day.name}
                       </p>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {day.status !== 'rest' && (
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    {/* Botão toggle descanso — só em dias passados, não em hoje/futuros */}
+                    {isPast && (
+                      <button
+                        onClick={() => toggleRestDay(day)}
+                        disabled={!canAddRest && day.status !== 'rest'}
+                        title={day.status === 'rest' ? 'Marcar como treino' : canAddRest ? 'Marcar como descanso' : 'Limite de 3 dias de descanso atingido'}
+                        className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 border transition-all
+                          ${ day.status === 'rest'
+                            ? 'border-blue-400/50 text-blue-400 hover:bg-blue-400/10'
+                            : canAddRest
+                              ? 'border-dark-border text-gray-600 hover:border-blue-400/50 hover:text-blue-400'
+                              : 'border-dark-border text-gray-700 cursor-not-allowed opacity-40'
+                          }`}
+                      >
+                        <BedDouble size={11} />
+                        {day.status === 'rest' ? 'Treino' : 'Descanso'}
+                      </button>
+                    )}
+
+                    {day.status !== 'rest' && !isFuture && (
                       <>
                         <span className="text-gray-500 text-xs flex items-center gap-1">
                           <Clock size={12} /> {day.duration_min} min
@@ -212,13 +285,18 @@ export default function Treinos() {
                         {day.status === 'done' && (
                           <span className="text-lime-green text-xs font-bold">✓ Feito</span>
                         )}
-                        {isOpen ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
+                        <button onClick={() => toggleExpand(day)} className="text-gray-400">
+                          {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                        </button>
                       </>
                     )}
-                    {day.status === 'rest'     && <span className="text-blue-400 text-xs">😴 Recuperação</span>}
-                    {day.status === 'upcoming'  && <span className="text-gray-600 text-xs uppercase tracking-wide">Bloqueado</span>}
+                    {day.status === 'rest'    && <span className="text-blue-400 text-xs">😴 Recuperação</span>}
+                    {day.status === 'upcoming' && <span className="text-gray-600 text-xs uppercase tracking-wide">Bloqueado</span>}
+                    {day.status === 'today'    && !activeLog && (
+                      <span className="text-gray-500 text-xs uppercase tracking-wide">Hoje</span>
+                    )}
                   </div>
-                </button>
+                </div>
 
                 {/* Exercícios expandidos */}
                 <AnimatePresence>
@@ -309,17 +387,18 @@ export default function Treinos() {
                           );
                         })}
 
+                        {/* Botão iniciar/finalizar — bloqueado para dias futuros */}
                         {isActive ? (
                           <ShimmerButton onClick={() => finishWorkout(day.id)} className="w-full mt-2 justify-center" shimmerColor="#ffffff" background="rgba(0,180,216,1)">
                             {doneCount === dayExercises.length ? '✓ Finalizar Treino' : `Salvar Progresso (${doneCount}/${dayExercises.length})`}
                           </ShimmerButton>
                         ) : (
-                          (day.status === 'today' || day.status === 'done') && (
+                          day.status === 'done' && (
                             <button
                               onClick={() => startWorkout(day)}
                               className="w-full mt-2 border-2 border-lime-green text-lime-green font-bold py-3 uppercase text-sm hover:bg-lime-green hover:text-black transition-all"
                             >
-                              {day.status === 'done' ? 'Refazer Treino ↺' : 'Iniciar Treino ▶'}
+                              Refazer Treino ↺
                             </button>
                           )
                         )}
