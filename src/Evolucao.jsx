@@ -43,15 +43,17 @@ const fmt2 = (v) => (typeof v === 'number' ? v.toFixed(2) : parseFloat(v || 0).t
 // Garante src válido para imagem base64 vinda da API
 const toImgSrc = (raw) => {
   if (!raw) return null;
-  if (raw.startsWith('data:')) return raw;
+  // Remove espaços, quebras de linha e caracteres inválidos que corrompem o base64
+  const clean = raw.replace(/[\s\r\n]/g, '');
+  if (clean.startsWith('data:')) return clean;
   // API retornou só o base64 puro sem prefixo — detecta tipo pelo magic bytes
-  const head = raw.slice(0, 8);
+  const head = clean.slice(0, 8);
   let mime = 'image/jpeg';
-  if (head.startsWith('/9j/'))          mime = 'image/jpeg';
-  else if (head.startsWith('iVBOR'))    mime = 'image/png';
-  else if (head.startsWith('R0lGOD'))   mime = 'image/gif';
-  else if (head.startsWith('UklGR'))    mime = 'image/webp';
-  return `data:${mime};base64,${raw}`;
+  if (head.startsWith('/9j/'))        mime = 'image/jpeg';
+  else if (head.startsWith('iVBOR')) mime = 'image/png';
+  else if (head.startsWith('R0lGO')) mime = 'image/gif';
+  else if (head.startsWith('UklGR')) mime = 'image/webp';
+  return `data:${mime};base64,${clean}`;
 };
 
 // Redimensiona e comprime imagem antes do upload (max 1200px, qualidade 0.8)
@@ -161,7 +163,9 @@ export default function Evolucao() {
         }
       } else if (t === 'Fotos') {
         const d = await progressApi.photos();
-        setPhotos(d.photos ?? []);
+        const list = d.photos ?? d.data ?? (Array.isArray(d) ? d : []);
+        console.log('[Fotos] raw sample:', list[0]?.photo_url?.slice(0, 80));
+        setPhotos(list);
       } else if (t === 'Conquistas') {
         const d = await progressApi.badges();
         setBadges({ earned: d.earned ?? [], locked: d.locked ?? [] });
@@ -561,6 +565,7 @@ export default function Evolucao() {
                         src={toImgSrc(p.photo_url)}
                         alt={p.label}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
+                        onError={(e) => console.error('[Foto] src inválido, primeiros 120 chars:', e.target.src?.slice(0, 120))}
                         onClick={() => setPhotoPreview({ src: toImgSrc(p.photo_url), label: p.label, date: p.recorded_at })}
                       />
                     ) : (
