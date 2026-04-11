@@ -215,15 +215,20 @@ export default function Evolucao() {
 
     await Promise.all(valid.map(async (file, idx) => {
       try {
-        const photo_url = await compressImage(file);
-        await progressApi.addPhoto({
-          photo_url,
+        const b64 = await compressImage(file);
+        // A API exige photo_url como HttpUrl válida.
+        // Enviamos o base64 como URL de dados no formato aceito pelo servidor.
+        // Se a API rejeitar (422), o status será 'error' e o usuário será avisado.
+        const res = await progressApi.addPhoto({
+          photo_url: `data:image/jpeg;base64,${b64}`,
           label: file.name,
           recorded_at: new Date().toISOString().split('T')[0],
         });
+        if (res?.detail || res?.error) throw new Error(JSON.stringify(res.detail));
         setUploadProgress(prev => prev.map((p, i) => i === idx ? { ...p, status: 'ok' } : p));
-      } catch {
-        setUploadProgress(prev => prev.map((p, i) => i === idx ? { ...p, status: 'error' } : p));
+      } catch (err) {
+        console.error('[Upload foto] erro:', err?.message ?? err);
+        setUploadProgress(prev => prev.map((p, i) => i === idx ? { ...p, status: 'error', msg: err?.message } : p));
       }
     }));
 
@@ -534,9 +539,9 @@ export default function Evolucao() {
                     <div className="w-full max-w-xs space-y-1 mt-1">
                       {uploadProgress.map((p, i) => (
                         <div key={i} className="flex items-center justify-between text-[10px]">
-                          <span className="text-gray-400 truncate max-w-[180px]">{p.name}</span>
+                          <span className="text-gray-400 truncate max-w-[160px]">{p.name}</span>
                           <span className={p.status === 'ok' ? 'text-lime-green' : p.status === 'error' ? 'text-red-400' : 'text-gray-500'}>
-                            {p.status === 'ok' ? '✓' : p.status === 'error' ? '✗' : '...'}
+                            {p.status === 'ok' ? '✓ Enviado' : p.status === 'error' ? '✗ Falhou — API não suporta base64' : '...'}
                           </span>
                         </div>
                       ))}
