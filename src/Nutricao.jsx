@@ -19,12 +19,19 @@ export default function Nutricao() {
 
   useEffect(() => {
     Promise.all([
-      nutritionApi.today(),
       nutritionApi.plan(),
+      nutritionApi.today(),
       nutritionApi.note(),
-    ]).then(([today, planData, noteData]) => {
-      setTodayData(today?.meals ? today : null);
-      setPlan(planData.detail ? null : (planData.plan ?? null));
+    ]).then(([planData, today, noteData]) => {
+      // plan: { plan: {...} } ou { id, name, ... } ou { detail: '...' }
+      const p = planData?.plan ?? (planData?.id ? planData : null);
+      setPlan(p);
+
+      // today: { meals: [...], totals: {...} } ou { data: { meals, totals } }
+      const t = today?.meals ? today : (today?.data?.meals ? today.data : null);
+      setTodayData(t);
+
+      // note: { message, nutritionist, crn, updated_at }
       setNote(noteData?.message ? noteData : null);
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
@@ -223,12 +230,12 @@ export default function Nutricao() {
                           {(meal.items ?? []).map((item, j) => (
                             <div key={j} className="grid grid-cols-5 gap-2 items-center bg-black/40 px-3 py-2">
                               <div className="col-span-2">
-                                <p className="text-white text-xs font-medium">{item.food_name}</p>
-                                <p className="text-gray-600 text-[10px]">{item.quantity}</p>
+                                <p className="text-white text-xs font-medium">{item.food_name ?? item.name}</p>
+                                <p className="text-gray-600 text-[10px]">{item.quantity ?? (item.quantity_g ? `${item.quantity_g}g` : '')}</p>
                               </div>
-                              <span className="text-red-400 text-xs text-center font-semibold">{item.protein_g}g</span>
-                              <span className="text-yellow-400 text-xs text-center font-semibold">{item.carbs_g}g</span>
-                              <span className="text-blue-400 text-xs text-center font-semibold">{item.fat_g}g</span>
+                              <span className="text-red-400 text-xs text-center font-semibold">{item.protein_g ?? 0}g</span>
+                              <span className="text-yellow-400 text-xs text-center font-semibold">{item.carbs_g ?? 0}g</span>
+                              <span className="text-blue-400 text-xs text-center font-semibold">{item.fat_g ?? 0}g</span>
                             </div>
                           ))}
                         </div>

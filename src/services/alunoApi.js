@@ -105,13 +105,12 @@ export const progress = {
 // 🥗 NUTRIÇÃO
 // ─────────────────────────────────────────────
 export const nutrition = {
-  plan:           ()                   => get(`${BASE}/aluno/nutrition/plan`),
-  planMeals:      (planId)             => get(`${BASE}/aluno/nutrition/plan/${planId}/meals`),
-  today:          ()                   => get(`${BASE}/aluno/nutrition/today`),
-  logMeal:        (meal_id, consumed_at) => post(`${BASE}/aluno/nutrition/logs`, { meal_id, consumed_at }),
-  removeLog:      (mealId)             => post(`${BASE}/aluno/nutrition/logs/${mealId}/delete`),
-  note:           ()                   => get(`${BASE}/aluno/nutrition/note`),
-  history:        ()                   => get(`${BASE}/aluno/nutrition/history`),
+  plan:      ()                        => get(`${BASE}/nutrition/plan`),
+  today:     ()                        => get(`${BASE}/nutrition/today`),
+  note:      ()                        => get(`${BASE}/nutrition/note`),
+  logMeal:   (meal_id, consumed_at)    => post(`${BASE}/nutrition/logs`, { meal_id, consumed_at }),
+  removeLog: (mealId)                  => post(`${BASE}/nutrition/logs/${mealId}/delete`),
+  history:   ()                        => get(`${BASE}/nutrition/history`),
 };
 
 // ─────────────────────────────────────────────
