@@ -74,6 +74,9 @@ export default function Evolucao() {
   const [novaMedida, setNovaMedida]   = useState({ tipo: 'Cintura', valor: '', unidade: 'cm' });
   const [saving, setSaving]           = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState([]); // [{ name, status: 'pending'|'ok'|'error' }]
+  const [photoPreview, setPhotoPreview]     = useState(null); // { src, file } para preview
+  const [deletingPhoto, setDeletingPhoto]   = useState(null);
 
   useEffect(() => { loadTab(tab); }, [tab, weightPeriod]);
 
@@ -159,25 +162,47 @@ export default function Evolucao() {
   const handlePhotoUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
+
+    // Valida tipo e tamanho (max 5MB por foto)
+    const valid = files.filter(f => f.type.startsWith('image/') && f.size <= 5 * 1024 * 1024);
+    if (!valid.length) return;
+
     setUploadingPhoto(true);
+    setUploadProgress(valid.map(f => ({ name: f.name, status: 'pending' })));
+
     const toBase64 = (file) => new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => resolve(reader.result); // inclui prefixo data:image/...;base64,
+      reader.onload  = () => resolve(reader.result);
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
-    for (const file of files) {
-      const photo_base64 = await toBase64(file).catch(() => null);
-      if (!photo_base64) continue;
-      await progressApi.addPhoto({
-        photo_base64,
-        label: file.name,
-        recorded_at: new Date().toISOString().split('T')[0],
-      }).catch(() => {});
-    }
-    setUploadingPhoto(false);
+
+    await Promise.all(valid.map(async (file, idx) => {
+      try {
+        const photo_base64 = await toBase64(file);
+        await progressApi.addPhoto({
+          photo_base64,
+          label: file.name,
+          recorded_at: new Date().toISOString().split('T')[0],
+        });
+        setUploadProgress(prev => prev.map((p, i) => i === idx ? { ...p, status: 'ok' } : p));
+      } catch {
+        setUploadProgress(prev => prev.map((p, i) => i === idx ? { ...p, status: 'error' } : p));
+      }
+    }));
+
     e.target.value = '';
+    setUploadingPhoto(false);
+    setTimeout(() => setUploadProgress([]), 2000);
     loadTab('Fotos');
+  };
+
+  const handleDeletePhoto = async (photo) => {
+    if (!photo.id) return;
+    setDeletingPhoto(photo.id);
+    await progressApi.deletePhoto(photo.id).catch(() => {});
+    setPhotos(prev => prev.filter(p => p.id !== photo.id));
+    setDeletingPhoto(null);
   };
 
   const saveMedida = async () => {
@@ -456,7 +481,7 @@ export default function Evolucao() {
 
             {/* Área de upload */}
             <label className={`flex flex-col items-center justify-center gap-3 border-2 border-dashed p-6 cursor-pointer transition-all
-              ${uploadingPhoto ? 'border-lime-green/50 bg-lime-green/5' : 'border-dark-border hover:border-lime-green/40 hover:bg-white/3'}`}>
+              ${uploadingPhoto ? 'border-lime-green/50 bg-lime-green/5 cursor-not-allowed' : 'border-dark-border hover:border-lime-green/40 hover:bg-white/3'}`}>
               <input
                 type="file"
                 accept="image/*"
@@ -469,43 +494,79 @@ export default function Evolucao() {
                 <>
                   <Upload size={28} className="text-lime-green animate-bounce" />
                   <p className="text-lime-green text-sm font-semibold">Enviando fotos...</p>
+                  {uploadProgress.length > 0 && (
+                    <div className="w-full max-w-xs space-y-1 mt-1">
+                      {uploadProgress.map((p, i) => (
+                        <div key={i} className="flex items-center justify-between text-[10px]">
+                          <span className="text-gray-400 truncate max-w-[180px]">{p.name}</span>
+                          <span className={p.status === 'ok' ? 'text-lime-green' : p.status === 'error' ? 'text-red-400' : 'text-gray-500'}>
+                            {p.status === 'ok' ? '✓' : p.status === 'error' ? '✗' : '...'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </>
               ) : (
                 <>
                   <ImagePlus size={28} className="text-gray-500" />
                   <div className="text-center">
                     <p className="text-white text-sm font-semibold">Adicionar fotos ao álbum</p>
-                    <p className="text-gray-500 text-xs mt-1">Toque para selecionar · múltiplas fotos permitidas</p>
+                    <p className="text-gray-500 text-xs mt-1">Toque para selecionar · múltiplas fotos · máx. 5MB cada</p>
                   </div>
                 </>
               )}
             </label>
 
             {/* Grid de fotos */}
-            {photos.length > 0 && (
+            {loading ? (
+              <p className="text-center text-gray-600 text-xs py-6">Carregando...</p>
+            ) : photos.length > 0 ? (
               <div className="grid grid-cols-3 gap-2">
                 {photos.map((p, i) => (
-                  <motion.div key={i} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.07 }}
-                    className="aspect-[3/4] bg-dark-card border border-dark-border overflow-hidden cursor-pointer hover:border-lime-green/50 transition-colors group relative"
+                  <motion.div
+                    key={p.id ?? i}
+                    initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}
+                    className="aspect-[3/4] bg-dark-card border border-dark-border overflow-hidden relative group"
                   >
-                    {(p.photo_url || p.photo_base64)
-                      ? <img src={p.photo_url ?? p.photo_base64} alt={p.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                      : <div className="w-full h-full flex flex-col items-center justify-center gap-2">
-                          <Camera size={24} className="text-gray-600" />
-                          <p className="text-gray-500 text-[10px] text-center px-2">{p.label}</p>
-                        </div>
-                    }
+                    {/* Imagem */}
+                    {(p.photo_url || p.photo_base64) ? (
+                      <img
+                        src={p.photo_url ?? p.photo_base64}
+                        alt={p.label}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
+                        onClick={() => setPhotoPreview({ src: p.photo_url ?? p.photo_base64, label: p.label, date: p.recorded_at })}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+                        <Camera size={24} className="text-gray-600" />
+                        <p className="text-gray-500 text-[10px] text-center px-2">{p.label}</p>
+                      </div>
+                    )}
+
+                    {/* Data */}
                     {p.recorded_at && (
                       <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-2 py-1">
-                        <p className="text-gray-300 text-[9px]">{p.recorded_at}</p>
+                        <p className="text-gray-300 text-[9px]">{fmtDate(p.recorded_at)}</p>
                       </div>
+                    )}
+
+                    {/* Botão deletar */}
+                    {p.id && (
+                      <button
+                        onClick={() => handleDeletePhoto(p)}
+                        disabled={deletingPhoto === p.id}
+                        className="absolute top-1 right-1 bg-black/70 text-red-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/20"
+                      >
+                        {deletingPhoto === p.id
+                          ? <span className="text-[9px] px-0.5">...</span>
+                          : <X size={12} />}
+                      </button>
                     )}
                   </motion.div>
                 ))}
               </div>
-            )}
-
-            {photos.length === 0 && !uploadingPhoto && (
+            ) : (
               <div className="text-center py-8">
                 <Camera size={40} className="text-gray-700 mx-auto mb-3" />
                 <p className="text-gray-500 text-sm">Nenhuma foto ainda</p>
@@ -516,6 +577,28 @@ export default function Evolucao() {
             <p className="text-gray-600 text-xs text-center">🔒 Fotos privadas · visíveis apenas para você e seu personal</p>
           </motion.div>
         )}
+
+        {/* Preview fullscreen */}
+        <AnimatePresence>
+          {photoPreview && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center p-4"
+              onClick={() => setPhotoPreview(null)}
+            >
+              <button className="absolute top-4 right-4 text-gray-400 hover:text-white"><X size={24} /></button>
+              <img
+                src={photoPreview.src}
+                alt={photoPreview.label}
+                className="max-w-full max-h-[80vh] object-contain"
+                onClick={e => e.stopPropagation()}
+              />
+              {photoPreview.date && (
+                <p className="text-gray-500 text-xs mt-3">{fmtDate(photoPreview.date)}</p>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Tab: Conquistas */}
         {tab === 'Conquistas' && (
