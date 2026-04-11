@@ -181,7 +181,7 @@ export default function Evolucao() {
       try {
         const photo_base64 = await toBase64(file);
         await progressApi.addPhoto({
-          photo_base64,
+          photo_url: photo_base64,
           label: file.name,
           recorded_at: new Date().toISOString().split('T')[0],
         });
