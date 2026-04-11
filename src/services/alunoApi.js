@@ -77,13 +77,13 @@ export const users = {
 // 🏋️ TREINOS
 // ─────────────────────────────────────────────
 export const workouts = {
-  plan:          ()                  => get(`${BASE}/aluno/workouts/plan`),
-  dayExercises:  (dayId)             => get(`${BASE}/aluno/workouts/days/${dayId}/exercises`),
-  startLog:      (day_id)            => post(`${BASE}/aluno/workouts/logs`, { day_id }),
-  saveExercises: (logId, exercises)  => post(`${BASE}/aluno/workouts/logs/${logId}/exercises`, { exercises }),
-  finishLog:     (logId, completed)  => post(`${BASE}/aluno/workouts/logs/${logId}/finish`, { completed }),
-  history:       ()                  => get(`${BASE}/aluno/workouts/logs/history`),
-  streak:        ()                  => get(`${BASE}/aluno/workouts/streak`),
+  plan:          ()                  => get(`${BASE}/workouts/plan`),
+  dayExercises:  (dayId)             => get(`${BASE}/workouts/days/${dayId}/exercises`),
+  startLog:      (day_id)            => post(`${BASE}/workouts/logs`, { day_id }),
+  saveExercises: (logId, exercises)  => post(`${BASE}/workouts/logs/${logId}/exercises`, { exercises }),
+  finishLog:     (logId, completed)  => post(`${BASE}/workouts/logs/${logId}/finish`, { completed }),
+  history:       ()                  => get(`${BASE}/workouts/logs/history`),
+  streak:        ()                  => get(`${BASE}/workouts/streak`),
 };
 
 // ─────────────────────────────────────────────

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2, X, Save, ChevronDown, ChevronRight, Dumbbell } from 'lucide-react';
-import { adminWorkouts } from '../services/adminApi';
+import { adminWorkouts, adminUsers } from '../services/adminApi';
 
 const MUSCLES   = ['Peito', 'Costas', 'Pernas', 'Quadríceps', 'Posterior', 'Glúteos', 'Ombro', 'Tríceps', 'Bíceps', 'Abdômen', 'Core', 'Panturrilha', 'Trapézio', 'Full Body', 'Cardio'];
 const WEEK_DAYS = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB', 'DOM'];
 
-const emptyPlan = { name: '', description: '', goal: '' };
+const emptyPlan = { user_id: '', name: '', description: '', goal: '' };
 const emptyDay  = { name: '', day_of_week: 'SEG', duration_min: 60, is_rest: false };
 const emptyEx   = { name: '', sets: 3, reps: '12', rest_seconds: 60, muscle_group: 'Peito', video_url: '', notes: '' };
 
@@ -41,6 +41,7 @@ const inp = 'w-full bg-black border border-dark-border text-white text-sm p-2.5 
 
 export default function AdminTreinos() {
   const [plans, setPlans]         = useState([]);
+  const [students, setStudents]   = useState([]);
   const [loading, setLoading]     = useState(true);
   const [expanded, setExpanded]   = useState(null);
   const [days, setDays]           = useState({});       // planId → days[]
@@ -62,9 +63,13 @@ export default function AdminTreinos() {
   const normalizeExs   = (d) => Array.isArray(d) ? d : (d?.exercises ?? d?.data ?? []);
 
   useEffect(() => {
-    adminWorkouts.plans()
-      .then(d => setPlans(normalizePlans(d)))
-      .finally(() => setLoading(false));
+    Promise.all([
+      adminWorkouts.plans(),
+      adminUsers.listAll(),
+    ]).then(([p, u]) => {
+      setPlans(normalizePlans(p));
+      setStudents(Array.isArray(u) ? u : (u?.users ?? u?.data ?? []));
+    }).finally(() => setLoading(false));
   }, []);
 
   const togglePlan = async (planId) => {
@@ -90,7 +95,13 @@ export default function AdminTreinos() {
   const savePlan = async () => {
     setSaving(true);
     if (planModal === 'new') {
-      await adminWorkouts.createPlan(planForm).catch(() => null);
+      const body = {
+        user_id: Number(planForm.user_id),
+        name: planForm.name,
+        ...(planForm.goal        && { goal: planForm.goal }),
+        ...(planForm.description && { description: planForm.description }),
+      };
+      await adminWorkouts.createPlan(body).catch(() => null);
       const updated = await adminWorkouts.plans().catch(() => null);
       if (updated) setPlans(normalizePlans(updated));
     } else {
@@ -273,6 +284,16 @@ export default function AdminTreinos() {
       {/* Modal Plano */}
       {planModal !== null && (
         <Modal title={planModal === 'new' ? 'Novo Plano' : 'Editar Plano'} onClose={() => setPlanModal(null)}>
+          {planModal === 'new' && (
+            <Field label="Aluno">
+              <select className={inp} value={planForm.user_id} onChange={e => setPlanForm({ ...planForm, user_id: e.target.value })}>
+                <option value="">Selecione o aluno...</option>
+                {students.map(s => (
+                  <option key={s.id ?? s.id_user} value={s.id ?? s.id_user}>{s.name} — {s.email}</option>
+                ))}
+              </select>
+            </Field>
+          )}
           <Field label="Nome do plano">
             <input className={inp} value={planForm.name} onChange={e => setPlanForm({ ...planForm, name: e.target.value })} placeholder="Ex: Hipertrofia - Julho" />
           </Field>
@@ -282,7 +303,7 @@ export default function AdminTreinos() {
           <Field label="Descrição">
             <textarea rows={2} className={`${inp} resize-none`} value={planForm.description} onChange={e => setPlanForm({ ...planForm, description: e.target.value })} />
           </Field>
-          <button onClick={savePlan} disabled={saving || !planForm.name}
+          <button onClick={savePlan} disabled={saving || !planForm.name || (planModal === 'new' && !planForm.user_id)}
             className="w-full flex items-center justify-center gap-2 bg-lime-green text-black font-bold py-3 uppercase text-sm hover:bg-neon-green transition-colors disabled:opacity-50">
             <Save size={15} /> {saving ? 'Salvando...' : 'Salvar Plano'}
           </button>
