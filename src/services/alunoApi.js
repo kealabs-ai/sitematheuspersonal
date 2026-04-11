@@ -76,15 +76,14 @@ export const users = {
 // ─────────────────────────────────────────────
 // 🏋️ TREINOS
 // ─────────────────────────────────────────────
-const W = 'https://srv1023256.hstgr.cloud';
 export const workouts = {
-  plan:          ()                  => get(`${W}/workouts/plan`),
-  dayExercises:  (dayId)             => get(`${W}/workouts/days/${dayId}/exercises`),
-  startLog:      (day_id)            => post(`${W}/workouts/logs`, { day_id }),
-  saveExercises: (logId, exercises)  => post(`${W}/workouts/logs/${logId}/exercises`, { exercises }),
-  finishLog:     (logId, completed)  => post(`${W}/workouts/logs/${logId}/finish`, { completed }),
-  history:       ()                  => get(`${W}/workouts/logs/history`),
-  streak:        ()                  => get(`${W}/workouts/streak`),
+  plan:          ()                  => get(`${BASE}/aluno/workouts/plan`),
+  dayExercises:  (dayId)             => get(`${BASE}/aluno/workouts/days/${dayId}/exercises`),
+  startLog:      (day_id)            => post(`${BASE}/aluno/workouts/logs`, { day_id }),
+  saveExercises: (logId, exercises)  => post(`${BASE}/aluno/workouts/logs/${logId}/exercises`, { exercises }),
+  finishLog:     (logId, completed)  => post(`${BASE}/aluno/workouts/logs/${logId}/finish`, { completed }),
+  history:       ()                  => get(`${BASE}/aluno/workouts/logs/history`),
+  streak:        ()                  => get(`${BASE}/aluno/workouts/streak`),
 };
 
 // ─────────────────────────────────────────────
