@@ -87,14 +87,16 @@ export default function AdminNutricao() {
   const savePlan = async () => {
     setSaving(true);
     const body = {
-      ...planForm,
-      user_id: Number(planForm.user_id),
-      nutritionist_id: Number(planForm.nutritionist_id),
-      goal_calories: Number(planForm.goal_calories),
-      goal_protein_g: Number(planForm.goal_protein_g),
-      goal_carbs_g: Number(planForm.goal_carbs_g),
-      goal_fat_g: Number(planForm.goal_fat_g),
-      water_goal_ml: Number(planForm.water_goal_ml),
+      user_id:        Number(planForm.user_id),
+      name:           planForm.name,
+      ...(planForm.goal_calories  && { goal_calories:  Number(planForm.goal_calories)  }),
+      ...(planForm.goal_protein_g && { goal_protein_g: Number(planForm.goal_protein_g) }),
+      ...(planForm.goal_carbs_g   && { goal_carbs_g:   Number(planForm.goal_carbs_g)   }),
+      ...(planForm.goal_fat_g     && { goal_fat_g:     Number(planForm.goal_fat_g)     }),
+      ...(planForm.water_goal_ml  && { water_goal_ml:  Number(planForm.water_goal_ml)  }),
+      ...(planForm.valid_from     && { valid_from:     planForm.valid_from             }),
+      ...(planForm.valid_until    && { valid_until:    planForm.valid_until            }),
+      active: planForm.active,
     };
     if (planModal === 'new') {
       await adminNutrition.createPlan(body).catch(() => null);
