@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, X, Save, ChevronDown, ChevronRight, Dumbbell } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Save, ChevronDown, ChevronRight, Dumbbell, RefreshCw } from 'lucide-react';
 import { adminWorkouts, adminUsers } from '../services/adminApi';
 
-const MUSCLES   = ['Peito', 'Costas', 'Pernas', 'Quadríceps', 'Posterior', 'Glúteos', 'Ombro', 'Tríceps', 'Bíceps', 'Abdômen', 'Core', 'Panturrilha', 'Trapézio', 'Full Body', 'Cardio'];
-const WEEK_DAYS = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB', 'DOM'];
+const MUSCLES   = ['Peito','Costas','Pernas','Quadríceps','Posterior','Glúteos','Ombro','Tríceps','Bíceps','Abdômen','Core','Panturrilha','Trapézio','Full Body','Cardio'];
+const WEEK_DAYS = ['SEG','TER','QUA','QUI','SEX','SAB','DOM'];
 
-const emptyPlan = { user_id: '', name: '', description: '', goal: '' };
+const emptyTpl  = { name: '', description: '', goal: '' };
 const emptyDay  = { name: '', day_of_week: 'SEG', duration_min: 60, is_rest: false };
 const emptyEx   = { name: '', sets: 3, reps: '12', rest_seconds: 60, muscle_group: 'Peito', video_url: '', notes: '' };
+const emptyCycle = { user_id: '', template_id: '', start_date: '', notes: '' };
 
-// Resolve ID de plano, dia ou exercício — aceita qualquer campo que a API retorne
-const pid = (p) => p?.plan_id   ?? p?.id_plan   ?? p?.id ?? p?.id_user;
-const did = (d) => d?.day_id    ?? d?.id_day    ?? d?.id ?? d?.id_user;
-const eid = (e) => e?.exercise_id ?? e?.id_exercise ?? e?.id ?? e?.id_user;
+const tid = (t) => t?.template_id ?? t?.id_template ?? t?.id;
+const did = (d) => d?.day_id      ?? d?.id_day      ?? d?.id;
+const eid = (e) => e?.exercise_id ?? e?.id_exercise ?? e?.id;
+
+const norm = (d, key) => Array.isArray(d) ? d : (d?.[key] ?? d?.data ?? []);
+
+const inp = 'w-full bg-black border border-dark-border text-white text-sm p-2.5 focus:outline-none focus:border-lime-green transition-colors';
 
 function Modal({ title, onClose, children }) {
   return (
@@ -37,106 +41,95 @@ function Field({ label, children }) {
   );
 }
 
-const inp = 'w-full bg-black border border-dark-border text-white text-sm p-2.5 focus:outline-none focus:border-lime-green transition-colors';
-
 export default function AdminTreinos() {
-  const [plans, setPlans]         = useState([]);
-  const [students, setStudents]   = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [expanded, setExpanded]   = useState(null);
-  const [days, setDays]           = useState({});       // planId → days[]
-  const [exercises, setExercises] = useState({});       // dayId  → exercises[]
-  const [loadingDays, setLoadingDays] = useState({});   // planId → bool
-  const [loadingExs, setLoadingExs]   = useState({});   // dayId  → bool
+  const [templates, setTemplates]   = useState([]);
+  const [students, setStudents]     = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [expanded, setExpanded]     = useState(null);
+  const [days, setDays]             = useState({});
+  const [exercises, setExercises]   = useState({});
+  const [loadingDays, setLoadingDays] = useState({});
+  const [loadingExs, setLoadingExs]   = useState({});
 
-  const [planModal, setPlanModal] = useState(null);
+  const [tplModal, setTplModal]   = useState(null);
   const [dayModal, setDayModal]   = useState(null);
   const [exModal, setExModal]     = useState(null);
+  const [cycleModal, setCycleModal] = useState(false);
 
-  const [planForm, setPlanForm]   = useState(emptyPlan);
+  const [tplForm, setTplForm]     = useState(emptyTpl);
   const [dayForm, setDayForm]     = useState(emptyDay);
   const [exForm, setExForm]       = useState(emptyEx);
+  const [cycleForm, setCycleForm] = useState(emptyCycle);
   const [saving, setSaving]       = useState(false);
 
-  const normalizePlans = (d) => Array.isArray(d) ? d : (d?.plans ?? d?.data ?? []);
-  const normalizeDays  = (d) => Array.isArray(d) ? d : (d?.days  ?? d?.data ?? []);
-  const normalizeExs   = (d) => Array.isArray(d) ? d : (d?.exercises ?? d?.data ?? []);
-
   useEffect(() => {
-    Promise.all([
-      adminWorkouts.plans(),
-      adminUsers.listAll(),
-    ]).then(([p, u]) => {
-      setPlans(normalizePlans(p));
-      setStudents(Array.isArray(u) ? u : (u?.users ?? u?.data ?? []));
-    }).finally(() => setLoading(false));
+    Promise.all([adminWorkouts.templates(), adminUsers.listAll()])
+      .then(([t, u]) => {
+        setTemplates(norm(t, 'templates'));
+        setStudents(norm(u, 'users'));
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  const togglePlan = async (planId) => {
-    if (expanded === planId) { setExpanded(null); return; }
-    setExpanded(planId);
-    if (!days[planId]) {
-      setLoadingDays(prev => ({ ...prev, [planId]: true }));
-      const d = await adminWorkouts.planDays(planId).catch(() => ({}));
-      setDays(prev => ({ ...prev, [planId]: normalizeDays(d) }));
-      setLoadingDays(prev => ({ ...prev, [planId]: false }));
+  const toggleTemplate = async (id) => {
+    if (expanded === id) { setExpanded(null); return; }
+    setExpanded(id);
+    if (!days[id]) {
+      setLoadingDays(p => ({ ...p, [id]: true }));
+      const d = await adminWorkouts.templateDays(id).catch(() => ({}));
+      setDays(p => ({ ...p, [id]: norm(d, 'days') }));
+      setLoadingDays(p => ({ ...p, [id]: false }));
     }
   };
 
   const loadExercises = async (dayId) => {
     if (exercises[dayId] !== undefined) return;
-    setLoadingExs(prev => ({ ...prev, [dayId]: true }));
+    setLoadingExs(p => ({ ...p, [dayId]: true }));
     const d = await adminWorkouts.dayExercises(dayId).catch(() => ({}));
-    setExercises(prev => ({ ...prev, [dayId]: normalizeExs(d) }));
-    setLoadingExs(prev => ({ ...prev, [dayId]: false }));
+    setExercises(p => ({ ...p, [dayId]: norm(d, 'exercises') }));
+    setLoadingExs(p => ({ ...p, [dayId]: false }));
   };
 
-  // ── Plano ──
-  const savePlan = async () => {
+  // ── Template ──
+  const saveTpl = async () => {
     setSaving(true);
-    if (planModal === 'new') {
-      const body = {
-        user_id: Number(planForm.user_id),
-        name: planForm.name,
-        ...(planForm.goal        && { goal: planForm.goal }),
-        ...(planForm.description && { description: planForm.description }),
-      };
-      await adminWorkouts.createPlan(body).catch(() => null);
-      const updated = await adminWorkouts.plans().catch(() => null);
-      if (updated) setPlans(normalizePlans(updated));
+    if (tplModal === 'new') {
+      await adminWorkouts.createTemplate(tplForm).catch(() => null);
+      const updated = await adminWorkouts.templates().catch(() => null);
+      if (updated) setTemplates(norm(updated, 'templates'));
     } else {
-      await adminWorkouts.updatePlan(pid(planModal), planForm).catch(() => {});
-      setPlans(prev => prev.map(p => pid(p) === pid(planModal) ? { ...p, ...planForm } : p));
+      await adminWorkouts.updateTemplate(tid(tplModal), tplForm).catch(() => {});
+      setTemplates(p => p.map(t => tid(t) === tid(tplModal) ? { ...t, ...tplForm } : t));
     }
-    setSaving(false); setPlanModal(null);
+    setSaving(false); setTplModal(null);
   };
 
-  const deletePlan = async (planId) => {
-    if (!confirm('Excluir este plano?')) return;
-    await adminWorkouts.deletePlan(planId).catch(() => {});
-    setPlans(prev => prev.filter(p => pid(p) !== planId));
-    if (expanded === planId) setExpanded(null);
+  const deleteTpl = async (id) => {
+    if (!confirm('Excluir este template?')) return;
+    await adminWorkouts.deleteTemplate(id).catch(() => {});
+    setTemplates(p => p.filter(t => tid(t) !== id));
+    if (expanded === id) setExpanded(null);
   };
 
   // ── Dia ──
   const saveDay = async () => {
     setSaving(true);
-    const { planId, day } = dayModal;
+    const { templateId, day } = dayModal;
     if (!day) {
-      await adminWorkouts.createDay(planId, dayForm).catch(() => null);
-      const updated = await adminWorkouts.planDays(planId).catch(() => null);
-      if (updated) setDays(prev => ({ ...prev, [planId]: normalizeDays(updated) }));
+      await adminWorkouts.createDay(templateId, dayForm).catch(() => null);
+      const updated = await adminWorkouts.templateDays(templateId).catch(() => null);
+      if (updated) setDays(p => ({ ...p, [templateId]: norm(updated, 'days') }));
     } else {
       await adminWorkouts.updateDay(did(day), dayForm).catch(() => {});
-      setDays(prev => ({ ...prev, [planId]: (prev[planId] ?? []).map(d => did(d) === did(day) ? { ...d, ...dayForm } : d) }));
+      setDays(p => ({ ...p, [templateId]: (p[templateId] ?? []).map(d => did(d) === did(day) ? { ...d, ...dayForm } : d) }));
     }
     setSaving(false); setDayModal(null);
   };
 
-  const deleteDay = async (planId, dayId) => {
+  const deleteDay = async (templateId, dayId) => {
     if (!confirm('Excluir este dia?')) return;
     await adminWorkouts.deleteDay(dayId).catch(() => {});
-    setDays(prev => ({ ...prev, [planId]: (prev[planId] ?? []).filter(d => did(d) !== dayId) }));
+    setDays(p => ({ ...p, [templateId]: (p[templateId] ?? []).filter(d => did(d) !== dayId) }));
   };
 
   // ── Exercício ──
@@ -146,10 +139,10 @@ export default function AdminTreinos() {
     if (!ex) {
       await adminWorkouts.createExercise(dayId, exForm).catch(() => null);
       const updated = await adminWorkouts.dayExercises(dayId).catch(() => null);
-      if (updated) setExercises(prev => ({ ...prev, [dayId]: normalizeExs(updated) }));
+      if (updated) setExercises(p => ({ ...p, [dayId]: norm(updated, 'exercises') }));
     } else {
       await adminWorkouts.updateExercise(eid(ex), exForm).catch(() => {});
-      setExercises(prev => ({ ...prev, [dayId]: (prev[dayId] ?? []).map(e => eid(e) === eid(ex) ? { ...e, ...exForm } : e) }));
+      setExercises(p => ({ ...p, [dayId]: (p[dayId] ?? []).map(e => eid(e) === eid(ex) ? { ...e, ...exForm } : e) }));
     }
     setSaving(false); setExModal(null);
   };
@@ -157,92 +150,104 @@ export default function AdminTreinos() {
   const deleteEx = async (dayId, exId) => {
     if (!confirm('Excluir exercício?')) return;
     await adminWorkouts.deleteExercise(exId).catch(() => {});
-    setExercises(prev => ({ ...prev, [dayId]: (prev[dayId] ?? []).filter(e => eid(e) !== exId) }));
+    setExercises(p => ({ ...p, [dayId]: (p[dayId] ?? []).filter(e => eid(e) !== exId) }));
+  };
+
+  // ── Ciclo ──
+  const saveCycle = async () => {
+    setSaving(true);
+    await adminWorkouts.createCycle({
+      user_id:     Number(cycleForm.user_id),
+      template_id: Number(cycleForm.template_id),
+      start_date:  cycleForm.start_date,
+      ...(cycleForm.notes && { notes: cycleForm.notes }),
+    }).catch(() => null);
+    setSaving(false); setCycleModal(false); setCycleForm(emptyCycle);
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <button onClick={() => { setPlanForm(emptyPlan); setPlanModal('new'); }}
+      <div className="flex justify-end gap-2">
+        <button onClick={() => { setCycleForm(emptyCycle); setCycleModal(true); }}
+          className="flex items-center gap-2 bg-dark-card border border-dark-border text-gray-300 font-bold px-4 py-2.5 text-sm uppercase hover:border-lime-green hover:text-lime-green transition-colors">
+          <RefreshCw size={14} /> Atribuir Ciclo
+        </button>
+        <button onClick={() => { setTplForm(emptyTpl); setTplModal('new'); }}
           className="flex items-center gap-2 bg-lime-green text-black font-bold px-4 py-2.5 text-sm uppercase hover:bg-neon-green transition-colors">
-          <Plus size={16} /> Novo Plano
+          <Plus size={16} /> Novo Template
         </button>
       </div>
 
       {loading ? (
         <p className="text-gray-500 text-sm animate-pulse">Carregando...</p>
-      ) : plans.length === 0 ? (
+      ) : templates.length === 0 ? (
         <div className="text-center py-12">
           <Dumbbell size={40} className="text-gray-700 mx-auto mb-3" />
-          <p className="text-gray-600 text-sm">Nenhum plano criado.</p>
+          <p className="text-gray-600 text-sm">Nenhum template criado.</p>
         </div>
       ) : (
         <div className="space-y-2">
-          {plans.map((plan, pi) => (
-            <div key={pid(plan) ?? pi} className="border border-dark-border bg-dark-card overflow-hidden">
+          {templates.map((tpl, i) => (
+            <div key={tid(tpl) ?? i} className="border border-dark-border bg-dark-card overflow-hidden">
 
-              {/* Cabeçalho do plano */}
+              {/* Cabeçalho */}
               <div className="flex items-center justify-between px-4 py-3">
-                <button onClick={() => togglePlan(pid(plan))} className="flex items-center gap-3 flex-1 text-left min-w-0">
-                  {expanded === pid(plan)
+                <button onClick={() => toggleTemplate(tid(tpl))} className="flex items-center gap-3 flex-1 text-left min-w-0">
+                  {expanded === tid(tpl)
                     ? <ChevronDown size={16} className="text-lime-green shrink-0" />
                     : <ChevronRight size={16} className="text-gray-500 shrink-0" />}
                   <div className="min-w-0">
-                    <p className="text-white font-semibold text-sm truncate">{plan.name}</p>
-                    {plan.description && <p className="text-gray-500 text-xs truncate">{plan.description}</p>}
+                    <p className="text-white font-semibold text-sm truncate">{tpl.name}</p>
+                    {tpl.description && <p className="text-gray-500 text-xs truncate">{tpl.description}</p>}
                   </div>
-                  {plan.goal && <span className="text-[10px] text-gray-500 border border-dark-border px-2 py-0.5 ml-2 shrink-0">{plan.goal}</span>}
-                  {plan.user_name && <span className="text-[10px] text-lime-green ml-2 shrink-0">{plan.user_name}</span>}
+                  {tpl.goal && <span className="text-[10px] text-gray-500 border border-dark-border px-2 py-0.5 ml-2 shrink-0">{tpl.goal}</span>}
                 </button>
                 <div className="flex gap-1 shrink-0 ml-2">
-                  <button onClick={() => { setPlanForm({ name: plan.name, description: plan.description ?? '', goal: plan.goal ?? '' }); setPlanModal(plan); }}
+                  <button onClick={() => { setTplForm({ name: tpl.name, description: tpl.description ?? '', goal: tpl.goal ?? '' }); setTplModal(tpl); }}
                     className="p-1.5 text-gray-500 hover:text-lime-green transition-colors"><Pencil size={14} /></button>
-                  <button onClick={() => deletePlan(pid(plan))}
+                  <button onClick={() => deleteTpl(tid(tpl))}
                     className="p-1.5 text-gray-500 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
                 </div>
               </div>
 
-              {/* Dias do plano */}
-              {expanded === pid(plan) && (
+              {/* Dias */}
+              {expanded === tid(tpl) && (
                 <div className="border-t border-dark-border bg-black/30 px-4 py-3 space-y-2">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-xs text-gray-500 uppercase tracking-widest">Dias</p>
-                    <button onClick={() => { setDayForm(emptyDay); setDayModal({ planId: pid(plan) }); }}
+                    <button onClick={() => { setDayForm(emptyDay); setDayModal({ templateId: tid(tpl) }); }}
                       className="flex items-center gap-1 text-xs text-lime-green border border-lime-green/30 px-2.5 py-1 hover:bg-lime-green/10 transition-colors">
                       <Plus size={12} /> Adicionar Dia
                     </button>
                   </div>
 
-                  {loadingDays[pid(plan)] && <p className="text-gray-600 text-xs animate-pulse">Carregando dias...</p>}
+                  {loadingDays[tid(tpl)] && <p className="text-gray-600 text-xs animate-pulse">Carregando dias...</p>}
 
-                  {(days[pid(plan)] ?? []).map((day, di) => (
+                  {(days[tid(tpl)] ?? []).map((day, di) => (
                     <div key={did(day) ?? di} className="border border-dark-border bg-dark-card overflow-hidden">
                       <div className="flex items-center justify-between px-3 py-2.5">
                         <button onClick={() => loadExercises(did(day))} className="flex items-center gap-2 flex-1 text-left min-w-0">
                           <span className="text-[10px] font-bold text-gray-400 border border-dark-border px-1.5 py-0.5 uppercase shrink-0">
-                            {day.day_of_week ?? day.week_day ?? '—'}
+                            {day.day_of_week ?? '—'}
                           </span>
                           <span className="text-white text-sm truncate">{day.name}</span>
-                          {day.is_rest && <span className="text-blue-400 text-[10px] shrink-0">Descanso</span>}
+                          {day.is_rest ? <span className="text-blue-400 text-[10px] shrink-0">Descanso</span> : null}
                           {day.duration_min > 0 && <span className="text-gray-600 text-xs shrink-0">{day.duration_min}min</span>}
                         </button>
                         <div className="flex gap-1 shrink-0">
-                          <button
-                            onClick={() => { loadExercises(did(day)); setExForm(emptyEx); setExModal({ dayId: did(day) }); }}
+                          <button onClick={() => { loadExercises(did(day)); setExForm(emptyEx); setExModal({ dayId: did(day) }); }}
                             className="p-1 text-gray-600 hover:text-lime-green transition-colors" title="Adicionar exercício">
                             <Plus size={13} />
                           </button>
-                          <button onClick={() => { setDayForm({ name: day.name, day_of_week: day.day_of_week ?? day.week_day ?? 'SEG', duration_min: day.duration_min ?? 60, is_rest: day.is_rest ?? false }); setDayModal({ planId: pid(plan), day }); }}
+                          <button onClick={() => { setDayForm({ name: day.name, day_of_week: day.day_of_week ?? 'SEG', duration_min: day.duration_min ?? 60, is_rest: !!day.is_rest }); setDayModal({ templateId: tid(tpl), day }); }}
                             className="p-1 text-gray-600 hover:text-lime-green transition-colors"><Pencil size={13} /></button>
-                          <button onClick={() => deleteDay(pid(plan), did(day))}
+                          <button onClick={() => deleteDay(tid(tpl), did(day))}
                             className="p-1 text-gray-600 hover:text-red-400 transition-colors"><Trash2 size={13} /></button>
                         </div>
                       </div>
 
-                      {/* Exercícios */}
-                      {loadingExs[did(day)] && (
-                        <p className="text-gray-600 text-xs px-3 pb-2 animate-pulse">Carregando exercícios...</p>
-                      )}
+                      {loadingExs[did(day)] && <p className="text-gray-600 text-xs px-3 pb-2 animate-pulse">Carregando exercícios...</p>}
+
                       {exercises[did(day)] && (
                         <div className="border-t border-dark-border px-3 pb-2 pt-1 space-y-1">
                           {exercises[did(day)].length === 0 && (
@@ -271,7 +276,7 @@ export default function AdminTreinos() {
                     </div>
                   ))}
 
-                  {!loadingDays[pid(plan)] && (days[pid(plan)] ?? []).length === 0 && (
+                  {!loadingDays[tid(tpl)] && (days[tid(tpl)] ?? []).length === 0 && (
                     <p className="text-gray-700 text-xs">Nenhum dia configurado.</p>
                   )}
                 </div>
@@ -281,31 +286,21 @@ export default function AdminTreinos() {
         </div>
       )}
 
-      {/* Modal Plano */}
-      {planModal !== null && (
-        <Modal title={planModal === 'new' ? 'Novo Plano' : 'Editar Plano'} onClose={() => setPlanModal(null)}>
-          {planModal === 'new' && (
-            <Field label="Aluno">
-              <select className={inp} value={planForm.user_id} onChange={e => setPlanForm({ ...planForm, user_id: e.target.value })}>
-                <option value="">Selecione o aluno...</option>
-                {students.map(s => (
-                  <option key={s.id ?? s.id_user} value={s.id ?? s.id_user}>{s.name} — {s.email}</option>
-                ))}
-              </select>
-            </Field>
-          )}
-          <Field label="Nome do plano">
-            <input className={inp} value={planForm.name} onChange={e => setPlanForm({ ...planForm, name: e.target.value })} placeholder="Ex: Hipertrofia - Julho" />
+      {/* Modal Template */}
+      {tplModal !== null && (
+        <Modal title={tplModal === 'new' ? 'Novo Template' : 'Editar Template'} onClose={() => setTplModal(null)}>
+          <Field label="Nome do template">
+            <input className={inp} value={tplForm.name} onChange={e => setTplForm({ ...tplForm, name: e.target.value })} placeholder="Ex: Hipertrofia A/B/C" />
           </Field>
           <Field label="Objetivo">
-            <input className={inp} value={planForm.goal} onChange={e => setPlanForm({ ...planForm, goal: e.target.value })} placeholder="Ex: Hipertrofia" />
+            <input className={inp} value={tplForm.goal} onChange={e => setTplForm({ ...tplForm, goal: e.target.value })} placeholder="Ex: Hipertrofia" />
           </Field>
           <Field label="Descrição">
-            <textarea rows={2} className={`${inp} resize-none`} value={planForm.description} onChange={e => setPlanForm({ ...planForm, description: e.target.value })} />
+            <textarea rows={2} className={`${inp} resize-none`} value={tplForm.description} onChange={e => setTplForm({ ...tplForm, description: e.target.value })} />
           </Field>
-          <button onClick={savePlan} disabled={saving || !planForm.name || (planModal === 'new' && !planForm.user_id)}
+          <button onClick={saveTpl} disabled={saving || !tplForm.name}
             className="w-full flex items-center justify-center gap-2 bg-lime-green text-black font-bold py-3 uppercase text-sm hover:bg-neon-green transition-colors disabled:opacity-50">
-            <Save size={15} /> {saving ? 'Salvando...' : 'Salvar Plano'}
+            <Save size={15} /> {saving ? 'Salvando...' : 'Salvar Template'}
           </button>
         </Modal>
       )}
@@ -375,6 +370,38 @@ export default function AdminTreinos() {
           <button onClick={saveEx} disabled={saving || !exForm.name}
             className="w-full flex items-center justify-center gap-2 bg-lime-green text-black font-bold py-3 uppercase text-sm hover:bg-neon-green transition-colors disabled:opacity-50">
             <Save size={15} /> {saving ? 'Salvando...' : 'Salvar Exercício'}
+          </button>
+        </Modal>
+      )}
+
+      {/* Modal Ciclo */}
+      {cycleModal && (
+        <Modal title="Atribuir Ciclo de Treino" onClose={() => setCycleModal(false)}>
+          <Field label="Aluno">
+            <select className={inp} value={cycleForm.user_id} onChange={e => setCycleForm({ ...cycleForm, user_id: e.target.value })}>
+              <option value="">Selecione o aluno...</option>
+              {students.map(s => (
+                <option key={s.id ?? s.id_user} value={s.id ?? s.id_user}>{s.name} — {s.email}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Template de treino">
+            <select className={inp} value={cycleForm.template_id} onChange={e => setCycleForm({ ...cycleForm, template_id: e.target.value })}>
+              <option value="">Selecione o template...</option>
+              {templates.map(t => (
+                <option key={tid(t)} value={tid(t)}>{t.name}{t.goal ? ` — ${t.goal}` : ''}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Data de início">
+            <input type="date" className={inp} value={cycleForm.start_date} onChange={e => setCycleForm({ ...cycleForm, start_date: e.target.value })} />
+          </Field>
+          <Field label="Observações">
+            <textarea rows={2} className={`${inp} resize-none`} value={cycleForm.notes} onChange={e => setCycleForm({ ...cycleForm, notes: e.target.value })} />
+          </Field>
+          <button onClick={saveCycle} disabled={saving || !cycleForm.user_id || !cycleForm.template_id || !cycleForm.start_date}
+            className="w-full flex items-center justify-center gap-2 bg-lime-green text-black font-bold py-3 uppercase text-sm hover:bg-neon-green transition-colors disabled:opacity-50">
+            <Save size={15} /> {saving ? 'Salvando...' : 'Atribuir Ciclo'}
           </button>
         </Modal>
       )}
