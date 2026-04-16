@@ -56,11 +56,11 @@ export default function AdminAluno() {
   useEffect(() => {
     Promise.all([
       adminUsers.listAll(),
-      adminWorkouts.plans(),
+      adminWorkouts.templates(),
       adminNutrition.plans(),
     ]).then(([u, w, n]) => {
       setUsers(Array.isArray(u) ? u : (u?.users ?? u?.data ?? []));
-      setWPlans(Array.isArray(w) ? w : (w?.plans ?? w?.data ?? []));
+      setWPlans(Array.isArray(w) ? w : (w?.templates ?? w?.data ?? []));
       setNPlans(Array.isArray(n) ? n : (n?.plans ?? n?.data ?? []));
     }).finally(() => setLoading(false));
   }, []);
@@ -97,7 +97,7 @@ export default function AdminAluno() {
   const doAssignW = async () => {
     if (!assignW) return;
     setAssigningW(true);
-    await adminWorkouts.assignPlan(uid(selected), assignW).catch(() => {});
+    await adminWorkouts.createCycle({ user_id: uid(selected), template_id: Number(assignW), start_date: new Date().toISOString().split('T')[0] }).catch(() => {});
     const plan = wPlans.find(p => String(p.id ?? p.id_user) === String(assignW));
     setAssignedW(plan?.name ?? 'Plano atribuído');
     setAssigningW(false);

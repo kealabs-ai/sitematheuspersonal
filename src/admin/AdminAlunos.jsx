@@ -27,7 +27,7 @@ export default function AdminAlunos() {
       })
       .catch(() => setUsers([]))
       .finally(() => setLoading(false));
-    adminWorkouts.plans().then(d => setWPlans(Array.isArray(d) ? d : (d?.plans ?? d?.data ?? [])));
+    adminWorkouts.templates().then(d => setWPlans(Array.isArray(d) ? d : (d?.templates ?? d?.data ?? [])));
     adminNutrition.plans().then(d => setNPlans(Array.isArray(d) ? d : (d?.plans ?? d?.data ?? [])));
   }, []);
 
@@ -55,7 +55,7 @@ export default function AdminAlunos() {
 
   const doAssignW = async () => {
     if (!assignW) return;
-    await adminWorkouts.assignPlan(selected.id_user, assignW).catch(() => {});
+    await adminWorkouts.createCycle({ user_id: selected.id_user, template_id: Number(assignW), start_date: new Date().toISOString().split('T')[0] }).catch(() => {});
     setAssignW('');
   };
 
