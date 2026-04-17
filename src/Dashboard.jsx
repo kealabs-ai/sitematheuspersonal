@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Dumbbell, TrendingUp, Salad, User, Flame, Calendar, ChevronRight, Trophy, Zap } from 'lucide-react';
+import { Dumbbell, TrendingUp, Salad, User, Flame, Calendar, Trophy } from 'lucide-react';
 import { dashboard, getUser } from './services/alunoApi';
 import { useBlockBack } from './hooks/useBlockBack';
 import OnboardingModal from './OnboardingModal';
@@ -132,21 +132,16 @@ export default function Dashboard() {
             <ShineBorder className="bg-black" color={['#00B4D8', '#0096C7']}>
               <button onClick={() => navigate('/dashboard/treinos')}
                 className="w-full p-5 text-left hover:bg-lime-green/5 transition-all group">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-lime-green text-xs uppercase tracking-widest font-bold mb-1">
-                      <Zap size={12} className="inline mr-1" />Hoje
-                    </p>
-                    <h2 className="text-2xl font-bebas text-white">{todayWorkout.name}</h2>
-                    <p className="text-gray-400 text-sm mt-1">{todayWorkout.exercises_count} exercícios · {todayWorkout.duration_min} min</p>
-                  </div>
-                  <div className="bg-lime-green text-black p-3 group-hover:scale-110 transition-transform">
-                    <ChevronRight size={24} />
-                  </div>
+                <div>
+                  <p className="text-lime-green text-xs uppercase tracking-widest font-bold mb-1">
+                    <Dumbbell size={12} className="inline mr-1" />Hoje
+                  </p>
+                  <h2 className="text-2xl font-bebas text-white">{todayWorkout.name}</h2>
+                  <p className="text-gray-400 text-sm mt-1">{todayWorkout.exercises_count} exercícios · {todayWorkout.duration_min} min</p>
                 </div>
                 <div className="mt-4">
                   <ShimmerButton className="w-full justify-center py-2.5" shimmerColor="#ffffff" background="rgba(0,180,216,1)">
-                    <Zap size={14} /> Iniciar Treino
+                    <Dumbbell size={14} /> Iniciar Treino
                   </ShimmerButton>
                 </div>
               </button>
