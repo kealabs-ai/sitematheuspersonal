@@ -48,9 +48,12 @@ const muscleColors = {
   'Cardio':      'bg-orange-500/10 text-orange-400 border-orange-500/20',
 };
 
+const WORKOUT_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+
 // ─── Modal: Seleção de Treino ────────────────────────────────────────────────
 function WorkoutSelectModal({ days, onSelect, onRest, onClose }) {
-  const trainDays = days.filter(d => d.status !== 'upcoming');
+  const trainDays = days.filter(d => !d.originalIsRest);
+
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/70 px-4 pb-4 md:pb-0">
       <motion.div
@@ -59,27 +62,40 @@ function WorkoutSelectModal({ days, onSelect, onRest, onClose }) {
       >
         <div className="flex items-center justify-between">
           <p className="font-bebas text-xl text-white flex items-center gap-2">
-            <ListChecks size={18} className="text-lime-green" /> Qual treino fazer hoje?
+            <ListChecks size={18} className="text-lime-green" /> Escolha o treino de hoje
           </p>
           <button onClick={onClose} className="text-gray-500 hover:text-white"><X size={18} /></button>
         </div>
 
+        <p className="text-gray-600 text-xs">Selecione qualquer treino — sem restrição de dia.</p>
+
         <div className="space-y-2">
-          {trainDays.map(d => (
-            <button
-              key={d.id}
-              onClick={() => onSelect(d)}
-              className="w-full flex items-center justify-between border border-dark-border hover:border-lime-green/60 bg-black hover:bg-lime-green/5 p-3 transition-all text-left"
-            >
-              <div>
-                <p className="text-white font-semibold text-sm">{d.name}</p>
-                <p className="text-gray-500 text-xs mt-0.5 flex items-center gap-1">
-                  <Clock size={11} /> {d.duration_min} min · {d.exercises_count} exercícios
-                </p>
-              </div>
-              {d.status === 'done' && <span className="text-lime-green text-xs font-bold">✓ Feito</span>}
-            </button>
-          ))}
+          {trainDays.map((d, i) => {
+            const label = WORKOUT_LABELS[i] ?? String(i + 1);
+            return (
+              <button
+                key={d.id}
+                onClick={() => onSelect(d)}
+                className="w-full flex items-center gap-4 border border-dark-border hover:border-lime-green bg-black hover:bg-lime-green/5 p-3 transition-all text-left group"
+              >
+                {/* Badge A/B/C */}
+                <div className="w-10 h-10 shrink-0 flex items-center justify-center border-2 border-lime-green/40 group-hover:border-lime-green group-hover:bg-lime-green/10 transition-colors">
+                  <span className="font-bebas text-2xl text-lime-green leading-none">{label}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-semibold text-sm truncate">{d.name}</p>
+                  <p className="text-gray-500 text-xs mt-0.5 flex items-center gap-2">
+                    <Clock size={11} /> {d.duration_min} min
+                    {d.exercises_count > 0 && <> · {d.exercises_count} exercícios</>}
+                    {d.day_of_week && <span className="text-gray-700 uppercase">{d.day_of_week}</span>}
+                  </p>
+                </div>
+                {d.status === 'done' && (
+                  <span className="text-lime-green text-[10px] font-bold shrink-0">✓ Feito</span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         <button
@@ -178,11 +194,12 @@ export default function Treinos() {
     if (next && day.status !== 'rest') loadExercises(day.id);
   };
 
-  // Inicia treino com o dia selecionado (pode ser diferente do "today" da API)
+  // Inicia treino com qualquer dia selecionado pelo aluno
   const startWorkout = async (day) => {
     const data = await workoutsApi.startLog(day.id).catch(() => null);
-    if (data?.log_id) {
-      setActiveLog({ logId: data.log_id, dayId: day.id });
+    const logId = data?.log_id ?? data?.id;
+    if (logId) {
+      setActiveLog({ logId, dayId: day.id });
       loadExercises(day.id);
       setExpanded(day.id);
       setShowSelectModal(false);
