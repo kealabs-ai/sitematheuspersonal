@@ -7,7 +7,50 @@ const WEEK_DAYS = ['SEG','TER','QUA','QUI','SEX','SAB','DOM'];
 
 const emptyTpl  = { name: '', description: '', goal: '' };
 const emptyDay  = { name: '', day_of_week: 'SEG', duration_min: 60, is_rest: false };
-const emptyEx   = { name: '', sets: 3, reps: '12', rest_seconds: 60, muscle_group: 'Peito', video_url: '', notes: '' };
+const emptyEx = { name: '', sets: 3, reps: '12', rest_seconds: 60, muscle_groups: [], video_url: '', notes: '' };
+
+const toArr = (v) => !v ? [] : Array.isArray(v) ? v : v.split(',').map(s => s.trim()).filter(Boolean);
+const toStr = (arr) => arr.join(', ');
+
+function MuscleChips({ selected, onChange }) {
+  const [open, setOpen] = useState(false);
+  const toggle = (m) => onChange(selected.includes(m) ? selected.filter(x => x !== m) : [...selected, m]);
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-1.5 min-h-[28px]">
+        {selected.length === 0 && <span className="text-gray-600 text-xs italic">Nenhum grupo selecionado</span>}
+        {selected.map(m => (
+          <span key={m} className="flex items-center gap-1 bg-lime-green/10 border border-lime-green/40 text-lime-green text-xs px-2 py-0.5">
+            {m}
+            <button type="button" onClick={() => toggle(m)} className="hover:text-white transition-colors"><X size={10} /></button>
+          </span>
+        ))}
+      </div>
+      <div className="relative">
+        <button type="button" onClick={() => setOpen(o => !o)}
+          className="w-full flex items-center justify-between bg-black border border-dark-border text-gray-400 text-sm p-2.5 hover:border-lime-green transition-colors">
+          <span>Adicionar grupo muscular...</span>
+          <ChevronDown size={14} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+        </button>
+        {open && (
+          <div className="absolute z-20 top-full left-0 right-0 bg-[#111] border border-dark-border mt-0.5 max-h-48 overflow-y-auto">
+            {MUSCLES.map(m => {
+              const active = selected.includes(m);
+              return (
+                <button key={m} type="button" onClick={() => toggle(m)}
+                  className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors
+                    ${active ? 'text-lime-green bg-lime-green/5' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+                  {m}
+                  {active && <span className="text-lime-green text-xs">&#10003;</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 const emptyCycle = { user_id: '', template_id: '', start_date: '', notes: '' };
 
 const tid = (t) => t?.template_id ?? t?.id_template ?? t?.id;
@@ -139,13 +182,14 @@ export default function AdminTreinos() {
   const saveEx = async () => {
     setSaving(true);
     const { dayId, ex } = exModal;
+    const payload = { ...exForm, muscle_group: toStr(exForm.muscle_groups) };
     if (!ex) {
-      await adminWorkouts.createExercise(dayId, exForm).catch(() => null);
+      await adminWorkouts.createExercise(dayId, payload).catch(() => null);
       const updated = await adminWorkouts.dayExercises(dayId).catch(() => null);
       if (updated) setExercises(p => ({ ...p, [dayId]: norm(updated, 'exercises') }));
     } else {
-      await adminWorkouts.updateExercise(eid(ex), exForm).catch(() => {});
-      setExercises(p => ({ ...p, [dayId]: (p[dayId] ?? []).map(e => eid(e) === eid(ex) ? { ...e, ...exForm } : e) }));
+      await adminWorkouts.updateExercise(eid(ex), payload).catch(() => {});
+      setExercises(p => ({ ...p, [dayId]: (p[dayId] ?? []).map(e => eid(e) === eid(ex) ? { ...e, ...payload } : e) }));
     }
     setSaving(false); setExModal(null);
   };
@@ -269,7 +313,7 @@ export default function AdminTreinos() {
                                 </span>
                               </div>
                               <div className="flex gap-1 shrink-0">
-                                <button onClick={() => { setExForm({ name: ex.name, sets: ex.sets ?? 3, reps: ex.reps ?? '12', rest_seconds: ex.rest_seconds ?? 60, muscle_group: ex.muscle_group ?? 'Peito', video_url: ex.video_url ?? '', notes: ex.notes ?? '' }); setExModal({ dayId: did(day), ex }); }}
+                                <button onClick={() => { setExForm({ name: ex.name, sets: ex.sets ?? 3, reps: ex.reps ?? '12', rest_seconds: ex.rest_seconds ?? 60, muscle_groups: toArr(ex.muscle_group), video_url: ex.video_url ?? '', notes: ex.notes ?? '' }); setExModal({ dayId: did(day), ex }); }}
                                   className="p-1 text-gray-600 hover:text-lime-green transition-colors"><Pencil size={12} /></button>
                                 <button onClick={() => deleteEx(did(day), eid(ex))}
                                   className="p-1 text-gray-600 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
@@ -350,10 +394,11 @@ export default function AdminTreinos() {
           <Field label="Nome do exercício">
             <input className={inp} value={exForm.name} onChange={e => setExForm({ ...exForm, name: e.target.value })} placeholder="Ex: Supino Reto" />
           </Field>
-          <Field label="Grupo muscular">
-            <select className={inp} value={exForm.muscle_group} onChange={e => setExForm({ ...exForm, muscle_group: e.target.value })}>
-              {MUSCLES.map(m => <option key={m} value={m}>{m}</option>)}
-            </select>
+          <Field label="Grupos musculares">
+            <MuscleChips
+              selected={exForm.muscle_groups}
+              onChange={v => setExForm({ ...exForm, muscle_groups: v })}
+            />
           </Field>
           <div className="grid grid-cols-3 gap-3">
             <Field label="Séries">
