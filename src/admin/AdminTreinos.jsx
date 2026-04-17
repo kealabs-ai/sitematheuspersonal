@@ -45,9 +45,10 @@ export default function AdminTreinos() {
   const [templates, setTemplates]   = useState([]);
   const [students, setStudents]     = useState([]);
   const [loading, setLoading]       = useState(true);
-  const [expanded, setExpanded]     = useState(null);
-  const [days, setDays]             = useState({});
-  const [exercises, setExercises]   = useState({});
+  const [expanded, setExpanded]       = useState(null);
+  const [expandedDay, setExpandedDay] = useState(null);
+  const [days, setDays]               = useState({});
+  const [exercises, setExercises]     = useState({});
   const [loadingDays, setLoadingDays] = useState({});
   const [loadingExs, setLoadingExs]   = useState({});
 
@@ -82,7 +83,9 @@ export default function AdminTreinos() {
     }
   };
 
-  const loadExercises = async (dayId) => {
+  const toggleDay = async (dayId) => {
+    if (expandedDay === dayId) { setExpandedDay(null); return; }
+    setExpandedDay(dayId);
     if (exercises[dayId] !== undefined) return;
     setLoadingExs(p => ({ ...p, [dayId]: true }));
     const d = await adminWorkouts.dayExercises(dayId).catch(() => ({}));
@@ -226,7 +229,10 @@ export default function AdminTreinos() {
                   {(days[tid(tpl)] ?? []).map((day, di) => (
                     <div key={did(day) ?? di} className="border border-dark-border bg-dark-card overflow-hidden">
                       <div className="flex items-center justify-between px-3 py-2.5">
-                        <button onClick={() => loadExercises(did(day))} className="flex items-center gap-2 flex-1 text-left min-w-0">
+                        <button onClick={() => toggleDay(did(day))} className="flex items-center gap-2 flex-1 text-left min-w-0">
+                          {expandedDay === did(day)
+                            ? <ChevronDown size={13} className="text-lime-green shrink-0" />
+                            : <ChevronRight size={13} className="text-gray-600 shrink-0" />}
                           <span className="text-[10px] font-bold text-gray-400 border border-dark-border px-1.5 py-0.5 uppercase shrink-0">
                             {day.day_of_week ?? '—'}
                           </span>
@@ -235,25 +241,24 @@ export default function AdminTreinos() {
                           {day.duration_min > 0 && <span className="text-gray-600 text-xs shrink-0">{day.duration_min}min</span>}
                         </button>
                         <div className="flex gap-1 shrink-0">
-                          <button onClick={() => { loadExercises(did(day)); setExForm(emptyEx); setExModal({ dayId: did(day) }); }}
+                          <button onClick={e => { e.stopPropagation(); if (expandedDay !== did(day)) setExpandedDay(did(day)); setExForm(emptyEx); setExModal({ dayId: did(day) }); }}
                             className="p-1 text-gray-600 hover:text-lime-green transition-colors" title="Adicionar exercício">
                             <Plus size={13} />
                           </button>
-                          <button onClick={() => { setDayForm({ name: day.name, day_of_week: day.day_of_week ?? 'SEG', duration_min: day.duration_min ?? 60, is_rest: !!day.is_rest }); setDayModal({ templateId: tid(tpl), day }); }}
+                          <button onClick={e => { e.stopPropagation(); setDayForm({ name: day.name, day_of_week: day.day_of_week ?? 'SEG', duration_min: day.duration_min ?? 60, is_rest: !!day.is_rest }); setDayModal({ templateId: tid(tpl), day }); }}
                             className="p-1 text-gray-600 hover:text-lime-green transition-colors"><Pencil size={13} /></button>
-                          <button onClick={() => deleteDay(tid(tpl), did(day))}
+                          <button onClick={e => { e.stopPropagation(); deleteDay(tid(tpl), did(day)); }}
                             className="p-1 text-gray-600 hover:text-red-400 transition-colors"><Trash2 size={13} /></button>
                         </div>
                       </div>
 
-                      {loadingExs[did(day)] && <p className="text-gray-600 text-xs px-3 pb-2 animate-pulse">Carregando exercícios...</p>}
-
-                      {exercises[did(day)] && (
+                      {expandedDay === did(day) && (
                         <div className="border-t border-dark-border px-3 pb-2 pt-1 space-y-1">
-                          {exercises[did(day)].length === 0 && (
+                          {loadingExs[did(day)] && <p className="text-gray-600 text-xs py-2 animate-pulse">Carregando exercícios...</p>}
+                          {!loadingExs[did(day)] && (exercises[did(day)] ?? []).length === 0 && (
                             <p className="text-gray-700 text-xs py-1">Nenhum exercício. Clique em + para adicionar.</p>
                           )}
-                          {exercises[did(day)].map((ex, ei) => (
+                          {(exercises[did(day)] ?? []).map((ex, ei) => (
                             <div key={eid(ex) ?? ei} className="flex items-center justify-between py-1.5 border-b border-dark-border/50 last:border-0">
                               <div className="min-w-0">
                                 <span className="text-white text-xs font-medium">{ex.name}</span>
