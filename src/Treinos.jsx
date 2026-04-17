@@ -12,6 +12,47 @@ import AppFooter from './AppFooter';
 import { ShimmerButton } from './components/magicui/shimmer-button';
 
 const WORKOUT_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+const WEEK_LABELS = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
+
+function getWeekDays() {
+  const today = new Date();
+  const sunday = new Date(today);
+  sunday.setDate(today.getDate() - today.getDay());
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(sunday);
+    d.setDate(sunday.getDate() + i);
+    return {
+      label: WEEK_LABELS[i],
+      iso: d.toISOString().split('T')[0],
+      isToday: d.toDateString() === today.toDateString(),
+    };
+  });
+}
+
+function WeekBar({ weekLogs }) {
+  const days = getWeekDays();
+  return (
+    <div className="grid grid-cols-7 gap-1">
+      {days.map(({ label, iso, isToday }) => {
+        const log = weekLogs[iso];
+        return (
+          <div key={iso} className={`flex flex-col items-center gap-1 py-2 px-1 border transition-colors
+            ${log ? 'border-lime-green/40 bg-lime-green/5' : isToday ? 'border-lime-green/20' : 'border-dark-border'}`}>
+            <span className={`text-[10px] font-bold uppercase ${isToday ? 'text-lime-green' : 'text-gray-500'}`}>{label}</span>
+            {log ? (
+              <>
+                <span className="text-lime-green font-bebas text-sm leading-none">{log.label}</span>
+                <span className="text-lime-green text-xs">&#10003;</span>
+              </>
+            ) : (
+              <span className="w-3 h-3 rounded-full border border-dark-border/60" />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 const muscleColors = {
   'Peito':       'bg-red-500/10 text-red-400 border-red-500/20',
@@ -146,28 +187,45 @@ export default function Treinos() {
   const [showModal, setShowModal]     = useState(false);
   const [weeklyResult, setWeeklyResult] = useState(null);
   const [showExercises, setShowExercises] = useState(true);
+  const [weekLogs, setWeekLogs]       = useState({});
   const planRef = useRef(null);
 
   useEffect(() => {
-    workoutsApi.plan()
-      .then(data => {
-        if (data.detail || data.error) return;
-        planRef.current = data.plan;
-        const days = (data.plan?.days ?? []).map(d => ({
+    Promise.all([
+      workoutsApi.plan().catch(() => ({})),
+      workoutsApi.history().catch(() => ({})),
+    ]).then(([planData, histData]) => {
+      if (!planData.detail && !planData.error) {
+        planRef.current = planData.plan;
+        const days = (planData.plan?.days ?? []).map((d, i) => ({
           ...d,
           originalIsRest: d.is_rest ?? false,
+          workoutLabel: WORKOUT_LABELS[i] ?? String(i + 1),
         }));
         setAllDays(days);
-        // dia sugerido pela API
         const s = days.find(d => d.status === 'today' && !d.is_rest);
         setSuggested(s ?? null);
         setTodayDay(s ?? null);
-        // pré-carrega exercícios apenas do sugerido
         if (s) fetchExercises(s.id);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      }
+      buildWeekLogs(histData);
+    }).finally(() => setLoading(false));
   }, []);
+
+  const buildWeekLogs = (histData) => {
+    const logs = histData.logs ?? histData.history ?? [];
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    weekStart.setHours(0, 0, 0, 0);
+    const map = {};
+    logs.forEach(l => {
+      const d = new Date(l.finished_at ?? l.started_at ?? l.date ?? '');
+      if (isNaN(d) || d < weekStart) return;
+      const iso = d.toISOString().split('T')[0];
+      if (!map[iso]) map[iso] = { label: l.workout_label ?? l.day_label ?? '✓', name: l.day_name ?? '' };
+    });
+    setWeekLogs(map);
+  };
 
   const fetchExercises = async (dayId) => {
     if (exercises[dayId]) return;
@@ -208,12 +266,20 @@ export default function Treinos() {
     await workoutsApi.finishLog(logId, true).catch(() => {});
     setActiveLog(null);
 
+    // Atualiza barra imediatamente com o treino finalizado
+    const todayIso = new Date().toISOString().split('T')[0];
+    const finishedDay = trainDays.find(d => d.id === dayId);
+    setWeekLogs(prev => ({ ...prev, [todayIso]: { label: finishedDay?.workoutLabel ?? '✓', name: finishedDay?.name ?? '' } }));
+
+    // Sincroniza com histórico real
     const histData = await workoutsApi.history().catch(() => ({}));
-    const logs = histData.logs ?? histData.history ?? [];
+    buildWeekLogs(histData);
+
+    const allLogs = histData.logs ?? histData.history ?? [];
     const weekStart = new Date();
     weekStart.setDate(weekStart.getDate() - weekStart.getDay());
     weekStart.setHours(0, 0, 0, 0);
-    const weeklyDone = logs.filter(l => {
+    const weeklyDone = allLogs.filter(l => {
       const d = new Date(l.finished_at ?? l.started_at ?? l.date);
       return d >= weekStart && l.completed !== false;
     }).length;
@@ -444,6 +510,12 @@ export default function Treinos() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* ── Barra semanal ── */}
+        <div className="space-y-2 pt-2">
+          <p className="text-[10px] text-gray-600 uppercase tracking-widest">Semana atual</p>
+          <WeekBar weekLogs={weekLogs} />
+        </div>
 
         <p className="text-center text-gray-700 text-xs pb-4">
           <button onClick={() => navigate('/dashboard')} className="hover:text-lime-green transition-colors">
