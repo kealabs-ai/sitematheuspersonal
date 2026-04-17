@@ -428,6 +428,8 @@ export default function Treinos() {
   };
 
   const confirmFinish = () => { setShowWeightWarning(false); setPendingFinish(false); finishWorkout(); };
+
+  const toggleCheck = (dayId, exId) =>
     setChecked(prev => ({ ...prev, [`${dayId}-${exId}`]: !prev[`${dayId}-${exId}`] }));
 
   const setWeight = (dayId, exId, val) =>
