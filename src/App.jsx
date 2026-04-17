@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, useAnimation } from 'framer-motion';
+import { motion, useAnimation, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ArrowRight, Menu, X, Dumbbell, Target, TrendingUp, Award, Instagram, Phone, MessageSquare } from 'lucide-react';
 import kealabsLogo from './assets/kealabs_logo_strategic_white.png';
 import matheusLogo from './assets/logotipo_matheus_personal.png';
@@ -612,9 +612,116 @@ const TestimonialsSection = () => {
   );
 };
 
-const ResultsSection = () => {
-  const [sliderValue, setSliderValue] = useState(50);
+const results = [
+  {
+    name: 'Aluno 1',
+    period: '3 meses',
+    before: '/img/antes.jpg',
+    after: '/img/depois.jpg',
+    highlight: '/img/resultado.jpg',
+    tag: 'Hipertrofia',
+  },
+];
 
+function ResultCard({ result, index }) {
+  const [slider, setSlider] = useState(50);
+  const [flipped, setFlipped] = useState(false);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: index * 0.12 }}
+      className="flex flex-col bg-dark-card border border-dark-border overflow-hidden group"
+    >
+      {/* Slider antes/depois */}
+      <div className="relative w-full aspect-[3/4] overflow-hidden select-none cursor-col-resize">
+        {/* DEPOIS (fundo) */}
+        <img
+          src={result.after}
+          alt="Depois"
+          className="absolute inset-0 w-full h-full object-cover object-top"
+          draggable={false}
+        />
+        {/* ANTES (clip) */}
+        <img
+          src={result.before}
+          alt="Antes"
+          className="absolute inset-0 w-full h-full object-cover object-top pointer-events-none"
+          style={{ clipPath: `polygon(0 0, ${slider}% 0, ${slider}% 100%, 0 100%)` }}
+          draggable={false}
+        />
+        {/* Linha divisória */}
+        <div
+          className="absolute inset-y-0 w-0.5 bg-lime-green z-20 pointer-events-none"
+          style={{ left: `${slider}%` }}
+        >
+          <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 bg-lime-green rounded-full flex items-center justify-center shadow-xl">
+            <ChevronLeft size={14} color="black" />
+            <ChevronRight size={14} color="black" />
+          </div>
+        </div>
+        {/* Input range invisível */}
+        <input
+          type="range" min="0" max="100" value={slider}
+          onChange={e => setSlider(Number(e.target.value))}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-col-resize z-30"
+        />
+        {/* Labels */}
+        <span className="absolute bottom-3 left-3 z-20 bg-black/70 text-white text-[10px] font-bold uppercase px-2 py-1 pointer-events-none">
+          Antes
+        </span>
+        <span className="absolute bottom-3 right-3 z-20 bg-lime-green text-black text-[10px] font-bold uppercase px-2 py-1 pointer-events-none">
+          Depois
+        </span>
+        {/* Tag */}
+        {result.tag && (
+          <span className="absolute top-3 left-3 z-20 bg-black/60 text-lime-green text-[10px] font-bold uppercase border border-lime-green/40 px-2 py-0.5 pointer-events-none">
+            {result.tag}
+          </span>
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="p-4 flex items-center justify-between">
+        <div>
+          <p className="text-white font-bebas text-xl uppercase leading-none">{result.name}</p>
+          <p className="text-gray-500 text-xs mt-0.5">Resultado em {result.period}</p>
+        </div>
+        {result.highlight && (
+          <button
+            onClick={() => setFlipped(f => !f)}
+            className="text-[10px] text-lime-green border border-lime-green/30 px-2 py-1 hover:bg-lime-green/10 transition-colors uppercase font-bold"
+          >
+            {flipped ? 'Fechar' : 'Ver foto'}
+          </button>
+        )}
+      </div>
+
+      {/* Foto destaque (expandível) */}
+      <AnimatePresence>
+        {flipped && result.highlight && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="overflow-hidden"
+          >
+            <img
+              src={result.highlight}
+              alt="Resultado"
+              className="w-full object-cover object-top max-h-72"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+const ResultsSection = () => {
   return (
     <section id="resultados" className="py-20 px-4">
       <div className="container mx-auto">
@@ -630,34 +737,20 @@ const ResultsSection = () => {
           <p className="text-gray-400 text-lg">Transformações reais de alunos reais</p>
         </motion.div>
 
-        <div className="max-w-4xl mx-auto">
-          <div className="relative w-full aspect-[4/3] overflow-hidden bg-dark-card border-2 border-dark-border">
-            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=800')" }}></div>
-            <div 
-              className="absolute inset-0 bg-cover bg-center" 
-              style={{ 
-                backgroundImage: "url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800')",
-                clipPath: `polygon(0 0, ${sliderValue}% 0, ${sliderValue}% 100%, 0 100%)`
-              }}
-            ></div>
-            <input 
-              type="range" 
-              min="0" 
-              max="100" 
-              value={sliderValue} 
-              onChange={(e) => setSliderValue(e.target.value)}
-              className="absolute inset-0 w-full h-full cursor-pointer opacity-0 z-10"
-            />
-            <div className="absolute inset-y-0 bg-lime-green z-20 pointer-events-none" style={{ left: `calc(${sliderValue}% - 2px)`, width: '4px' }}>
-              <div className="absolute top-1/2 -translate-y-1/2 -left-4 bg-lime-green rounded-full h-8 w-8 flex items-center justify-center shadow-lg">
-                <ChevronLeft color="black" size={20} />
-                <ChevronRight color="black" size={20} />
-              </div>
-            </div>
-            <div className="absolute bottom-4 left-4 bg-black/80 px-4 py-2 text-sm font-bold">ANTES</div>
-            <div className="absolute bottom-4 right-4 bg-lime-green/90 text-black px-4 py-2 text-sm font-bold">DEPOIS</div>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          {results.map((r, i) => (
+            <ResultCard key={i} result={r} index={i} />
+          ))}
         </div>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="text-center text-gray-600 text-xs mt-10 uppercase tracking-widest"
+        >
+          Arraste o divisor para comparar · Resultados individuais podem variar
+        </motion.p>
       </div>
     </section>
   );
