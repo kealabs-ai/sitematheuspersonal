@@ -41,8 +41,8 @@ function WeekBar({ weekLogs }) {
             <span className={`text-[10px] font-bold uppercase ${isToday ? 'text-lime-green' : 'text-gray-500'}`}>{label}</span>
             {log ? (
               <>
-                <span className="text-lime-green font-bebas text-sm leading-none">{log.label}</span>
                 <span className="text-lime-green text-xs">&#10003;</span>
+                <span className="text-lime-green font-bebas text-sm leading-none">{log.label}</span>
               </>
             ) : (
               <span className="w-3 h-3 rounded-full border border-dark-border/60" />
