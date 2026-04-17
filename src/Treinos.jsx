@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   CheckCircle, Circle, Dumbbell, Clock, Zap, PlayCircle,
-  BedDouble, X, ListChecks, ChevronDown, ChevronUp,
+  BedDouble, X, ListChecks, ChevronDown, ChevronUp, History, CalendarDays,
 } from 'lucide-react';
 import { workouts as workoutsApi } from './services/alunoApi';
 import { useBlockBack } from './hooks/useBlockBack';
@@ -29,27 +29,154 @@ function getWeekDays() {
   });
 }
 
-function WeekBar({ weekLogs }) {
+function WeekBar({ weekLogs, onHistoryClick }) {
   const days = getWeekDays();
+  const doneCount = days.filter(d => weekLogs[d.iso]).length;
   return (
-    <div className="grid grid-cols-7 gap-1">
-      {days.map(({ label, iso, isToday }) => {
-        const log = weekLogs[iso];
-        return (
-          <div key={iso} className={`flex flex-col items-center gap-1 py-2 px-1 border transition-colors
-            ${log ? 'border-lime-green/40 bg-lime-green/5' : isToday ? 'border-lime-green/20' : 'border-dark-border'}`}>
-            <span className={`text-[10px] font-bold uppercase ${isToday ? 'text-lime-green' : 'text-gray-500'}`}>{label}</span>
-            {log ? (
-              <>
-                <span className="text-lime-green text-xs">&#10003;</span>
-                <span className="text-lime-green font-bebas text-sm leading-none">{log.label}</span>
-              </>
-            ) : (
-              <span className="w-3 h-3 rounded-full border border-dark-border/60" />
-            )}
-          </div>
-        );
-      })}
+    <div className="bg-dark-card border border-dark-border p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <CalendarDays size={14} className="text-lime-green" />
+          <span className="text-xs font-bold uppercase tracking-widest text-gray-400">Semana atual</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-gray-600">
+            <span className="text-lime-green font-bold">{doneCount}</span>/{days.length} dias
+          </span>
+          <button
+            onClick={onHistoryClick}
+            className="flex items-center gap-1.5 text-[11px] text-gray-500 border border-dark-border px-2.5 py-1 hover:border-lime-green hover:text-lime-green transition-colors"
+          >
+            <History size={12} /> Histórico
+          </button>
+        </div>
+      </div>
+
+      {/* Barra de progresso semanal */}
+      <div className="w-full bg-black h-1">
+        <div
+          className="bg-lime-green h-1 transition-all duration-700"
+          style={{ width: `${(doneCount / days.length) * 100}%` }}
+        />
+      </div>
+
+      {/* Grid de dias */}
+      <div className="grid grid-cols-7 gap-1.5">
+        {days.map(({ label, iso, isToday }) => {
+          const log = weekLogs[iso];
+          return (
+            <div
+              key={iso}
+              className={`relative flex flex-col items-center gap-1 py-2.5 px-1 border transition-all
+                ${log
+                  ? 'border-lime-green/50 bg-lime-green/8'
+                  : isToday
+                  ? 'border-lime-green/30 bg-lime-green/3'
+                  : 'border-dark-border/60'}`}
+            >
+              {/* Dot indicador */}
+              {isToday && !log && (
+                <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-lime-green animate-pulse" />
+              )}
+              <span className={`text-[9px] font-bold uppercase tracking-wider
+                ${isToday && !log ? 'text-lime-green' : log ? 'text-lime-green/70' : 'text-gray-600'}`}>
+                {label}
+              </span>
+              {log ? (
+                <>
+                  <span className="text-lime-green font-bebas text-base leading-none">{log.label}</span>
+                  <CheckCircle size={12} className="text-lime-green" />
+                </>
+              ) : (
+                <span className={`w-5 h-5 rounded-full border flex items-center justify-center
+                  ${isToday ? 'border-lime-green/40' : 'border-dark-border/40'}`}>
+                  {isToday && <span className="w-1.5 h-1.5 rounded-full bg-lime-green/40" />}
+                </span>
+              )}
+              {log?.name && (
+                <span className="text-[8px] text-gray-600 truncate w-full text-center leading-tight">
+                  {log.name.split(' ')[0]}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Modal histórico ─────────────────────────────────────────────────────────
+function HistoryModal({ onClose }) {
+  const [logs, setLogs]       = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    workoutsApi.history().catch(() => ({}))
+      .then(d => setLogs(d.logs ?? d.history ?? []))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const fmt = (iso) => {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', weekday: 'short' });
+  };
+
+  const dur = (start, end) => {
+    if (!start || !end) return null;
+    const mins = Math.round((new Date(end) - new Date(start)) / 60000);
+    return mins > 0 ? `${mins} min` : null;
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/80 px-4 pb-4 md:pb-0" onClick={onClose}>
+      <motion.div
+        initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
+        className="w-full max-w-md bg-dark-card border border-dark-border max-h-[80vh] flex flex-col"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-4 border-b border-dark-border shrink-0">
+          <p className="font-bebas text-xl text-white flex items-center gap-2">
+            <History size={18} className="text-lime-green" /> Histórico de Treinos
+          </p>
+          <button onClick={onClose} className="text-gray-500 hover:text-white"><X size={18} /></button>
+        </div>
+
+        <div className="overflow-y-auto flex-1 p-4 space-y-2">
+          {loading && <p className="text-gray-500 text-sm text-center py-8 animate-pulse">Carregando...</p>}
+          {!loading && logs.length === 0 && (
+            <div className="text-center py-10">
+              <Dumbbell size={32} className="text-gray-700 mx-auto mb-2" />
+              <p className="text-gray-600 text-sm">Nenhum treino registrado ainda.</p>
+            </div>
+          )}
+          {logs.map((l, i) => (
+            <div key={l.id ?? i} className="flex items-center gap-3 border border-dark-border bg-black p-3">
+              {/* Badge treino */}
+              <div className="w-10 h-10 shrink-0 flex items-center justify-center border border-lime-green/30 bg-lime-green/5">
+                <span className="font-bebas text-xl text-lime-green leading-none">
+                  {l.training ?? '✓'}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white text-sm font-semibold truncate">{l.day_name ?? 'Treino'}</p>
+                <p className="text-gray-500 text-xs mt-0.5 flex items-center gap-2">
+                  <CalendarDays size={10} /> {fmt(l.finished_at ?? l.started_at)}
+                  {dur(l.started_at, l.finished_at) && (
+                    <><Clock size={10} /> {dur(l.started_at, l.finished_at)}</>
+                  )}
+                </p>
+              </div>
+              {l.completed ? (
+                <CheckCircle size={16} className="text-lime-green shrink-0" />
+              ) : (
+                <span className="text-[10px] text-yellow-500 border border-yellow-500/30 px-1.5 py-0.5 shrink-0">Parcial</span>
+              )}
+            </div>
+          ))}
+        </div>
+      </motion.div>
     </div>
   );
 }
@@ -188,6 +315,7 @@ export default function Treinos() {
   const [weeklyResult, setWeeklyResult] = useState(null);
   const [showExercises, setShowExercises] = useState(true);
   const [weekLogs, setWeekLogs]       = useState({});
+  const [showHistory, setShowHistory] = useState(false);
   const planRef = useRef(null);
 
   useEffect(() => {
@@ -336,6 +464,7 @@ export default function Treinos() {
             onClose={() => setWeeklyResult(null)}
           />
         )}
+        {showHistory && <HistoryModal onClose={() => setShowHistory(false)} />}
       </AnimatePresence>
 
       <main className="max-w-2xl md:max-w-3xl mx-auto px-4 md:px-8 py-6 space-y-4">
@@ -513,10 +642,7 @@ export default function Treinos() {
         </AnimatePresence>
 
         {/* ── Barra semanal ── */}
-        <div className="space-y-2 pt-2">
-          <p className="text-[10px] text-gray-600 uppercase tracking-widest">Semana atual</p>
-          <WeekBar weekLogs={weekLogs} />
-        </div>
+        <WeekBar weekLogs={weekLogs} onHistoryClick={() => setShowHistory(true)} />
 
         <p className="text-center text-gray-700 text-xs pb-4">
           <button onClick={() => navigate('/dashboard')} className="hover:text-lime-green transition-colors">
