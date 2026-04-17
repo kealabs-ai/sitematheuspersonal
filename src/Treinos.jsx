@@ -52,7 +52,7 @@ const WORKOUT_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
 
 // ─── Modal: Seleção de Treino ────────────────────────────────────────────────
 function WorkoutSelectModal({ days, onSelect, onRest, onClose }) {
-  const trainDays = days.filter(d => !d.originalIsRest);
+  const trainDays = days.filter(d => !d.originalIsRest).slice(0, 3);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/70 px-4 pb-4 md:pb-0">
@@ -173,16 +173,23 @@ export default function Treinos() {
         };
         setPlan(normalized);
         const today = normalized.days.find(d => d.status === 'today');
-        if (today) setExpanded(today.id);
+        if (today) {
+          setExpanded(today.id);
+          loadExercisesById(today.id);
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
-  const loadExercises = async (dayId) => {
-    if (exercises[dayId]) return;
+  const loadExercisesById = async (dayId) => {
     const data = await workoutsApi.dayExercises(dayId).catch(() => ({}));
     setExercises(prev => ({ ...prev, [dayId]: data.exercises ?? [] }));
+  };
+
+  const loadExercises = async (dayId) => {
+    if (exercises[dayId]) return;
+    await loadExercisesById(dayId);
   };
 
   const toggleExpand = (day) => {
