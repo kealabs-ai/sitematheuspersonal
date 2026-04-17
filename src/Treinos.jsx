@@ -158,10 +158,11 @@ export default function Treinos() {
   const [exercises, setExercises] = useState({});
   const [checked, setChecked]     = useState({});
   const [weights, setWeights]     = useState({});
-  const [activeLog, setActiveLog] = useState(null); // { logId, dayId }
+  const [activeLog, setActiveLog]     = useState(null);
   const [todayIsRest, setTodayIsRest] = useState(false);
   const [showSelectModal, setShowSelectModal] = useState(false);
-  const [weeklyResult, setWeeklyResult] = useState(null); // { weeklyDone, weeklyGoal }
+  const [weeklyResult, setWeeklyResult] = useState(null);
+  const [chosenDay, setChosenDay]      = useState(null); // dia escolhido pelo aluno
 
   useEffect(() => {
     workoutsApi.plan()
@@ -206,6 +207,7 @@ export default function Treinos() {
     const data = await workoutsApi.startLog(day.id).catch(() => null);
     const logId = data?.log_id ?? data?.id;
     if (logId) {
+      setChosenDay(day);        // salva o dia escolhido como "treino de hoje"
       setActiveLog({ logId, dayId: day.id });
       loadExercises(day.id);
       setExpanded(day.id);
@@ -226,6 +228,7 @@ export default function Treinos() {
     await workoutsApi.saveExercises(activeLog.logId, payload).catch(() => {});
     await workoutsApi.finishLog(activeLog.logId, true).catch(() => {});
     setActiveLog(null);
+    setChosenDay(null);
 
     // Histórico e meta semanal
     const [histData] = await Promise.all([
@@ -250,7 +253,8 @@ export default function Treinos() {
     setWeights(prev => ({ ...prev, [`${dayId}-${exId}`]: val }));
 
   const days = plan?.days ?? [];
-  const todayDay = days.find(d => d.status === 'today');
+  const suggestedDay = days.find(d => d.status === 'today');
+  const todayDay = chosenDay ?? suggestedDay;  // escolha do aluno prevalece sobre sugestão da API
   const restCount = days.filter(d => d.status === 'rest').length + (todayIsRest ? 1 : 0);
 
   if (loading) return (
