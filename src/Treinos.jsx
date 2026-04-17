@@ -422,9 +422,8 @@ export default function Treinos() {
     if (!activeLog) return;
     const { dayId } = activeLog;
     const exList = exercises[dayId] ?? [];
-    const missing = exList.filter(ex => !checked[`${dayId}-${ex.id}`] ? false : !weights[`${dayId}-${ex.id}`]);
     const anyMissing = exList.some(ex => !weights[`${dayId}-${ex.id}`]);
-    if (anyMissing) { setPendingFinish(true); setShowWeightWarning(true); return; }
+    if (anyMissing) { setShowWeightWarning(true); return; }
     finishWorkout();
   };
 
