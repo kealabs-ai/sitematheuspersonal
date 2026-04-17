@@ -623,6 +623,18 @@ const results = [
   },
 ];
 
+function ImgWithFallback({ src, alt, className, style }) {
+  const [err, setErr] = useState(false);
+  if (err) {
+    return (
+      <div className={`${className} bg-dark-border flex items-center justify-center`} style={style}>
+        <span className="text-gray-700 text-xs uppercase tracking-wide">{alt}</span>
+      </div>
+    );
+  }
+  return <img src={src} alt={alt} className={className} style={style} onError={() => setErr(true)} draggable={false} />;
+}
+
 function ResultCard({ result, index }) {
   const [slider, setSlider] = useState(50);
   const [flipped, setFlipped] = useState(false);
@@ -638,19 +650,17 @@ function ResultCard({ result, index }) {
       {/* Slider antes/depois */}
       <div className="relative w-full aspect-[3/4] overflow-hidden select-none cursor-col-resize">
         {/* DEPOIS (fundo) */}
-        <img
+        <ImgWithFallback
           src={result.after}
           alt="Depois"
           className="absolute inset-0 w-full h-full object-cover object-top"
-          draggable={false}
         />
         {/* ANTES (clip) */}
-        <img
+        <ImgWithFallback
           src={result.before}
           alt="Antes"
           className="absolute inset-0 w-full h-full object-cover object-top pointer-events-none"
           style={{ clipPath: `polygon(0 0, ${slider}% 0, ${slider}% 100%, 0 100%)` }}
-          draggable={false}
         />
         {/* Linha divisória */}
         <div
@@ -709,7 +719,7 @@ function ResultCard({ result, index }) {
             transition={{ duration: 0.25 }}
             className="overflow-hidden"
           >
-            <img
+            <ImgWithFallback
               src={result.highlight}
               alt="Resultado"
               className="w-full object-cover object-top max-h-72"
