@@ -222,7 +222,7 @@ export default function Treinos() {
       const d = new Date(l.finished_at ?? l.started_at ?? l.date ?? '');
       if (isNaN(d) || d < weekStart) return;
       const iso = d.toISOString().split('T')[0];
-      if (!map[iso]) map[iso] = { label: l.workout_label ?? l.day_label ?? '✓', name: l.day_name ?? '' };
+      if (!map[iso]) map[iso] = { label: l.training ?? l.workout_label ?? l.day_label ?? '✓', name: l.day_name ?? '' };
     });
     setWeekLogs(map);
   };
@@ -246,9 +246,10 @@ export default function Treinos() {
     await fetchExercises(day.id);
 
     // inicia log com o day_id do treino escolhido
-    const data = await workoutsApi.startLog(day.id).catch(() => null);
+    const training = day.workoutLabel ?? 'A';
+    const data = await workoutsApi.startLog(day.id, training).catch(() => null);
     const logId = data?.log_id ?? data?.id;
-    if (logId) setActiveLog({ logId, dayId: day.id });
+    if (logId) setActiveLog({ logId, dayId: day.id, training });
   };
 
   const finishWorkout = async () => {
