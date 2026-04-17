@@ -312,7 +312,9 @@ export default function Treinos() {
   const [loadingEx, setLoadingEx]     = useState(false);
   const [isRest, setIsRest]           = useState(false);
   const [showModal, setShowModal]     = useState(false);
-  const [weeklyResult, setWeeklyResult] = useState(null);
+  const [weeklyResult, setWeeklyResult]         = useState(null);
+  const [showWeightWarning, setShowWeightWarning] = useState(false);
+  const [pendingFinish, setPendingFinish]         = useState(false);
   const [showExercises, setShowExercises] = useState(true);
   const [weekLogs, setWeekLogs]       = useState({});
   const [showHistory, setShowHistory] = useState(false);
@@ -416,7 +418,17 @@ export default function Treinos() {
     setWeeklyResult({ weeklyDone, weeklyGoal });
   };
 
-  const toggleCheck = (dayId, exId) =>
+  const handleFinishClick = () => {
+    if (!activeLog) return;
+    const { dayId } = activeLog;
+    const exList = exercises[dayId] ?? [];
+    const missing = exList.filter(ex => !checked[`${dayId}-${ex.id}`] ? false : !weights[`${dayId}-${ex.id}`]);
+    const anyMissing = exList.some(ex => !weights[`${dayId}-${ex.id}`]);
+    if (anyMissing) { setPendingFinish(true); setShowWeightWarning(true); return; }
+    finishWorkout();
+  };
+
+  const confirmFinish = () => { setShowWeightWarning(false); setPendingFinish(false); finishWorkout(); };
     setChecked(prev => ({ ...prev, [`${dayId}-${exId}`]: !prev[`${dayId}-${exId}`] }));
 
   const setWeight = (dayId, exId, val) =>
@@ -465,6 +477,41 @@ export default function Treinos() {
           />
         )}
         {showHistory && <HistoryModal onClose={() => setShowHistory(false)} />}
+        {showWeightWarning && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4" onClick={() => setShowWeightWarning(false)}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.92 }}
+              className="w-full max-w-sm bg-dark-card border border-yellow-500/40 p-6 space-y-4"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="text-center">
+                <span className="text-4xl">&#9878;</span>
+                <p className="font-bebas text-2xl text-white mt-2">Registre as cargas!</p>
+              </div>
+              <p className="text-gray-300 text-sm text-center leading-relaxed">
+                Registrar o peso utilizado em cada exercício é essencial para acompanhar sua
+                <span className="text-yellow-400 font-semibold"> evolução de força</span> ao longo do tempo.
+              </p>
+              <p className="text-gray-500 text-xs text-center">
+                Com os dados de carga, o Matheus consegue ajustar seu treino com precisão e você visualiza seu progresso real nos gráficos.
+              </p>
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <button
+                  onClick={() => { setShowWeightWarning(false); setPendingFinish(false); }}
+                  className="border border-dark-border text-gray-400 font-bold py-3 text-sm uppercase hover:border-gray-500 hover:text-white transition-colors"
+                >
+                  Voltar e preencher
+                </button>
+                <button
+                  onClick={confirmFinish}
+                  className="border border-yellow-500/50 text-yellow-400 font-bold py-3 text-sm uppercase hover:bg-yellow-500/10 transition-colors"
+                >
+                  Salvar mesmo assim
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </AnimatePresence>
 
       <main className="max-w-2xl md:max-w-3xl mx-auto px-4 md:px-8 py-6 space-y-4">
@@ -629,7 +676,7 @@ export default function Treinos() {
               {/* Botão finalizar */}
               {activeLog && dayExercises.length > 0 && (
                 <ShimmerButton
-                  onClick={finishWorkout}
+                  onClick={handleFinishClick}
                   className="w-full mt-2 justify-center"
                   shimmerColor="#ffffff"
                   background="rgba(0,180,216,1)"
