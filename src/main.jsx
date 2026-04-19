@@ -18,6 +18,7 @@ import Nutricao from './Nutricao.jsx';
 import Perfil from './Perfil.jsx';
 import NotFound from './NotFound.jsx';
 import Admin from './Admin.jsx';
+import ResetPassword from './ResetPassword.jsx';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -40,6 +41,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/dashboard/nutricao" element={<Nutricao />} />
         <Route path="/dashboard/perfil" element={<Perfil />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/recuperar-senha" element={<ResetPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
