@@ -26,13 +26,24 @@ const planColors = {
 };
 const planEmoji = { BRONZE: '🥉', PRATA: '🥈', OURO: '🥇', DIAMANTE: '💎' };
 
-const calcImc  = (w, h) => (w / ((h / 100) ** 2)).toFixed(1);
+const calcImc  = (w, h) => (w / ((h / 100) ** 2)).toFixed(2);
 const imcLabel = (v) => {
-  if (v < 18.5) return { label: 'Abaixo do peso', color: 'text-blue-400' };
-  if (v < 25)   return { label: 'Peso normal',    color: 'text-lime-green' };
-  if (v < 30)   return { label: 'Sobrepeso',      color: 'text-yellow-400' };
-  return              { label: 'Obesidade',       color: 'text-red-400' };
+  if (v < 18.5) return { label: 'Abaixo do peso', color: 'text-blue-400',    range: '< 18.5'   };
+  if (v < 25)   return { label: 'Peso normal',    color: 'text-lime-green',  range: '18.5 – 24.9' };
+  if (v < 30)   return { label: 'Sobrepeso',      color: 'text-yellow-400',  range: '25.0 – 29.9' };
+  if (v < 35)   return { label: 'Obesidade I',    color: 'text-orange-400',  range: '30.0 – 34.9' };
+  if (v < 40)   return { label: 'Obesidade II',   color: 'text-red-400',     range: '35.0 – 39.9' };
+  return              { label: 'Obesidade III',   color: 'text-red-600',     range: '≥ 40.0'    };
 };
+
+const IMC_TABLE = [
+  { range: '< 18.5',       label: 'Abaixo do peso', color: 'text-blue-400'    },
+  { range: '18.5 – 24.9',  label: 'Peso normal',    color: 'text-lime-green'  },
+  { range: '25.0 – 29.9',  label: 'Sobrepeso',      color: 'text-yellow-400'  },
+  { range: '30.0 – 34.9',  label: 'Obesidade I',    color: 'text-orange-400'  },
+  { range: '35.0 – 39.9',  label: 'Obesidade II',   color: 'text-red-400'     },
+  { range: '≥ 40.0',        label: 'Obesidade III',  color: 'text-red-600'     },
+];
 const calcAge = (d) => Math.floor((Date.now() - new Date(d)) / (1000 * 60 * 60 * 24 * 365.25));
 const daysUntil = (d) => Math.max(0, Math.ceil((new Date(d) - new Date()) / (1000 * 60 * 60 * 24)));
 
@@ -83,6 +94,7 @@ export default function Perfil() {
   const [notifOpen, setNotifOpen]         = useState(false);
   const [notifPrefs, setNotifPrefs]       = useState(null);
   const [notifSaving, setNotifSaving]     = useState(false);
+  const [imcModalOpen, setImcModalOpen]   = useState(false);
   const [avatar, setAvatar]               = useState(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
@@ -416,7 +428,13 @@ export default function Perfil() {
             {imcVal && imcInfo && (
               <div className="bg-black border border-dark-border p-3 flex items-center justify-between">
                 <div>
-                  <p className="text-gray-500 text-[10px] uppercase tracking-wide">IMC</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-gray-500 text-[10px] uppercase tracking-wide">IMC</p>
+                    <button onClick={() => setImcModalOpen(true)}
+                      className="w-4 h-4 rounded-full border border-gray-600 text-gray-500 hover:border-lime-green hover:text-lime-green transition-colors flex items-center justify-center text-[9px] font-bold leading-none">
+                      i
+                    </button>
+                  </div>
                   <p className={`font-bebas text-3xl mt-0.5 ${imcInfo.color}`}>{imcVal}</p>
                 </div>
                 <div className="text-right">
@@ -485,6 +503,54 @@ export default function Perfil() {
                   <Camera size={16} /> Escolher da galeria
                 </button>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* Modal IMC */}
+        {imcModalOpen && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            className="fixed inset-0 bg-black/80 z-50 flex items-end md:items-center justify-center p-4"
+            onClick={() => setImcModalOpen(false)}>
+            <motion.div initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+              className="bg-dark-card border border-dark-border p-6 w-full max-w-sm space-y-4"
+              onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bebas uppercase text-white">Índice de Massa Corporal</h3>
+                <button onClick={() => setImcModalOpen(false)} className="text-gray-500 hover:text-white"><X size={20} /></button>
+              </div>
+
+              {/* Fórmula */}
+              <div className="bg-black border border-dark-border p-3 text-center">
+                <p className="text-gray-500 text-[10px] uppercase tracking-widest mb-1">Fórmula</p>
+                <p className="text-white text-sm font-mono">IMC = peso (kg) ÷ altura² (m)</p>
+                {imcVal && (
+                  <p className="text-gray-500 text-xs mt-1">
+                    {metrics.weight} ÷ {(metrics.height / 100).toFixed(2)}² = <span className={`font-bold ${imcInfo?.color}`}>{imcVal}</span>
+                  </p>
+                )}
+              </div>
+
+              {/* Tabela */}
+              <div>
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-2">Classificação</p>
+                <div className="divide-y divide-dark-border border border-dark-border">
+                  {IMC_TABLE.map((row, i) => {
+                    const isUser = imcInfo?.label === row.label;
+                    return (
+                      <div key={i} className={`flex items-center justify-between px-3 py-2 ${
+                        isUser ? 'bg-white/5' : ''
+                      }`}>
+                        <span className={`text-xs font-mono ${row.color}`}>{row.range}</span>
+                        <span className={`text-xs font-semibold ${row.color}`}>{row.label}</span>
+                        {isUser && <span className="text-[10px] text-lime-green border border-lime-green/30 px-1.5 py-0.5 ml-2">← você</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <p className="text-gray-600 text-[10px] text-center">O IMC é uma referência geral. Consulte um profissional para avaliação completa.</p>
             </motion.div>
           </motion.div>
         )}
