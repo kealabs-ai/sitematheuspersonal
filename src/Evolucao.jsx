@@ -49,22 +49,20 @@ const fmtDate = (raw) => {
 
 const fmt2 = (v) => (typeof v === 'number' ? v.toFixed(2) : parseFloat(v || 0).toFixed(2));
 
-// Garante src válido para imagem base64 vinda da API
-// A API armazena só o base64 puro (sem prefixo data:) — reconstrói aqui
+// Resolve src de imagem — aceita URL HTTP, data:image ou base64 puro
 const toImgSrc = (raw) => {
   if (!raw) return null;
-  // Remove qualquer whitespace/newline que possa ter sido inserido
-  const clean = String(raw).replace(/[\s\r\n]/g, '');
-  // Se já tem prefixo data: correto, usa direto
-  if (clean.startsWith('data:image')) return clean;
-  // Se tem prefixo corrompido (ex: "data:image/jpeg" sem o resto), descarta e reconstrói
-  // Detecta mime pelo magic bytes do base64
-  let mime = 'image/jpeg'; // padrão
-  if (clean.startsWith('/9j/'))         mime = 'image/jpeg';  // JPEG
-  else if (clean.startsWith('iVBOR'))   mime = 'image/png';   // PNG
-  else if (clean.startsWith('R0lGO'))   mime = 'image/gif';   // GIF
-  else if (clean.startsWith('UklGR'))   mime = 'image/webp';  // WEBP
-  else if (clean.startsWith('AAABAA'))  mime = 'image/x-icon';
+  const s = String(raw).trim();
+  // URL HTTP normal — usa direto
+  if (s.startsWith('http://') || s.startsWith('https://') || s.startsWith('/')) return s;
+  // Já tem prefixo data: correto
+  if (s.startsWith('data:image')) return s;
+  // Base64 puro — detecta mime pelos magic bytes
+  const clean = s.replace(/[\s\r\n]/g, '');
+  let mime = 'image/jpeg';
+  if (clean.startsWith('iVBOR'))  mime = 'image/png';
+  else if (clean.startsWith('R0lGO')) mime = 'image/gif';
+  else if (clean.startsWith('UklGR')) mime = 'image/webp';
   return `data:${mime};base64,${clean}`;
 };
 
@@ -165,7 +163,6 @@ export default function Evolucao() {
       } else if (t === 'Fotos') {
         const d = await progressApi.photos();
         const list = d.photos ?? d.data ?? (Array.isArray(d) ? d : []);
-        console.log('[Fotos] raw sample:', list[0]?.photo_url?.slice(0, 80));
         setPhotos(list);
       } else if (t === 'Conquistas') {
         const d = await progressApi.badges();
@@ -222,7 +219,7 @@ export default function Evolucao() {
           label: file.name,
           recorded_at: new Date().toISOString().split('T')[0],
         });
-        if (res?.detail || res?.error) throw new Error(JSON.stringify(res.detail));
+        if (res?.detail || res?.error) throw new Error(JSON.stringify(res.detail ?? res.error));
         setUploadProgress(prev => prev.map((p, i) => i === idx ? { ...p, status: 'ok' } : p));
       } catch (err) {
         console.error('[Upload foto] erro:', err?.message ?? err);
@@ -655,7 +652,7 @@ export default function Evolucao() {
                         <div key={i} className="flex items-center justify-between text-[10px]">
                           <span className="text-gray-400 truncate max-w-[160px]">{p.name}</span>
                           <span className={p.status === 'ok' ? 'text-lime-green' : p.status === 'error' ? 'text-red-400' : 'text-gray-500'}>
-                            {p.status === 'ok' ? '✓ Enviado' : p.status === 'error' ? '✗ Falhou — API não suporta base64' : '...'}
+                            {p.status === 'ok' ? '✓ Enviado' : p.status === 'error' ? '✗ Falhou' : '...'}
                           </span>
                         </div>
                       ))}
