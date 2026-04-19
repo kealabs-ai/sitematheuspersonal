@@ -687,7 +687,6 @@ export default function Evolucao() {
                         src={toImgSrc(p.photo_url)}
                         alt={p.label}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
-                        onError={(e) => console.error('[Foto] src inválido, primeiros 120 chars:', e.target.src?.slice(0, 120))}
                         onClick={() => setPhotoPreview({ src: toImgSrc(p.photo_url), label: p.label, date: p.recorded_at })}
                       />
                     ) : (
