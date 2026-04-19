@@ -118,6 +118,7 @@ export default function Evolucao() {
   const [selectedExercise, setSelectedExercise] = useState(null);
   const [showExSelect, setShowExSelect] = useState(false);
   const [measurements, setMeasurements] = useState([]);
+  const [measureHistory, setMeasureHistory] = useState([]);
   const [photos, setPhotos] = useState([]);
   const [badges, setBadges]           = useState({ earned: [], locked: [] });
   const [loading, setLoading]         = useState(false);
@@ -158,9 +159,9 @@ export default function Evolucao() {
         }
       } else if (t === 'Medidas') {
         const d = await progressApi.measurements();
-        // Backend retorna { measurements: cards[], history: [] }
         const cards = d.measurements ?? [];
         setMeasurements(cards);
+        setMeasureHistory(d.history ?? []);
       } else if (t === 'Fotos') {
         const d = await progressApi.photos();
         const list = d.photos ?? d.data ?? (Array.isArray(d) ? d : []);
@@ -515,10 +516,11 @@ export default function Evolucao() {
 
         {/* Tab: Medidas */}
         {tab === 'Medidas' && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
             <ShimmerButton onClick={() => setModalMedida(true)} className="w-full justify-center" shimmerColor="#ffffff" background="rgba(0,180,216,1)">
               <Ruler size={16} /> Registrar Medida
             </ShimmerButton>
+
             {loading ? (
               <p className="text-center text-gray-600 text-xs py-8">Carregando...</p>
             ) : measurements.length === 0 ? (
@@ -528,8 +530,8 @@ export default function Evolucao() {
                 <p className="text-gray-600 text-xs mt-1">Registre suas medidas para acompanhar a evolução</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {/* Última atualização */}
+              <>
+                {/* Cards atuais */}
                 {measurements[0]?.recorded_at && (
                   <p className="text-gray-600 text-xs">
                     Última medição: <span className="text-gray-400">{fmtDate(measurements[0].recorded_at)}</span>
@@ -537,11 +539,10 @@ export default function Evolucao() {
                 )}
                 <div className="grid grid-cols-2 gap-3">
                   {measurements.map((m, i) => {
-                    const diff = m.diff;
-                    const isPositive = diff?.startsWith('+');
-                    const isNegative = diff?.startsWith('-');
-                    const diffColor = isNegative ? 'text-lime-green' : isPositive ? 'text-red-400' : 'text-gray-500';
-                    const diffIcon  = isNegative ? '↓' : isPositive ? '↑' : '=';
+                    const isNeg = m.diff?.startsWith('-');
+                    const isPos = m.diff?.startsWith('+') && m.diff !== '+0.0 ' + m.unit;
+                    const diffColor = isNeg ? 'text-lime-green' : isPos ? 'text-red-400' : 'text-gray-500';
+                    const diffIcon  = isNeg ? '↓' : isPos ? '↑' : '=';
                     return (
                       <motion.div key={i}
                         initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
@@ -553,23 +554,18 @@ export default function Evolucao() {
                             {typeof m.value === 'number' ? m.value.toFixed(1) : m.value}
                             <span className="text-gray-500 text-sm font-inter ml-1">{m.unit}</span>
                           </p>
-                          {diff && (
-                            <span className={`text-xs font-bold ${diffColor}`}>
-                              {diffIcon} {diff}
-                            </span>
+                          {m.diff && (
+                            <span className={`text-xs font-bold ${diffColor}`}>{diffIcon} {m.diff}</span>
                           )}
                         </div>
                         {m.initial != null && m.initial !== m.value && (
-                          <p className="text-gray-700 text-[10px]">
-                            Inicial: {typeof m.initial === 'number' ? m.initial.toFixed(1) : m.initial} {m.unit}
-                          </p>
+                          <p className="text-gray-700 text-[10px]">Inicial: {typeof m.initial === 'number' ? m.initial.toFixed(1) : m.initial} {m.unit}</p>
                         )}
-                        {/* Mini barra de progresso */}
                         {m.initial != null && m.initial > 0 && (
                           <div className="w-full bg-black h-1">
                             <div
-                              className={`h-1 transition-all ${isNegative ? 'bg-lime-green' : isPositive ? 'bg-red-400' : 'bg-gray-600'}`}
-                              style={{ width: `${Math.min(Math.abs((m.value - m.initial) / m.initial) * 100 * 5, 100)}%` }}
+                              className={`h-1 transition-all ${isNeg ? 'bg-lime-green' : isPos ? 'bg-red-400' : 'bg-gray-600'}`}
+                              style={{ width: `${Math.min(Math.abs((m.value - m.initial) / m.initial) * 500, 100)}%` }}
                             />
                           </div>
                         )}
@@ -577,7 +573,59 @@ export default function Evolucao() {
                     );
                   })}
                 </div>
-              </div>
+
+                {/* Histórico de medições */}
+                {measureHistory.length > 1 && (
+                  <div className="bg-dark-card border border-dark-border overflow-hidden">
+                    <p className="text-[10px] text-gray-500 uppercase tracking-widest px-4 pt-4 pb-2">Histórico de medições</p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="border-b border-dark-border">
+                            <th className="text-left text-gray-600 px-4 py-2 font-medium uppercase tracking-wide">Data</th>
+                            {['Peso','Cintura','Braço','Perna','Peito','% Gord.'].map(h => (
+                              <th key={h} className="text-right text-gray-600 px-3 py-2 font-medium uppercase tracking-wide whitespace-nowrap">{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[...measureHistory].reverse().map((r, i, arr) => {
+                            const prev = arr[i + 1];
+                            const cell = (key, unit) => {
+                              const val  = r[key]   != null ? parseFloat(r[key]).toFixed(1)   : '—';
+                              const pval = prev?.[key] != null ? parseFloat(prev[key]) : null;
+                              const cur  = r[key]   != null ? parseFloat(r[key])   : null;
+                              const diff = pval != null && cur != null ? cur - pval : null;
+                              const color = diff === null ? '' : diff < 0 ? 'text-lime-green' : diff > 0 ? 'text-red-400' : 'text-gray-500';
+                              const arrow = diff === null ? '' : diff < 0 ? ' ↓' : diff > 0 ? ' ↑' : '';
+                              return (
+                                <td key={key} className={`text-right px-3 py-2.5 ${color} whitespace-nowrap`}>
+                                  {val !== '—' ? `${val}${unit}` : '—'}
+                                  {arrow && <span className="text-[10px] ml-0.5">{arrow}</span>}
+                                </td>
+                              );
+                            };
+                            return (
+                              <tr key={i} className={`border-b border-dark-border/50 last:border-0 ${i === 0 ? 'bg-lime-green/5' : 'hover:bg-white/3'}`}>
+                                <td className="px-4 py-2.5 text-gray-400 whitespace-nowrap">
+                                  {fmtDate(r.recorded_at)}
+                                  {i === 0 && <span className="ml-2 text-[9px] text-lime-green border border-lime-green/30 px-1">atual</span>}
+                                </td>
+                                {cell('weight',   'kg')}
+                                {cell('waist',    'cm')}
+                                {cell('arm',      'cm')}
+                                {cell('leg',      'cm')}
+                                {cell('chest',    'cm')}
+                                {cell('body_fat', '%')}
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </motion.div>
         )}
