@@ -161,8 +161,12 @@ export default function Perfil() {
       recorded_at: metricsDraft.recorded_at || new Date().toISOString().split('T')[0],
     };
     const res = await usersApi.addMetric(payload).catch(() => null);
-    if (res && !res.error) {
-      setMetrics(prev => ({ ...prev, ...payload }));
+    // Usa métricas retornadas pelo POST ou recarrega do backend
+    if (res?.metrics) {
+      setMetrics(res.metrics);
+    } else {
+      const fresh = await usersApi.me().catch(() => null);
+      setMetrics(fresh?.latest_metrics ?? { ...metrics, ...payload });
     }
     setMetricsSaving(false);
     setMetricsOpen(false);
