@@ -122,17 +122,30 @@ export default function Perfil() {
   const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const preview = URL.createObjectURL(file);
-    setAvatar(preview);
+    setAvatar(URL.createObjectURL(file));
     setAvatarUploading(true);
-    const fd = new FormData();
-    fd.append('avatar', file);
-    const res = await usersApi.uploadAvatar(fd).catch(() => null);
-    setAvatarUploading(false);
-    if (res?.avatar_url) {
-      setAvatar(res.avatar_url);
-      setUser(prev => ({ ...prev, avatar_url: res.avatar_url }));
-    }
+    // Comprime e converte para base64
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const img = new Image();
+      img.onload = async () => {
+        const MAX = 800;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width  = Math.round(img.width  * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        const b64 = canvas.toDataURL('image/jpeg', 0.8);
+        const res = await usersApi.uploadAvatar({ avatar_base64: b64 }).catch(() => null);
+        setAvatarUploading(false);
+        if (res?.avatar_url) {
+          setAvatar(res.avatar_url);
+          setUser(prev => ({ ...prev, avatar_url: res.avatar_url }));
+        }
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
   };
 
   const openNotif = async () => {

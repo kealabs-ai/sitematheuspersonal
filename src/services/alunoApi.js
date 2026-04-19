@@ -64,11 +64,7 @@ export const users = {
   metrics:        ()                                => get(`${BASE}/aluno/users/me/metrics`),
   addMetric:      (data)                            => post(`${BASE}/aluno/users/me/metrics`, data),
   feedback:       (message)                         => post(`${BASE}/aluno/users/me/feedback`, { message }),
-  uploadAvatar:   (formData)                        => fetch(`${BASE}/aluno/users/me/avatar`, {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${getToken()}` },
-    body: formData,
-  }).then(safeJson),
+  uploadAvatar:   (data)                            => post(`${BASE}/aluno/users/me/avatar`, data),
   notifPrefs:     ()                                => get(`${BASE}/aluno/users/me/notification-preferences`),
   updateNotifPrefs: (data)                          => post(`${BASE}/aluno/users/me/notification-preferences`, data),
 };
