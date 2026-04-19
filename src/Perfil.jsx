@@ -374,9 +374,9 @@ export default function Perfil() {
           className="bg-dark-card border border-dark-border divide-y divide-dark-border">
           {[
             { icon: <Lock size={16} />, label: 'Alterar senha',               action: () => { setPwDraft({ current: '', next: '', confirm: '' }); setPwError(''); setPasswordOpen(true); }, highlight: false },
-            { icon: <Bell size={16} />, label: 'Notificações',                 action: openNotif,                   highlight: false },
+            { icon: <Bell size={16} />, label: 'Notificações', action: openNotif, highlight: false, hidden: true },
             { icon: <Star size={16} />, label: 'Enviar feedback ao personal',  action: () => setFeedbackOpen(true), highlight: true  },
-          ].map(({ icon, label, action, highlight }, i) => (
+          ].filter(item => !item.hidden).map(({ icon, label, action, highlight }, i) => (
             <button key={i} onClick={action}
               className={`w-full flex items-center justify-between px-4 py-3.5 hover:bg-white/5 transition-colors ${highlight ? 'text-lime-green' : 'text-gray-300'}`}>
               <div className="flex items-center gap-3">
