@@ -100,11 +100,14 @@ export default function Perfil() {
     'https://api.dicebear.com/8.x/adventurer/svg?seed=athlete3&backgroundColor=0d1b2a&hair=long03',
   ];
 
-  const saveAvatarUrl = async (url) => {
+  const saveAvatarUrl = async (urlOrBase64) => {
+    // Mostra preview imediato
+    setAvatar(urlOrBase64);
     setAvatarUploading(true);
-    const res = await usersApi.uploadAvatar({ avatar_base64: url }).catch(() => null);
+    const res = await usersApi.uploadAvatar({ avatar_base64: urlOrBase64 }).catch(() => null);
     setAvatarUploading(false);
-    const finalUrl = res?.avatar_url ?? url;
+    // Usa URL retornada pelo backend (arquivo salvo) ou mantém a original
+    const finalUrl = res?.avatar_url ?? urlOrBase64;
     setAvatar(finalUrl);
     const updated = { ...getUser(), avatar_url: finalUrl };
     localStorage.setItem('user', JSON.stringify(updated));

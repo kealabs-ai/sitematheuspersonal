@@ -49,14 +49,33 @@ export default function AppNav() {
   const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
   const [avatarUrl, setAvatarUrl] = useState(user.avatar_url ?? null);
 
-  // Sincroniza avatar_url quando o localStorage é atualizado (ex: após salvar no Perfil)
   useEffect(() => {
+    // Carrega avatar_url do banco se não estiver no localStorage
+    const u = getUser();
+    if (u?.avatar_url) {
+      setAvatarUrl(u.avatar_url);
+    } else {
+      // Busca do backend e atualiza localStorage
+      fetch(`${import.meta.env.VITE_API_URL ?? '/api'}/aluno/users/me`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data?.avatar_url) {
+            setAvatarUrl(data.avatar_url);
+            const updated = { ...(getUser() ?? {}), avatar_url: data.avatar_url };
+            localStorage.setItem('user', JSON.stringify(updated));
+          }
+        })
+        .catch(() => {});
+    }
+
+    // Sincroniza quando Perfil atualiza o avatar
     const sync = () => {
-      const u = getUser();
-      if (u?.avatar_url) setAvatarUrl(u.avatar_url);
+      const updated = getUser();
+      if (updated?.avatar_url) setAvatarUrl(updated.avatar_url);
     };
     window.addEventListener('storage', sync);
-    sync();
     return () => window.removeEventListener('storage', sync);
   }, []);
 
