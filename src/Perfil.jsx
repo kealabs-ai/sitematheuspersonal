@@ -100,35 +100,21 @@ export default function Perfil() {
     'https://api.dicebear.com/8.x/adventurer/svg?seed=athlete3&backgroundColor=0d1b2a&hair=long03',
   ];
 
+  const saveAvatarUrl = async (url) => {
+    setAvatarUploading(true);
+    const res = await usersApi.uploadAvatar({ avatar_base64: url }).catch(() => null);
+    setAvatarUploading(false);
+    const finalUrl = res?.avatar_url ?? url;
+    setAvatar(finalUrl);
+    const updated = { ...getUser(), avatar_url: finalUrl };
+    localStorage.setItem('user', JSON.stringify(updated));
+    setUser(prev => ({ ...prev, avatar_url: finalUrl }));
+    window.dispatchEvent(new Event('storage'));
+  };
+
   const handlePresetAvatar = async (url) => {
     setAvatarModalOpen(false);
-    setAvatarUploading(true);
-    // Busca o SVG e converte para base64
-    try {
-      const res  = await fetch(url);
-      const blob = await res.blob();
-      const reader = new FileReader();
-      reader.onload = async (ev) => {
-        const b64 = ev.target.result; // data:image/svg+xml;base64,...
-        const apiRes = await usersApi.uploadAvatar({ avatar_base64: b64 }).catch(() => null);
-        setAvatarUploading(false);
-        const finalUrl = apiRes?.avatar_url ?? url;
-        setAvatar(finalUrl);
-        const updated = { ...getUser(), avatar_url: finalUrl };
-        localStorage.setItem('user', JSON.stringify(updated));
-        setUser(prev => ({ ...prev, avatar_url: finalUrl }));
-        window.dispatchEvent(new Event('storage'));
-      };
-      reader.readAsDataURL(blob);
-    } catch {
-      setAvatarUploading(false);
-      // fallback: usa a URL direta
-      setAvatar(url);
-      const updated = { ...getUser(), avatar_url: url };
-      localStorage.setItem('user', JSON.stringify(updated));
-      setUser(prev => ({ ...prev, avatar_url: url }));
-      window.dispatchEvent(new Event('storage'));
-    }
+    await saveAvatarUrl(url);
   };
 
   useEffect(() => {
@@ -136,6 +122,7 @@ export default function Perfil() {
       setUser(data);
       setDraft(data);
       if (data.latest_metrics) setMetrics(data.latest_metrics);
+      if (data.avatar_url) setAvatar(data.avatar_url); // carrega avatar do banco
     }).catch(() => {});
   }, []);
 
@@ -166,9 +153,7 @@ export default function Perfil() {
   const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setAvatar(URL.createObjectURL(file));
-    setAvatarUploading(true);
-    // Comprime e converte para base64
+    setAvatar(URL.createObjectURL(file)); // preview imediato
     const reader = new FileReader();
     reader.onload = async (ev) => {
       const img = new Image();
@@ -179,17 +164,7 @@ export default function Perfil() {
         canvas.width  = Math.round(img.width  * scale);
         canvas.height = Math.round(img.height * scale);
         canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        const b64 = canvas.toDataURL('image/jpeg', 0.8);
-        const res = await usersApi.uploadAvatar({ avatar_base64: b64 }).catch(() => null);
-        setAvatarUploading(false);
-        if (res?.avatar_url) {
-          setAvatar(res.avatar_url);
-          const updated = { ...getUser(), avatar_url: res.avatar_url };
-          localStorage.setItem('user', JSON.stringify(updated));
-          setUser(prev => ({ ...prev, avatar_url: res.avatar_url }));
-          // Dispara evento storage para o BottomNav sincronizar
-          window.dispatchEvent(new Event('storage'));
-        }
+        await saveAvatarUrl(canvas.toDataURL('image/jpeg', 0.8));
       };
       img.src = ev.target.result;
     };
