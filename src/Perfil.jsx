@@ -26,7 +26,11 @@ const planColors = {
 };
 const planEmoji = { BRONZE: '🥉', PRATA: '🥈', OURO: '🥇', DIAMANTE: '💎' };
 
-const calcImc  = (w, h) => (w / ((h / 100) ** 2)).toFixed(2);
+const calcImc = (w, h) => {
+  const val = w / ((h / 100) ** 2);
+  return parseFloat(val.toFixed(1)); // número real com 1 decimal para cálculos
+};
+const fmtImc = (v) => v.toFixed(1); // exibe com 1 decimal: 22.4, 32.1
 const imcLabel = (v) => {
   if (v < 18.5) return { label: 'Abaixo do peso', color: 'text-blue-400',    range: '< 18.5'   };
   if (v < 25)   return { label: 'Peso normal',    color: 'text-lime-green',  range: '18.5 – 24.9' };
@@ -140,14 +144,26 @@ export default function Perfil() {
   }, []);
 
   const openMetrics = () => {
-    setMetricsDraft({ weight: metrics?.weight ?? '', height: metrics?.height ?? '', body_fat: metrics?.body_fat ?? '' });
+    setMetricsDraft({
+      weight:   metrics?.weight   ?? '',
+      height:   metrics?.height   ?? '',
+      recorded_at: new Date().toISOString().split('T')[0],
+    });
     setMetricsOpen(true);
   };
 
   const saveMetrics = async () => {
+    if (!metricsDraft.weight || !metricsDraft.height) return;
     setMetricsSaving(true);
-    const res = await usersApi.addMetric(metricsDraft).catch(() => null);
-    if (res) setMetrics(prev => ({ ...prev, ...metricsDraft }));
+    const payload = {
+      weight:      parseFloat(metricsDraft.weight),
+      height:      parseFloat(metricsDraft.height),
+      recorded_at: metricsDraft.recorded_at || new Date().toISOString().split('T')[0],
+    };
+    const res = await usersApi.addMetric(payload).catch(() => null);
+    if (res && !res.error) {
+      setMetrics(prev => ({ ...prev, ...payload }));
+    }
     setMetricsSaving(false);
     setMetricsOpen(false);
   };
@@ -225,8 +241,8 @@ export default function Perfil() {
   };
 
   const pc        = planColors[user?.plan] ?? planColors.OURO;
-  const imcVal    = metrics?.weight && metrics?.height ? calcImc(metrics.weight, metrics.height) : null;
-  const imcInfo   = imcVal ? imcLabel(parseFloat(imcVal)) : null;
+  const imcVal  = metrics?.weight && metrics?.height ? calcImc(parseFloat(metrics.weight), parseFloat(metrics.height)) : null;
+  const imcInfo  = imcVal ? imcLabel(imcVal) : null;
   const renewDate = nextRenewal(user?.plan_start, user?.plan_renewal);
   const renewDays  = renewDate ? daysUntil(renewDate) : null;
   const cycle      = detectCycle(user?.plan_start, user?.plan_renewal);
@@ -412,11 +428,10 @@ export default function Perfil() {
                 <Edit3 size={11} /> Editar
               </button>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'Peso',      key: 'weight',   unit: 'kg', icon: <Scale size={16} />,    color: 'text-lime-green'  },
-                { label: 'Altura',    key: 'height',   unit: 'cm', icon: <Ruler size={16} />,    color: 'text-blue-400'   },
-                { label: '% Gordura', key: 'body_fat', unit: '%',  icon: <Dumbbell size={16} />, color: 'text-orange-400' },
+                { label: 'Peso',   key: 'weight', unit: 'kg', icon: <Scale size={16} />,  color: 'text-lime-green' },
+                { label: 'Altura', key: 'height', unit: 'cm', icon: <Ruler size={16} />,  color: 'text-blue-400'  },
               ].map(({ label, key, unit, icon, color }) => (
                 <div key={key} className="bg-black border border-dark-border p-3 text-center">
                   <div className={`flex justify-center mb-1 ${color}`}>{icon}</div>
@@ -435,7 +450,7 @@ export default function Perfil() {
                       i
                     </button>
                   </div>
-                  <p className={`font-bebas text-3xl mt-0.5 ${imcInfo.color}`}>{imcVal}</p>
+                  <p className={`font-bebas text-3xl mt-0.5 ${imcInfo.color}`}>{fmtImc(imcVal)}</p>
                 </div>
                 <div className="text-right">
                   <p className={`text-sm font-bold ${imcInfo.color}`}>{imcInfo.label}</p>
@@ -526,7 +541,7 @@ export default function Perfil() {
                 <p className="text-white text-sm font-mono">IMC = peso (kg) ÷ altura² (m)</p>
                 {imcVal && (
                   <p className="text-gray-500 text-xs mt-1">
-                    {metrics.weight} ÷ {(metrics.height / 100).toFixed(2)}² = <span className={`font-bold ${imcInfo?.color}`}>{imcVal}</span>
+                    {metrics.weight} ÷ {(metrics.height / 100).toFixed(2)}² = <span className={`font-bold ${imcInfo?.color}`}>{fmtImc(imcVal)}</span>
                   </p>
                 )}
               </div>
@@ -569,22 +584,49 @@ export default function Perfil() {
               </div>
               <div className="space-y-4">
                 {[
-                  { label: 'Peso (kg)',      key: 'weight',   icon: <Scale size={14} /> },
-                  { label: 'Altura (cm)',    key: 'height',   icon: <Ruler size={14} /> },
-                  { label: '% Gordura',     key: 'body_fat', icon: <Dumbbell size={14} /> },
-                ].map(({ label, key, icon }) => (
+                  { label: 'Peso (kg)',   key: 'weight', icon: <Scale size={14} />,  placeholder: 'Ex: 75.5' },
+                  { label: 'Altura (cm)', key: 'height', icon: <Ruler size={14} />,  placeholder: 'Ex: 175' },
+                ].map(({ label, key, icon, placeholder }) => (
                   <div key={key}>
                     <label className="flex items-center gap-1.5 text-[10px] text-gray-500 uppercase tracking-wide mb-1.5">
                       <span className="text-gray-600">{icon}</span> {label}
                     </label>
-                    <input type="number" step="0.1" value={metricsDraft[key]}
+                    <input type="number" step="0.1" placeholder={placeholder}
+                      value={metricsDraft[key]}
                       onChange={e => setMetricsDraft({ ...metricsDraft, [key]: e.target.value })}
                       className="w-full bg-black border border-dark-border text-white text-sm p-2.5 focus:outline-none focus:border-lime-green transition-colors"
                     />
                   </div>
                 ))}
+
+                {/* Preview IMC em tempo real */}
+                {metricsDraft.weight && metricsDraft.height && (() => {
+                  const v = calcImc(parseFloat(metricsDraft.weight), parseFloat(metricsDraft.height));
+                  const info = imcLabel(v);
+                  return (
+                    <div className={`flex items-center justify-between border p-3 ${info.color.replace('text-', 'border-')}/30 bg-black`}>
+                      <span className="text-gray-400 text-xs uppercase tracking-wide">IMC calculado</span>
+                      <div className="text-right">
+                        <span className={`font-bebas text-2xl ${info.color}`}>{fmtImc(v)}</span>
+                        <span className={`text-xs ml-2 ${info.color}`}>{info.label}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {(!metricsDraft.weight || !metricsDraft.height) && (
+                  <p className="text-yellow-500/70 text-xs flex items-center gap-1">
+                    ⚠️ Preencha peso e altura para calcular o IMC
+                  </p>
+                )}
               </div>
-              <ShimmerButton onClick={saveMetrics} disabled={metricsSaving} className="w-full mt-5 justify-center" shimmerColor="#ffffff" background="rgba(0,180,216,1)">
+              <ShimmerButton
+                onClick={saveMetrics}
+                disabled={metricsSaving || !metricsDraft.weight || !metricsDraft.height}
+                className="w-full mt-5 justify-center"
+                shimmerColor="#ffffff"
+                background="rgba(0,180,216,1)"
+              >
                 {metricsSaving ? 'Salvando...' : 'Salvar Métricas'}
               </ShimmerButton>
             </motion.div>
