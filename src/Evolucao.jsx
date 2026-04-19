@@ -149,11 +149,12 @@ export default function Evolucao() {
         setWeightSummary(d.summary ?? null);
       } else if (t === 'Força') {
         const d = await progressApi.strength();
-        // API pode retornar { records: [...] } ou array direto
         const list = d.records ?? d.personal_records ?? (Array.isArray(d) ? d : []);
-        setRecords(list);
+        // Normaliza weight_kg → weight_kg (já correto), garante exercise_name
+        setRecords(list.filter(r => r.exercise_name));
         if (list.length && !selectedExercise) {
           setSelectedExercise(list[0].exercise_name);
+          loadStrengthByEx(list[0].exercise_name);
         }
       } else if (t === 'Medidas') {
         const d = await progressApi.measurements();
@@ -196,13 +197,16 @@ export default function Evolucao() {
   const loadStrengthByEx = async (ex) => {
     if (strengthData[ex]) return;
     const d = await progressApi.strengthByEx(ex).catch(() => ({ data: [] }));
-    // Normaliza: data pode ser array de { date, weight } ou { date, weight_kg }
     const raw = d.data ?? d.history ?? (Array.isArray(d) ? d : []);
     const normalized = raw.map(r => ({
       date:   r.date ?? r.recorded_at ?? '',
       weight: parseFloat(r.weight ?? r.weight_kg ?? 0),
-    }));
-    setStrengthData(prev => ({ ...prev, [ex]: { ...d, data: normalized } }));
+    })).filter(r => r.weight > 0);
+    setStrengthData(prev => ({ ...prev, [ex]: {
+      data:   normalized,
+      record: d.record ?? (normalized.length ? Math.max(...normalized.map(r => r.weight)) : 0),
+      gain:   d.gain   ?? 0,
+    }}));
   };
 
   const savePeso = async () => {
@@ -507,8 +511,11 @@ export default function Evolucao() {
                         className={`w-full flex items-center justify-between py-3 hover:bg-white/5 transition-colors ${
                           selectedExercise === r.exercise_name ? 'text-lime-green' : ''
                         }`}>
-                        <span className="text-sm">{r.exercise_name}</span>
-                        <span className="text-blue-400 font-bold text-sm">{r.weight_kg ?? r.record ?? '—'} kg</span>
+                        <div className="text-left">
+                          <span className="text-sm">{r.exercise_name}</span>
+                          {r.total_sets > 0 && <span className="text-gray-600 text-xs ml-2">{r.total_sets} séries</span>}
+                        </div>
+                        <span className="text-blue-400 font-bold text-sm">{parseFloat(r.weight_kg ?? r.record ?? 0).toFixed(1)} kg</span>
                       </button>
                     ))}
                   </div>
