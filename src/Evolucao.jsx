@@ -135,7 +135,7 @@ export default function Evolucao() {
         const normalized = raw.map(w => ({
           date:   w.date ?? w.recorded_at ?? w.created_at ?? '—',
           weight: parseFloat(w.weight ?? w.weight_kg ?? 0),
-        })).filter(w => w.weight > 0);
+        })).filter(w => w.weight > 0).sort((a, b) => a.date.localeCompare(b.date));
         setWeightData(normalized);
         setWeightSummary(d.summary ?? null);
       } else if (t === 'Força') {
@@ -224,7 +224,7 @@ export default function Evolucao() {
         // Enviamos o base64 como URL de dados no formato aceito pelo servidor.
         // Se a API rejeitar (422), o status será 'error' e o usuário será avisado.
         const res = await progressApi.addPhoto({
-          photo_url: `data:image/jpeg;base64,${b64}`,
+          photo_base64: `data:image/jpeg;base64,${b64}`,
           label: file.name,
           recorded_at: new Date().toISOString().split('T')[0],
         });
@@ -335,8 +335,9 @@ export default function Evolucao() {
                 const atual  = weightData[weightData.length - 1].weight;
                 const inicio = weightData[0].weight;
                 const diff   = atual - inicio;
+                const avg    = weightSummary?.avg ?? parseFloat((weightData.reduce((s, w) => s + w.weight, 0) / weightData.length).toFixed(1));
                 return (
-                  <div className="grid grid-cols-3 gap-2 mb-4">
+                  <div className="grid grid-cols-4 gap-2 mb-4">
                     <div className="bg-black border border-dark-border p-2 text-center">
                       <p className="text-gray-500 text-[10px] uppercase tracking-wide">Início</p>
                       <p className="text-white font-bebas text-lg">{fmt2(inicio)} kg</p>
@@ -344,6 +345,10 @@ export default function Evolucao() {
                     <div className="bg-black border border-dark-border p-2 text-center">
                       <p className="text-gray-500 text-[10px] uppercase tracking-wide">Atual</p>
                       <p className="text-lime-green font-bebas text-lg">{fmt2(atual)} kg</p>
+                    </div>
+                    <div className="bg-black border border-dark-border p-2 text-center">
+                      <p className="text-gray-500 text-[10px] uppercase tracking-wide">Média</p>
+                      <p className="text-yellow-400 font-bebas text-lg">{fmt2(avg)} kg</p>
                     </div>
                     <div className="bg-black border border-dark-border p-2 text-center">
                       <p className="text-gray-500 text-[10px] uppercase tracking-wide">Variação</p>
