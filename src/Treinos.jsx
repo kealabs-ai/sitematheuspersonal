@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
-  CheckCircle, Circle, Dumbbell, Clock, Zap, PlayCircle,
+  CheckCircle, Circle, Dumbbell, Clock, PlayCircle,
   BedDouble, X, ListChecks, ChevronDown, ChevronUp, History, CalendarDays,
 } from 'lucide-react';
 import { workouts as workoutsApi } from './services/alunoApi';
@@ -548,7 +548,7 @@ export default function Treinos() {
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-lime-green text-xs font-bold uppercase tracking-widest flex items-center gap-1">
-                    <Zap size={12} /> Treino de hoje
+                    <Dumbbell size={12} /> Treino de hoje
                   </p>
                   <p className="text-white font-bebas text-2xl mt-0.5 truncate">{todayDay.name}</p>
                   <p className="text-gray-400 text-xs flex items-center gap-2 mt-1">
