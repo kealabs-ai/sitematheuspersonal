@@ -20,20 +20,29 @@ import { AnimatedGradientText } from './components/magicui/animated-gradient-tex
 const fmtDate = (raw) => {
   if (!raw) return '—';
   try {
+    // YYYY-MM-DD (formato retornado pelo backend)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+      const [y, m, d] = raw.split('-');
+      return `${d}-${m}-${y.slice(2)}`;
+    }
     // dd-MM-YYYY ou dd/MM/YYYY
     const dmyMatch = raw.match(/^(\d{2})[-\/](\d{2})[-\/](\d{4})$/);
     if (dmyMatch) {
       const [, d, m, y] = dmyMatch;
-      return new Date(y, m - 1, d).toLocaleDateString('pt-BR');
+      return `${d}-${m}-${y.slice(2)}`;
     }
-    // YYYY-MM (agrupado por mês)
+    // YYYY-MM
     if (/^\d{4}-\d{2}$/.test(raw)) {
       const [y, m] = raw.split('-');
-      return new Date(y, m - 1).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+      return `${m}-${y.slice(2)}`;
     }
-    // YYYY-MM-DD ou ISO
-    const d = new Date(raw);
-    if (!isNaN(d)) return d.toLocaleDateString('pt-BR');
+    const dt = new Date(raw);
+    if (!isNaN(dt)) {
+      const d = String(dt.getDate()).padStart(2, '0');
+      const m = String(dt.getMonth() + 1).padStart(2, '0');
+      const y = String(dt.getFullYear()).slice(2);
+      return `${d}-${m}-${y}`;
+    }
   } catch {}
   return raw;
 };
