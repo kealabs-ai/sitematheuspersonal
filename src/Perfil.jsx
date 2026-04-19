@@ -101,12 +101,10 @@ export default function Perfil() {
   ];
 
   const saveAvatarUrl = async (urlOrBase64) => {
-    // Mostra preview imediato
     setAvatar(urlOrBase64);
     setAvatarUploading(true);
     const res = await usersApi.uploadAvatar({ avatar_base64: urlOrBase64 }).catch(() => null);
     setAvatarUploading(false);
-    // Usa URL retornada pelo backend (arquivo salvo) ou mantém a original
     const finalUrl = res?.avatar_url ?? urlOrBase64;
     setAvatar(finalUrl);
     const updated = { ...getUser(), avatar_url: finalUrl };
@@ -156,22 +154,47 @@ export default function Perfil() {
   const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setAvatar(URL.createObjectURL(file)); // preview imediato
-    const reader = new FileReader();
-    reader.onload = async (ev) => {
-      const img = new Image();
-      img.onload = async () => {
-        const MAX = 800;
-        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
-        const canvas = document.createElement('canvas');
-        canvas.width  = Math.round(img.width  * scale);
-        canvas.height = Math.round(img.height * scale);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        await saveAvatarUrl(canvas.toDataURL('image/jpeg', 0.8));
-      };
-      img.src = ev.target.result;
-    };
-    reader.readAsDataURL(file);
+    e.target.value = ''; // reset para permitir selecionar o mesmo arquivo novamente
+
+    // Preview imediato com object URL
+    const previewUrl = URL.createObjectURL(file);
+    setAvatar(previewUrl);
+    setAvatarUploading(true);
+
+    try {
+      const b64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const img = new Image();
+          img.onload = () => {
+            const MAX = 800;
+            const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+            const canvas = document.createElement('canvas');
+            canvas.width  = Math.round(img.width  * scale);
+            canvas.height = Math.round(img.height * scale);
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/jpeg', 0.8));
+          };
+          img.onerror = reject;
+          img.src = ev.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const res = await usersApi.uploadAvatar({ avatar_base64: b64 }).catch(() => null);
+      const finalUrl = res?.avatar_url ?? previewUrl;
+      setAvatar(finalUrl);
+      const updated = { ...getUser(), avatar_url: finalUrl };
+      localStorage.setItem('user', JSON.stringify(updated));
+      setUser(prev => ({ ...prev, avatar_url: finalUrl }));
+      window.dispatchEvent(new Event('storage'));
+    } catch {
+      setAvatar(user?.avatar_url ?? null); // reverte em caso de erro
+    } finally {
+      setAvatarUploading(false);
+      URL.revokeObjectURL(previewUrl);
+    }
   };
 
   const openNotif = async () => {
@@ -457,11 +480,10 @@ export default function Perfil() {
               <div className="border-t border-dark-border pt-4">
                 <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-3">Ou envie sua foto</p>
                 <button
-                  onClick={() => { setAvatarModalOpen(false); avatarInputRef.current?.click(); }}
+                  onClick={() => { setAvatarModalOpen(false); setTimeout(() => avatarInputRef.current?.click(), 100); }}
                   className="w-full flex items-center justify-center gap-2 border border-dashed border-dark-border text-gray-400 py-4 hover:border-lime-green hover:text-lime-green transition-colors text-sm font-semibold">
                   <Camera size={16} /> Escolher da galeria
                 </button>
-                <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
               </div>
             </motion.div>
           </motion.div>
