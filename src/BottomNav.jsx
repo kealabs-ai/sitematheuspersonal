@@ -47,6 +47,18 @@ export default function AppNav() {
   const menuRef = useRef(null);
   const avatarRef = useRef(null);
   const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+  const [avatarUrl, setAvatarUrl] = useState(user.avatar_url ?? null);
+
+  // Sincroniza avatar_url quando o localStorage é atualizado (ex: após salvar no Perfil)
+  useEffect(() => {
+    const sync = () => {
+      const u = getUser();
+      if (u?.avatar_url) setAvatarUrl(u.avatar_url);
+    };
+    window.addEventListener('storage', sync);
+    sync();
+    return () => window.removeEventListener('storage', sync);
+  }, []);
 
   useEffect(() => {
     const handler = (e) => { if (menuRef.current && !menuRef.current.contains(e.target) && avatarRef.current && !avatarRef.current.contains(e.target)) setMenuOpen(false); };
@@ -67,6 +79,19 @@ export default function AppNav() {
     clearSession();
     navigate('/login');
   };
+
+  const AvatarBtn = ({ size = 10, onClick, refProp, className = '' }) => (
+    <button
+      ref={refProp}
+      onClick={onClick}
+      className={`relative w-${size} h-${size} rounded-full border-2 flex items-center justify-center text-sm font-bold bg-dark-card transition-all ring-2 ring-offset-1 ring-offset-black overflow-hidden ${pc.border} ${pc.text} ${pc.ring} ${className}`}
+    >
+      {avatarUrl
+        ? <img src={avatarUrl} alt={initials} className="w-full h-full object-cover" />
+        : <span>{initials}</span>
+      }
+    </button>
+  );
 
   return (
     <>
@@ -116,12 +141,11 @@ export default function AppNav() {
         {/* Avatar + info + sair */}
         <div className="flex items-center gap-3 flex-shrink-0">
           {/* Avatar clicável */}
-          <button
+          <AvatarBtn
+            size={10}
             onClick={() => navigate('/dashboard/perfil')}
-            className={`relative w-10 h-10 rounded-full border-2 flex items-center justify-center text-sm font-bold bg-dark-card transition-all hover:scale-105 ring-2 ring-offset-1 ring-offset-black ${pc.border} ${pc.text} ${pc.ring}`}
-          >
-            {initials}
-          </button>
+            className="hover:scale-105"
+          />
 
           {/* Nome + plano */}
           <div className="text-left">
@@ -159,13 +183,12 @@ export default function AppNav() {
               {user.plan ?? '—'}
             </span>
           </div>
-          <button
-            ref={avatarRef}
+          <AvatarBtn
+            size={9}
+            refProp={avatarRef}
             onClick={openMenu}
-            className={`w-9 h-9 rounded-full border-2 flex items-center justify-center text-xs font-bold bg-dark-card ring-2 ring-offset-1 ring-offset-black transition-all active:scale-95 ${pc.border} ${pc.text} ${pc.ring}`}
-          >
-            {initials}
-          </button>
+            className="active:scale-95"
+          />
         </div>
 
         {/* Dropdown via portal */}

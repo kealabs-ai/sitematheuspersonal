@@ -6,7 +6,7 @@ import {
   Dumbbell, Calendar, Scale, Ruler,
   Star, ChevronRight, Shield, Bell, Lock, Eye, EyeOff, Camera, Flame
 } from 'lucide-react';
-import { users as usersApi, auth, clearSession } from './services/alunoApi';
+import { users as usersApi, auth, clearSession, getUser } from './services/alunoApi';
 import { useBlockBack } from './hooks/useBlockBack';
 import BottomNav from './BottomNav';
 import AppFooter from './AppFooter';
@@ -85,7 +85,51 @@ export default function Perfil() {
   const [notifSaving, setNotifSaving]     = useState(false);
   const [avatar, setAvatar]               = useState(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarModalOpen, setAvatarModalOpen] = useState(false);
   const avatarInputRef                    = React.useRef(null);
+
+  const PRESET_AVATARS = [
+    'https://api.dicebear.com/8.x/adventurer/svg?seed=gym1&backgroundColor=1a1a2e&hair=short01&eyes=variant01',
+    'https://api.dicebear.com/8.x/adventurer/svg?seed=gym2&backgroundColor=1a1a2e&hair=short02&eyes=variant02',
+    'https://api.dicebear.com/8.x/adventurer/svg?seed=gym3&backgroundColor=0d1b2a&hair=short03',
+    'https://api.dicebear.com/8.x/adventurer/svg?seed=gym4&backgroundColor=1a1a2e&hair=short04',
+    'https://api.dicebear.com/8.x/adventurer/svg?seed=gym5&backgroundColor=0d1b2a&hair=short05',
+    'https://api.dicebear.com/8.x/adventurer/svg?seed=gym6&backgroundColor=1a1a2e',
+    'https://api.dicebear.com/8.x/adventurer/svg?seed=athlete1&backgroundColor=0d1b2a&hair=long01',
+    'https://api.dicebear.com/8.x/adventurer/svg?seed=athlete2&backgroundColor=1a1a2e&hair=long02',
+    'https://api.dicebear.com/8.x/adventurer/svg?seed=athlete3&backgroundColor=0d1b2a&hair=long03',
+  ];
+
+  const handlePresetAvatar = async (url) => {
+    setAvatarModalOpen(false);
+    setAvatarUploading(true);
+    // Busca o SVG e converte para base64
+    try {
+      const res  = await fetch(url);
+      const blob = await res.blob();
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        const b64 = ev.target.result; // data:image/svg+xml;base64,...
+        const apiRes = await usersApi.uploadAvatar({ avatar_base64: b64 }).catch(() => null);
+        setAvatarUploading(false);
+        const finalUrl = apiRes?.avatar_url ?? url;
+        setAvatar(finalUrl);
+        const updated = { ...getUser(), avatar_url: finalUrl };
+        localStorage.setItem('user', JSON.stringify(updated));
+        setUser(prev => ({ ...prev, avatar_url: finalUrl }));
+        window.dispatchEvent(new Event('storage'));
+      };
+      reader.readAsDataURL(blob);
+    } catch {
+      setAvatarUploading(false);
+      // fallback: usa a URL direta
+      setAvatar(url);
+      const updated = { ...getUser(), avatar_url: url };
+      localStorage.setItem('user', JSON.stringify(updated));
+      setUser(prev => ({ ...prev, avatar_url: url }));
+      window.dispatchEvent(new Event('storage'));
+    }
+  };
 
   useEffect(() => {
     usersApi.me().then(data => {
@@ -140,7 +184,11 @@ export default function Perfil() {
         setAvatarUploading(false);
         if (res?.avatar_url) {
           setAvatar(res.avatar_url);
+          const updated = { ...getUser(), avatar_url: res.avatar_url };
+          localStorage.setItem('user', JSON.stringify(updated));
           setUser(prev => ({ ...prev, avatar_url: res.avatar_url }));
+          // Dispara evento storage para o BottomNav sincronizar
+          window.dispatchEvent(new Event('storage'));
         }
       };
       img.src = ev.target.result;
@@ -220,7 +268,7 @@ export default function Perfil() {
                 </div>
               )}
             </div>
-            <button onClick={() => avatarInputRef.current?.click()}
+            <button onClick={() => setAvatarModalOpen(true)}
               className="absolute -bottom-1 -right-1 bg-lime-green text-black p-1.5 rounded-full hover:bg-neon-green transition-colors">
               <Camera size={12} />
             </button>
@@ -400,6 +448,46 @@ export default function Perfil() {
             </button>
           ))}
         </motion.div>
+
+        {/* Modal avatar */}
+        {avatarModalOpen && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            className="fixed inset-0 bg-black/80 z-50 flex items-end md:items-center justify-center p-4"
+            onClick={() => setAvatarModalOpen(false)}>
+            <motion.div initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+              className="bg-dark-card border border-lime-green/40 p-6 w-full max-w-md space-y-5"
+              onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bebas uppercase text-lime-green flex items-center gap-2">
+                  <Camera size={18} /> Foto de Perfil
+                </h3>
+                <button onClick={() => setAvatarModalOpen(false)} className="text-gray-500 hover:text-white"><X size={20} /></button>
+              </div>
+
+              <div>
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-3">Avatares sugeridos</p>
+                <div className="grid grid-cols-3 gap-3">
+                  {PRESET_AVATARS.map((url, i) => (
+                    <button key={i} onClick={() => handlePresetAvatar(url)}
+                      className="aspect-square rounded-full overflow-hidden border-2 border-dark-border hover:border-lime-green transition-all hover:scale-105 bg-[#1a1a2e]">
+                      <img src={url} alt={`Avatar ${i + 1}`} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-t border-dark-border pt-4">
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-3">Ou envie sua foto</p>
+                <button
+                  onClick={() => { setAvatarModalOpen(false); avatarInputRef.current?.click(); }}
+                  className="w-full flex items-center justify-center gap-2 border border-dashed border-dark-border text-gray-400 py-4 hover:border-lime-green hover:text-lime-green transition-colors text-sm font-semibold">
+                  <Camera size={16} /> Escolher da galeria
+                </button>
+                <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
 
         {/* Modal métricas */}
         {metricsOpen && (
