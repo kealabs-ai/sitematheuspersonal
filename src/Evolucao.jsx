@@ -9,7 +9,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, AreaChart, Area, ReferenceLine, Legend
 } from 'recharts';
-import { progress as progressApi } from './services/alunoApi';
+import { progress as progressApi, users } from './services/alunoApi';
 import { useBlockBack } from './hooks/useBlockBack';
 import BottomNav from './BottomNav';
 import AppFooter from './AppFooter';
@@ -158,29 +158,9 @@ export default function Evolucao() {
         }
       } else if (t === 'Medidas') {
         const d = await progressApi.measurements();
-        // API retorna array de body_metrics ou { measurements: [...] }
-        const raw = d.measurements ?? d.metrics ?? d.history ?? (Array.isArray(d) ? d : []);
-        // Normaliza para { label, value, unit, recorded_at, prev, diff }
-        const LABELS = { weight: 'Peso', height: 'Altura', body_fat: '% Gordura', waist: 'Cintura', arm: 'Braço', leg: 'Perna', chest: 'Peito' };
-        const UNITS  = { weight: 'kg', height: 'cm', body_fat: '%', waist: 'cm', arm: 'cm', leg: 'cm', chest: 'cm' };
-        if (raw.length > 0 && ('weight' in raw[0] || 'waist' in raw[0])) {
-          // Formato body_metrics: cada item é uma medição completa
-          const latest = raw[raw.length - 1];
-          const first  = raw[0];
-          const normalized = Object.keys(LABELS)
-            .filter(k => latest[k] != null)
-            .map(k => ({
-              label: LABELS[k],
-              unit:  UNITS[k],
-              value: latest[k],
-              prev:  first[k] ?? null,
-              diff:  first[k] != null ? `${(latest[k] - first[k]) >= 0 ? '+' : ''}${(latest[k] - first[k]).toFixed(1)} ${UNITS[k]}` : null,
-              recorded_at: latest.recorded_at,
-            }));
-          setMeasurements(normalized);
-        } else {
-          setMeasurements(raw);
-        }
+        // Backend retorna { measurements: cards[], history: [] }
+        const cards = d.measurements ?? [];
+        setMeasurements(cards);
       } else if (t === 'Fotos') {
         const d = await progressApi.photos();
         const list = d.photos ?? d.data ?? (Array.isArray(d) ? d : []);
@@ -266,7 +246,15 @@ export default function Evolucao() {
   const saveMedida = async () => {
     if (!novaMedida.valor) return;
     setSaving(true);
-    await progressApi.addMetric?.({ type: novaMedida.tipo, value: parseFloat(novaMedida.valor), unit: novaMedida.unidade, recorded_at: novaData }).catch(() => {});
+    const fieldMap = {
+      'Peso': 'weight', 'Altura': 'height', '% Gordura': 'body_fat',
+      'Cintura': 'waist', 'Quadril': 'waist', 'Abdome': 'waist',
+      'Braço': 'arm', 'Ombro': 'arm',
+      'Perna': 'leg', 'Coxa': 'leg', 'Panturrilha': 'leg',
+      'Peito': 'chest',
+    };
+    const field = fieldMap[novaMedida.tipo] ?? 'waist';
+    await users.addMetric({ [field]: parseFloat(novaMedida.valor), recorded_at: novaData }).catch(() => {});
     setSaving(false);
     setModalMedida(false);
     setNovaMedida({ tipo: 'Cintura', valor: '', unidade: 'cm' });
@@ -540,26 +528,55 @@ export default function Evolucao() {
                 <p className="text-gray-600 text-xs mt-1">Registre suas medidas para acompanhar a evolução</p>
               </div>
             ) : (
-              <div className="bg-dark-card border border-dark-border divide-y divide-dark-border">
-                {measurements.map((m, i) => (
-                  <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
-                    className="flex items-center justify-between px-4 py-3.5"
-                  >
-                    <div>
-                      <p className="text-white text-sm font-semibold">{m.label ?? m.type ?? '—'}</p>
-                      {m.recorded_at && <p className="text-gray-600 text-xs mt-0.5">{fmtDate(m.recorded_at)}</p>}
-                      {m.prev != null && <p className="text-gray-500 text-xs">Inicial: {m.prev} {m.unit ?? ''}</p>}
-                    </div>
-                    <div className="text-right">
-                      <p className="text-white font-bebas text-2xl">{m.value} <span className="text-gray-500 text-sm font-inter">{m.unit ?? ''}</span></p>
-                      {m.diff && (
-                        <p className={`text-xs font-bold ${
-                          m.diff.startsWith('-') ? 'text-lime-green' : m.diff.startsWith('+') && m.diff !== '+0.0' ? 'text-red-400' : 'text-gray-500'
-                        }`}>{m.diff}</p>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
+              <div className="space-y-3">
+                {/* Última atualização */}
+                {measurements[0]?.recorded_at && (
+                  <p className="text-gray-600 text-xs">
+                    Última medição: <span className="text-gray-400">{fmtDate(measurements[0].recorded_at)}</span>
+                  </p>
+                )}
+                <div className="grid grid-cols-2 gap-3">
+                  {measurements.map((m, i) => {
+                    const diff = m.diff;
+                    const isPositive = diff?.startsWith('+');
+                    const isNegative = diff?.startsWith('-');
+                    const diffColor = isNegative ? 'text-lime-green' : isPositive ? 'text-red-400' : 'text-gray-500';
+                    const diffIcon  = isNegative ? '↓' : isPositive ? '↑' : '=';
+                    return (
+                      <motion.div key={i}
+                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                        className="bg-dark-card border border-dark-border p-4 space-y-2"
+                      >
+                        <p className="text-gray-500 text-[10px] uppercase tracking-widest">{m.label}</p>
+                        <div className="flex items-end justify-between">
+                          <p className="text-white font-bebas text-3xl leading-none">
+                            {typeof m.value === 'number' ? m.value.toFixed(1) : m.value}
+                            <span className="text-gray-500 text-sm font-inter ml-1">{m.unit}</span>
+                          </p>
+                          {diff && (
+                            <span className={`text-xs font-bold ${diffColor}`}>
+                              {diffIcon} {diff}
+                            </span>
+                          )}
+                        </div>
+                        {m.initial != null && m.initial !== m.value && (
+                          <p className="text-gray-700 text-[10px]">
+                            Inicial: {typeof m.initial === 'number' ? m.initial.toFixed(1) : m.initial} {m.unit}
+                          </p>
+                        )}
+                        {/* Mini barra de progresso */}
+                        {m.initial != null && m.initial > 0 && (
+                          <div className="w-full bg-black h-1">
+                            <div
+                              className={`h-1 transition-all ${isNegative ? 'bg-lime-green' : isPositive ? 'bg-red-400' : 'bg-gray-600'}`}
+                              style={{ width: `${Math.min(Math.abs((m.value - m.initial) / m.initial) * 100 * 5, 100)}%` }}
+                            />
+                          </div>
+                        )}
+                      </motion.div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </motion.div>
