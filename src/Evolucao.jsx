@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, AreaChart, Area
+  ResponsiveContainer, AreaChart, Area, ReferenceLine, Legend
 } from 'recharts';
 import { progress as progressApi } from './services/alunoApi';
 import { useBlockBack } from './hooks/useBlockBack';
@@ -84,9 +84,13 @@ const compressImage = (file) => new Promise((resolve) => {
 const CustomTooltip = ({ active, payload, label, unit }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-black border border-lime-green/40 px-3 py-2 text-xs">
-      <p className="text-gray-400 mb-1">{label}</p>
-      <p className="text-lime-green font-bold">{payload[0].value}{unit}</p>
+    <div className="bg-black border border-lime-green/40 px-3 py-2 text-xs space-y-1">
+      <p className="text-gray-400">{fmtDate(label)}</p>
+      {payload.map((p, i) => (
+        <p key={i} style={{ color: p.color }} className="font-bold">
+          {p.name === 'weight' ? 'Peso' : p.name}: {typeof p.value === 'number' ? p.value.toFixed(1) : p.value}{unit}
+        </p>
+      ))}
     </div>
   );
 };
@@ -351,21 +355,45 @@ export default function Evolucao() {
                 );
               })()}
               {loading ? <p className="text-center text-gray-600 text-xs py-8">Carregando...</p> : (
-                <ResponsiveContainer width="100%" height={280}>
-                  <AreaChart data={weightData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="weightGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#00B4D8" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#00B4D8" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1f1f1f" />
-                    <XAxis dataKey="date" tickFormatter={fmtDate} tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-                    <YAxis domain={['dataMin - 1', 'dataMax + 1']} tickFormatter={v => fmt2(v)} tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} width={45} />
-                    <Tooltip content={<CustomTooltip unit=" kg" />} />
-                    <Area type="monotone" dataKey="weight" stroke="#00B4D8" strokeWidth={2} fill="url(#weightGrad)" dot={{ fill: '#00B4D8', r: 3 }} activeDot={{ r: 5 }} />
-                  </AreaChart>
-                </ResponsiveContainer>
+                weightData.length === 0 ? (
+                  <p className="text-center text-gray-600 text-xs py-8">Nenhum dado no período</p>
+                ) : (() => {
+                  const avg = weightData.reduce((s, w) => s + w.weight, 0) / weightData.length;
+                  const chartData = weightData.map(w => ({ ...w, media: parseFloat(avg.toFixed(1)) }));
+                  return (
+                    <ResponsiveContainer width="100%" height={280}>
+                      <AreaChart data={chartData} margin={{ top: 8, right: 4, left: -20, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="weightGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#00B4D8" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#00B4D8" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#1f1f1f" />
+                        <XAxis dataKey="date" tickFormatter={fmtDate} tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                        <YAxis domain={['dataMin - 1', 'dataMax + 1']} tickFormatter={v => v.toFixed(1)} tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} width={45} />
+                        <Tooltip content={<CustomTooltip unit=" kg" />} />
+                        <ReferenceLine
+                          y={avg}
+                          stroke="#facc15"
+                          strokeDasharray="5 3"
+                          strokeWidth={1.5}
+                          label={{ value: `Média ${avg.toFixed(1)}kg`, position: 'insideTopRight', fill: '#facc15', fontSize: 10 }}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="weight"
+                          name="weight"
+                          stroke="#00B4D8"
+                          strokeWidth={2}
+                          fill="url(#weightGrad)"
+                          dot={{ fill: '#00B4D8', r: 4, strokeWidth: 0 }}
+                          activeDot={{ r: 6, fill: '#00B4D8', stroke: '#fff', strokeWidth: 1 }}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  );
+                })()
               )}
             </div>
             <div className="relative bg-dark-card border border-dark-border p-4 overflow-hidden">
