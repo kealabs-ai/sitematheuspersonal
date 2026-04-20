@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Users, Dumbbell, Salad, DollarSign,
-  PlayCircle, LogOut, Menu, X, ShieldCheck, ArrowRight,
+  PlayCircle, LogOut, Menu, X, ShieldCheck, ArrowRight, Tag,
 } from 'lucide-react';
 import { auth, clearSession, getUser, saveSession } from './services/alunoApi';
 import matheusLogo from './assets/logotipo_matheus_personal.png';
@@ -21,6 +21,7 @@ const MODULES = [
   { key: 'treinos',    label: 'Treinos',       icon: <Dumbbell size={18} />,      color: 'text-orange-400',  desc: 'Criar planos e exercícios' },
   { key: 'nutricao',   label: 'Nutrição',      icon: <Salad size={18} />,         color: 'text-purple-400',  desc: 'Planos alimentares' },
   { key: 'financeiro', label: 'Financeiro',    icon: <DollarSign size={18} />,    color: 'text-yellow-400',  desc: 'Receitas e pedidos' },
+  { key: 'cupons',     label: 'Cupons',        icon: <Tag size={18} />,           color: 'text-pink-400',    desc: 'Cupons de desconto' },
 ];
 
 // ─── Tela de login admin ──────────────────────────────────────────────────────
@@ -203,6 +204,7 @@ function AdminPanel({ user, onLogout }) {
                 {active === 'treinos'    && <AdminTreinos    key="treinos" />}
                 {active === 'nutricao'   && <AdminNutricao   key="nutricao" />}
                 {active === 'financeiro' && <AdminFinanceiro key="financeiro" />}
+                {active === 'cupons'     && <AdminCupons     key="cupons" />}
               </motion.div>
             </AnimatePresence>
           </div>

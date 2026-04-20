@@ -81,3 +81,11 @@ export const adminFinance = {
   orders:   () => get(`${BASE}/aluno/orders/all`),
   students: () => get(`${BASE}/aluno/users/all`),
 };
+
+// ─── Cupons ───────────────────────────────────
+export const adminCoupons = {
+  list:   ()           => get(`${BASE}/coupons`),
+  create: (data)       => post(`${BASE}/coupons`, data),
+  update: (id, data)   => post(`${BASE}/coupons/${id}/update`, data),
+  delete: (id)         => post(`${BASE}/coupons/${id}/delete`),
+};
