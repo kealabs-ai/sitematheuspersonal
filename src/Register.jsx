@@ -196,7 +196,9 @@ const Register = () => {
         navigate('/checkout', {
           state: {
             plan,
-            userData: { ...userBody, userId }
+            userData: { ...userBody, userId },
+            coupon,
+            total: discountedTotal
           }
         });
       } else {
