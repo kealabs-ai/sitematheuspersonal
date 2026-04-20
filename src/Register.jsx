@@ -71,6 +71,15 @@ const Register = () => {
 
   const [cepLoading, setCepLoading] = useState(false);
 
+  const getFrequencyLabel = () => {
+    const months = plan?.months || 1;
+    if (months === 1) return 'Mensal';
+    if (months === 3) return '3 Meses';
+    if (months === 6) return '6 Meses';
+    if (months === 12) return '12 Meses (Anual)';
+    return `${months} Meses`;
+  };
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -559,7 +568,7 @@ const Register = () => {
               </div>
               <div className="flex justify-between text-sm text-gray-400">
                 <span>Frequência:</span>
-                <span>{plan.frequency}</span>
+                <span className="text-white font-semibold">{getFrequencyLabel()}</span>
               </div>
               
               {coupon && discountedTotal && (
