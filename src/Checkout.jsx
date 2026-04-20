@@ -181,6 +181,9 @@ const Checkout = () => {
           asaasId: checkoutData?.asaas_id,
           status: checkoutData?.status,
           invoiceUrl: checkoutData?.invoice_url,
+          coupon,
+          discountedTotal,
+          total: totalPrice,
         }
       });
 

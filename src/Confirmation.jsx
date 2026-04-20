@@ -6,7 +6,8 @@ import ProgressIndicator from './ProgressIndicator';
 const Confirmation = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { plan, userData, orderId } = location.state || {};
+  const { plan, userData, orderId, coupon, discountedTotal, total } = location.state || {};
+  const displayPrice = discountedTotal || total || plan?.price;
 
   useEffect(() => {
     if (!plan || !userData) {
@@ -50,8 +51,18 @@ const Confirmation = () => {
                 <span>{plan.frequency}</span>
               </div>
               <div className="flex justify-between border-b border-dark-border pb-2">
-                <span>Valor:</span>
-                <span className="text-lime-green font-bold text-xl">R$ {plan.price}/mês</span>
+                <span>Valor Original:</span>
+                <span>R$ {(plan.price * (plan.months ?? 1)).toFixed(2).replace('.', ',')}</span>
+              </div>
+              {coupon && (
+                <div className="flex justify-between border-b border-dark-border pb-2">
+                  <span>Desconto ({coupon.code}):</span>
+                  <span className="text-lime-green">-R$ {((plan.price * (plan.months ?? 1)) - displayPrice).toFixed(2).replace('.', ',')}</span>
+                </div>
+              )}
+              <div className="flex justify-between border-b border-dark-border pb-2">
+                <span>Valor Final:</span>
+                <span className="text-lime-green font-bold text-xl">R$ {displayPrice.toFixed(2).replace('.', ',')}</span>
               </div>
             </div>
           </div>
