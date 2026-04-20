@@ -32,6 +32,16 @@ const Checkout = () => {
   const [pixCode, setPixCode] = useState('');
   const [copied, setCopied] = useState(false);
 
+  // Debug: Log do cupom recebido
+  useEffect(() => {
+    console.log('%c[CHECKOUT] Dados recebidos:', 'color:#a78bfa;font-weight:bold', {
+      plan,
+      coupon,
+      discountedTotal,
+      total: location.state?.total
+    });
+  }, [plan, coupon, location.state]);
+
   const handleChange = (e) => {
     let value = e.target.value;
     const name = e.target.name;
@@ -532,9 +542,17 @@ const Checkout = () => {
                       <span className="text-white">{plan.months ?? 1} × R$ {parsePlanPrice(plan.price).toFixed(2).replace('.', ',')} = R$ {fullPrice.toFixed(2).replace('.', ',')}</span>
                     </div>
                     {coupon && (
-                      <div className="flex justify-between text-lime-green mb-2">
-                        <span>Desconto ({coupon.code}):</span>
-                        <span>-R$ {(fullPrice - totalPrice).toFixed(2).replace('.', ',')}</span>
+                      <>
+                        <div className="flex justify-between text-lime-green mb-2 bg-lime-green/10 p-2 border border-lime-green/30">
+                          <span className="font-semibold">🎉 Desconto ({coupon.code || 'Cupom'}):</span>
+                          <span className="font-bold">-R$ {(fullPrice - totalPrice).toFixed(2).replace('.', ',')}</span>
+                        </div>
+                      </>
+                    )}
+                    {discountedTotal && !coupon && (
+                      <div className="flex justify-between text-lime-green mb-2 bg-lime-green/10 p-2 border border-lime-green/30">
+                        <span className="font-semibold">🎉 Desconto Aplicado:</span>
+                        <span className="font-bold">-R$ {(fullPrice - totalPrice).toFixed(2).replace('.', ',')}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-gray-400 mb-4">
