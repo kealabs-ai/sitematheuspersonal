@@ -12,6 +12,7 @@ import AdminVideos     from './admin/AdminVideos';
 import AdminTreinos    from './admin/AdminTreinos';
 import AdminNutricao   from './admin/AdminNutricao';
 import AdminFinanceiro from './admin/AdminFinanceiro';
+import AdminCupons    from './admin/AdminCupons';
 
 // ─── Módulos do painel ────────────────────────────────────────────────────────
 const MODULES = [
