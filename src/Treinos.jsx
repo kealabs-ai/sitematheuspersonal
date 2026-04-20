@@ -200,7 +200,8 @@ const muscleColors = {
 };
 
 // ─── Modal seleção A/B/C ─────────────────────────────────────────────────────
-function WorkoutSelectModal({ trainDays, suggested, onSelect, onRest, onClose }) {
+function WorkoutSelectModal({ trainDays, suggested, userGoal, onSelect, onRest, onClose }) {
+  const goalColor = userGoal === 'Emagrecimento' ? 'text-orange-400 border-orange-400/40' : 'text-lime-green border-lime-green/40';
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/70 px-4 pb-4 md:pb-0">
       <motion.div
@@ -208,9 +209,16 @@ function WorkoutSelectModal({ trainDays, suggested, onSelect, onRest, onClose })
         className="w-full max-w-md bg-dark-card border border-dark-border p-5 space-y-4"
       >
         <div className="flex items-center justify-between">
-          <p className="font-bebas text-xl text-white flex items-center gap-2">
-            <ListChecks size={18} className="text-lime-green" /> Escolha o treino de hoje
-          </p>
+          <div>
+            <p className="font-bebas text-xl text-white flex items-center gap-2">
+              <ListChecks size={18} className="text-lime-green" /> Escolha o treino de hoje
+            </p>
+            {userGoal && (
+              <span className={`text-[10px] font-bold uppercase border px-2 py-0.5 mt-1 inline-block ${goalColor}`}>
+                {userGoal === 'Hipertrofia' ? '💪' : '🔥'} {userGoal}
+              </span>
+            )}
+          </div>
           <button onClick={onClose} className="text-gray-500 hover:text-white"><X size={18} /></button>
         </div>
 
@@ -304,6 +312,7 @@ export default function Treinos() {
   const [allDays, setAllDays]         = useState([]);   // todos os dias do template
   const [suggested, setSuggested]     = useState(null); // sugerido pela API para hoje
   const [todayDay, setTodayDay]       = useState(null); // dia corrente (escolhido ou sugerido)
+  const [userGoal, setUserGoal]       = useState(null); // objetivo do aluno
   const [exercises, setExercises]     = useState({});
   const [checked, setChecked]         = useState({});
   const [weights, setWeights]         = useState({});
@@ -333,6 +342,7 @@ export default function Treinos() {
           workoutLabel: WORKOUT_LABELS[i] ?? String(i + 1),
         }));
         setAllDays(days);
+        setUserGoal(planData.plan?.user_goal ?? null);
         const s = days.find(d => d.status === 'today' && !d.is_rest);
         setSuggested(s ?? null);
         setTodayDay(s ?? null);
@@ -465,6 +475,7 @@ export default function Treinos() {
           <WorkoutSelectModal
             trainDays={trainDays}
             suggested={suggested}
+            userGoal={userGoal}
             onSelect={handleSelect}
             onRest={() => { setIsRest(true); setShowModal(false); setActiveLog(null); }}
             onClose={() => setShowModal(false)}
@@ -549,6 +560,11 @@ export default function Treinos() {
                 <div className="min-w-0">
                   <p className="text-lime-green text-xs font-bold uppercase tracking-widest flex items-center gap-1">
                     <Dumbbell size={12} /> Treino de hoje
+                    {userGoal && (
+                      <span className="ml-2 text-[10px] border border-lime-green/40 px-1.5 py-0.5 font-normal">
+                        {userGoal}
+                      </span>
+                    )}
                   </p>
                   <p className="text-white font-bebas text-2xl mt-0.5 truncate">{todayDay.name}</p>
                   <p className="text-gray-400 text-xs flex items-center gap-2 mt-1">
