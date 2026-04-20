@@ -508,8 +508,8 @@ const Checkout = () => {
                   </div>
                   <div className="border-t border-dark-border pt-4">
                     <div className="flex justify-between text-gray-400 mb-2">
-                      <span>R$ {plan.price}/mês × {plan.months ?? 1} {(plan.months ?? 1) > 1 ? 'meses' : 'mês'}:</span>
-                      <span>R$ {fullPrice.toFixed(2).replace('.', ',')}</span>
+                      <span>Subtotal:</span>
+                      <span className="text-white">{plan.months ?? 1} × R$ {parsePlanPrice(plan.price).toFixed(2).replace('.', ',')} = R$ {fullPrice.toFixed(2).replace('.', ',')}</span>
                     </div>
                     {coupon && (
                       <div className="flex justify-between text-lime-green mb-2">

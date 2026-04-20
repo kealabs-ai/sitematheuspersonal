@@ -71,6 +71,11 @@ const Register = () => {
 
   const [cepLoading, setCepLoading] = useState(false);
 
+  const parsePlanPrice = (price) => {
+    if (typeof price === 'number') return price;
+    return parseFloat(String(price).replace(/\./g, '').replace(',', '.'));
+  };
+
   const getFrequencyLabel = () => {
     const months = plan?.months || 1;
     if (months === 1) return 'Mensal';
@@ -78,6 +83,12 @@ const Register = () => {
     if (months === 6) return '6 Meses';
     if (months === 12) return '12 Meses (Anual)';
     return `${months} Meses`;
+  };
+
+  const calculatePlanTotal = () => {
+    const priceValue = parsePlanPrice(plan?.price);
+    const months = plan?.months || 1;
+    return priceValue * months;
   };
 
   const [loading, setLoading] = useState(false);
@@ -564,42 +575,33 @@ const Register = () => {
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-400">Plano {plan.name}</span>
-                <span className="text-white font-bold">R$ {(typeof plan.price === 'string' ? parseFloat(plan.price.replace(',', '.')) : plan.price).toFixed(2).replace('.', ',')}</span>
+                <span className="text-white font-bold">R$ {parsePlanPrice(plan.price).toFixed(2).replace('.', ',')}/mês</span>
               </div>
               <div className="flex justify-between text-sm text-gray-400">
                 <span>Frequência:</span>
                 <span className="text-white font-semibold">{getFrequencyLabel()}</span>
               </div>
               
-              {coupon && discountedTotal && (
-                <>
-                  <div className="border-t border-dark-border pt-3 mt-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Subtotal:</span>
-                      <span className="text-white">R$ {(typeof plan.price === 'string' ? parseFloat(plan.price.replace(',', '.')) : plan.price).toFixed(2).replace('.', ',')}</span>
-                    </div>
-                    <div className="flex justify-between text-lime-green mt-2">
-                      <span>Desconto ({coupon.code}):</span>
-                      <span>-R$ {((typeof plan.price === 'string' ? parseFloat(plan.price.replace(',', '.')) : plan.price) - discountedTotal).toFixed(2).replace('.', ',')}</span>
-                    </div>
-                  </div>
-                  <div className="border-t border-dark-border pt-3 mt-3 flex justify-between items-center">
-                    <span className="text-lg font-bebas uppercase">Valor Final:</span>
-                    <span className="text-2xl font-bebas text-lime-green">
-                      R$ {discountedTotal.toFixed(2).replace('.', ',')}
-                    </span>
-                  </div>
-                </>
-              )}
-              
-              {!coupon && (
-                <div className="border-t border-dark-border pt-3 mt-3 flex justify-between items-center">
-                  <span className="text-lg font-bebas uppercase">Total:</span>
-                  <span className="text-2xl font-bebas text-lime-green">
-                    R$ {(typeof plan.price === 'string' ? parseFloat(plan.price.replace(',', '.')) : plan.price).toFixed(2).replace('.', ',')}
-                  </span>
+              <div className="border-t border-dark-border pt-3 mt-3">
+                <div className="flex justify-between text-gray-400 mb-2">
+                  <span>Subtotal:</span>
+                  <span className="text-white">{(plan?.months || 1)} × R$ {parsePlanPrice(plan.price).toFixed(2).replace('.', ',')} = R$ {calculatePlanTotal().toFixed(2).replace('.', ',')}</span>
                 </div>
-              )}
+                
+                {coupon && discountedTotal && (
+                  <div className="flex justify-between text-lime-green mt-2">
+                    <span>Desconto ({coupon.code}):</span>
+                    <span>-R$ {(calculatePlanTotal() - discountedTotal).toFixed(2).replace('.', ',')}</span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="border-t border-dark-border pt-3 mt-3 flex justify-between items-center">
+                <span className="text-lg font-bebas uppercase">Total:</span>
+                <span className="text-2xl font-bebas text-lime-green">
+                  R$ {(discountedTotal || calculatePlanTotal()).toFixed(2).replace('.', ',')}
+                </span>
+              </div>
             </div>
           </div>
         </div>

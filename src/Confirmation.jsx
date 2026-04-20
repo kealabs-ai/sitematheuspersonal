@@ -9,6 +9,11 @@ const Confirmation = () => {
   const { plan, userData, orderId, coupon, discountedTotal, total } = location.state || {};
   const displayPrice = discountedTotal || total || plan?.price;
 
+  const parsePlanPrice = (price) => {
+    if (typeof price === 'number') return price;
+    return parseFloat(String(price).replace(/\./g, '').replace(',', '.'));
+  };
+
   useEffect(() => {
     if (!plan || !userData) {
       navigate('/');
@@ -51,13 +56,13 @@ const Confirmation = () => {
                 <span>{plan.frequency}</span>
               </div>
               <div className="flex justify-between border-b border-dark-border pb-2">
-                <span>Valor Original:</span>
-                <span>R$ {(plan.price * (plan.months ?? 1)).toFixed(2).replace('.', ',')}</span>
+                <span>Subtotal:</span>
+                <span className="text-white">{plan.months ?? 1} × R$ {parsePlanPrice(plan.price).toFixed(2).replace('.', ',')} = R$ {(parsePlanPrice(plan.price) * (plan.months ?? 1)).toFixed(2).replace('.', ',')}</span>
               </div>
               {coupon && (
                 <div className="flex justify-between border-b border-dark-border pb-2">
                   <span>Desconto ({coupon.code}):</span>
-                  <span className="text-lime-green">-R$ {((plan.price * (plan.months ?? 1)) - displayPrice).toFixed(2).replace('.', ',')}</span>
+                  <span className="text-lime-green">-R$ {((parsePlanPrice(plan.price) * (plan.months ?? 1)) - displayPrice).toFixed(2).replace('.', ',')}</span>
                 </div>
               )}
               <div className="flex justify-between border-b border-dark-border pb-2">
