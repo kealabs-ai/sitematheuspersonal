@@ -57,7 +57,11 @@ const Cart = () => {
   };
 
   const calculateSubtotal = () => {
-    return cartItems.reduce((sum, item) => sum + parseFloat(item.price), 0);
+    return cartItems.reduce((sum, item) => {
+      const price = typeof item.price === 'string' ? parseFloat(item.price.replace(',', '.')) : item.price;
+      const months = item.months || 1;
+      return sum + (price * months);
+    }, 0);
   };
 
   const calculateDiscount = () => {
