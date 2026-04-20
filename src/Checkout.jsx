@@ -71,7 +71,17 @@ const Checkout = () => {
   };
 
   const fullPrice = parsePlanPrice(plan?.price) * (plan?.months ?? 1);
-  const totalPrice = discountedTotal ?? fullPrice;
+  
+  // FALLBACK: Se cupom existe mas não veio desconto, calcula aqui
+  let finalPrice = discountedTotal ?? fullPrice;
+  if (coupon && !discountedTotal) {
+    const discount = coupon.type === 'percent' 
+      ? (fullPrice * coupon.discount) / 100 
+      : coupon.discount;
+    finalPrice = fullPrice - discount;
+  }
+  
+  const totalPrice = finalPrice;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -85,20 +95,26 @@ const Checkout = () => {
       const planPrice = totalPrice;
       const cpfClean = (userData.cpf || '').replace(/\D/g, '');
 
-      // 1. Cria o pedido
+      // 1. Cria o pedido COM DESCONTO EXPLÍCITO
       const orderData = {
         id_user: userData.userId,
         payment_method: formData.paymentMethod === 'credit' ? 'CREDIT_CARD' : 'PIX',
         id_coupon: coupon?.id || null,
+        coupon_code: coupon?.code || null,
+        discount_type: coupon?.type || null,
+        discount_value: coupon?.discount || 0,
+        original_price: fullPrice,
+        final_price: totalPrice,
         items: [{
           plan_name: `Plano ${plan.name}`,
-          plan_price: totalPrice,
+          plan_price: fullPrice,
+          plan_price_with_discount: totalPrice,
           plan_frequency: plan.frequency || 'monthly',
           quantity: 1
         }]
       };
 
-      console.log('%c[JORNADA 3/4] POST /orders body', 'color:#a78bfa;font-weight:bold', orderData);
+      console.log('%c[JORNADA 3/4] POST /orders body (com desconto explícito)', 'color:#a78bfa;font-weight:bold', orderData);
 
       const orderResult = await api.createOrder(orderData);
       console.log('%c[JORNADA 3/4] POST /orders response', 'color:#a78bfa;font-weight:bold', orderResult);
@@ -122,7 +138,7 @@ const Checkout = () => {
         return;
       }
 
-      // 2. Chama o checkout Asaas
+      // 2. Chama o checkout Asaas COM DESCONTO EXPLÍCITO
       const billingType = formData.paymentMethod === 'pix' ? 'PIX' : 'CREDIT_CARD';
       const checkoutBody = {
         id_order: orderId,
@@ -131,7 +147,11 @@ const Checkout = () => {
         customer_name: userData.name,
         customer_email: userData.email,
         customer_cpf_cnpj: cpfClean,
-        amount: planPrice,
+        amount: totalPrice,
+        original_amount: fullPrice,
+        discount_amount: fullPrice - totalPrice,
+        coupon_code: coupon?.code || null,
+        coupon_id: coupon?.id || null,
         billing_type: billingType,
         ...(formData.paymentMethod !== 'pix' && {
           card_number: formData.cardNumber.replace(/\s/g, ''),
@@ -142,7 +162,7 @@ const Checkout = () => {
         }),
       };
 
-      console.log('%c[JORNADA 3/4] POST /asaas/checkout body', 'color:#a78bfa;font-weight:bold', { ...checkoutBody, card_number: checkoutBody.card_number ? '[HIDDEN]' : undefined, card_cvv: checkoutBody.card_cvv ? '[HIDDEN]' : undefined });
+      console.log('%c[JORNADA 3/4] POST /asaas/checkout body (com desconto explícito)', 'color:#a78bfa;font-weight:bold', { ...checkoutBody, card_number: checkoutBody.card_number ? '[HIDDEN]' : undefined, card_cvv: checkoutBody.card_cvv ? '[HIDDEN]' : undefined });
 
       const checkoutRes = await fetch('https://srv1023256.hstgr.cloud/api/asaas/checkout', {
         method: 'POST',
