@@ -189,10 +189,11 @@ const api = {
   // Coupons
   async validateCoupon(code, amount) {
     try {
-      const res = await post(`${BASE}/coupons/validate`, {
+      const params = new URLSearchParams({
         code: code.toUpperCase(),
         amount: parseFloat(amount)
       });
+      const res = await get(`${BASE}/coupons/validate?${params.toString()}`);
       const data = await res.json();
       if (!res.ok) return { success: false, message: data.detail ?? 'Cupão inválido ou expirado.' };
       // Normaliza campos para o Cart
