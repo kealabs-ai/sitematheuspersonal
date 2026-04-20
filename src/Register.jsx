@@ -47,6 +47,8 @@ const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const plan = location.state?.plan;
+  const coupon = location.state?.coupon;
+  const discountedTotal = location.state?.total;
 
   const [formData, setFormData] = useState({
     name: '',
@@ -546,19 +548,49 @@ const Register = () => {
           </div>
 
           {/* Resumo do Plano */}
-          <div className="mt-6 bg-black border border-dark-border p-6">
-            <h3 className="text-xl font-bebas uppercase mb-3 text-lime-green">
+          <div className="mt-6 bg-dark-card border border-dark-border p-6">
+            <h3 className="text-xl font-bebas uppercase mb-4 text-lime-green">
               Plano Selecionado
             </h3>
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-white font-bold">Plano {plan.name}</p>
-                <p className="text-sm text-gray-400">{plan.frequency}</p>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Plano {plan.name}</span>
+                <span className="text-white font-bold">R$ {(typeof plan.price === 'string' ? parseFloat(plan.price.replace(',', '.')) : plan.price).toFixed(2).replace('.', ',')}</span>
               </div>
-              <p className="text-2xl font-bebas text-lime-green">
-                R$ {plan.price}
-                <span className="text-sm text-gray-400">/mês</span>
-              </p>
+              <div className="flex justify-between text-sm text-gray-400">
+                <span>Frequência:</span>
+                <span>{plan.frequency}</span>
+              </div>
+              
+              {coupon && discountedTotal && (
+                <>
+                  <div className="border-t border-dark-border pt-3 mt-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Subtotal:</span>
+                      <span className="text-white">R$ {(typeof plan.price === 'string' ? parseFloat(plan.price.replace(',', '.')) : plan.price).toFixed(2).replace('.', ',')}</span>
+                    </div>
+                    <div className="flex justify-between text-lime-green mt-2">
+                      <span>Desconto ({coupon.code}):</span>
+                      <span>-R$ {((typeof plan.price === 'string' ? parseFloat(plan.price.replace(',', '.')) : plan.price) - discountedTotal).toFixed(2).replace('.', ',')}</span>
+                    </div>
+                  </div>
+                  <div className="border-t border-dark-border pt-3 mt-3 flex justify-between items-center">
+                    <span className="text-lg font-bebas uppercase">Valor Final:</span>
+                    <span className="text-2xl font-bebas text-lime-green">
+                      R$ {discountedTotal.toFixed(2).replace('.', ',')}
+                    </span>
+                  </div>
+                </>
+              )}
+              
+              {!coupon && (
+                <div className="border-t border-dark-border pt-3 mt-3 flex justify-between items-center">
+                  <span className="text-lg font-bebas uppercase">Total:</span>
+                  <span className="text-2xl font-bebas text-lime-green">
+                    R$ {(typeof plan.price === 'string' ? parseFloat(plan.price.replace(',', '.')) : plan.price).toFixed(2).replace('.', ',')}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
