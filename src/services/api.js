@@ -189,10 +189,27 @@ const api = {
   // Coupons
   async validateCoupon(code, amount) {
     try {
-      const res = await get(`${BASE}/coupons/validate`);
-      return res.json();
+      const res = await post(`${BASE}/coupons/validate`, {
+        code: code.toUpperCase(),
+        amount: parseFloat(amount)
+      });
+      const data = await res.json();
+      if (!res.ok) return { success: false, message: data.detail ?? 'Cupão inválido ou expirado.' };
+      // Normaliza campos para o Cart
+      const c = data;
+      if (c.min_purchase_amount && amount < parseFloat(c.min_purchase_amount)) {
+        return { success: false, message: `Compra mínima de R$ ${parseFloat(c.min_purchase_amount).toFixed(2)} para este cupão.` };
+      }
+      return {
+        success: true,
+        coupon: {
+          id:            c.id_coupon,
+          code:          c.code,
+          discountType:  c.discount_type,
+          discountValue: parseFloat(c.discount_value),
+        }
+      };
     } catch (error) {
-      console.error('Erro ao validar cupom:', error);
       return { success: false, message: 'Erro de conexão' };
     }
   },
