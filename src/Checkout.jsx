@@ -10,6 +10,8 @@ const Checkout = () => {
   const location = useLocation();
   const plan = location.state?.plan;
   const userData = location.state?.userData;
+  const coupon = location.state?.coupon;
+  const discountedTotal = location.state?.total;
 
   const [formData, setFormData] = useState({
     name: userData?.name || '',
@@ -68,7 +70,8 @@ const Checkout = () => {
     return parseFloat(String(price).replace(/\./g, '').replace(',', '.'));
   };
 
-  const totalPrice = parsePlanPrice(plan?.price) * (plan?.months ?? 1);
+  const fullPrice = parsePlanPrice(plan?.price) * (plan?.months ?? 1);
+  const totalPrice = discountedTotal ?? fullPrice;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -86,10 +89,10 @@ const Checkout = () => {
       const orderData = {
         id_user: userData.userId,
         payment_method: formData.paymentMethod === 'credit' ? 'CREDIT_CARD' : 'PIX',
-        id_coupon: null,
+        id_coupon: coupon?.id || null,
         items: [{
           plan_name: `Plano ${plan.name}`,
-          plan_price: planPrice,
+          plan_price: totalPrice,
           plan_frequency: plan.frequency || 'monthly',
           quantity: 1
         }]
@@ -503,8 +506,14 @@ const Checkout = () => {
                   <div className="border-t border-dark-border pt-4">
                     <div className="flex justify-between text-gray-400 mb-2">
                       <span>R$ {plan.price}/mês × {plan.months ?? 1} {(plan.months ?? 1) > 1 ? 'meses' : 'mês'}:</span>
-                      <span>R$ {totalPrice.toFixed(2).replace('.', ',')}</span>
+                      <span>R$ {fullPrice.toFixed(2).replace('.', ',')}</span>
                     </div>
+                    {coupon && (
+                      <div className="flex justify-between text-lime-green mb-2">
+                        <span>Desconto ({coupon.code}):</span>
+                        <span>-R$ {(fullPrice - totalPrice).toFixed(2).replace('.', ',')}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-gray-400 mb-4">
                       <span>Taxa de adesão:</span>
                       <span className="text-lime-green">Grátis</span>
