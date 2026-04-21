@@ -1,6 +1,134 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, X, Save, ChevronDown, ChevronRight, Dumbbell, RefreshCw } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Save, ChevronDown, ChevronRight, Dumbbell, RefreshCw, Images, Search } from 'lucide-react';
 import { adminWorkouts, adminUsers } from '../services/adminApi';
+
+const GIF_DIRS = [
+  { label: 'Peito',      path: '1- PEITO',       count: 70 },
+  { label: 'Costas',     path: '2- COSTAS',      count: 61 },
+  { label: 'Tríceps',    path: '3- TRICEPS',     count: 55 },
+  { label: 'Bíceps',     path: '4- BICEPS',      count: 56 },
+  { label: 'Ombros',     path: '5- OMBROS',      count: 94 },
+  { label: 'Antebraço',  path: '6- ANTEBRAÇO',   count: 9  },
+  { label: 'Trapézio',   path: '7- TRAPÉZIO',    count: 9  },
+  { label: 'Abs e Core', path: '8- ABS E CORE',  count: 93 },
+  { label: 'Pernas',     path: '9- PERNAS',      count: 105},
+  { label: 'Panturrilha',path: '10- PANTURRILHA',count: 18 },
+  { label: 'Cardio',     path: '11- CARDIO',     count: 19 },
+];
+
+function buildGifs(dir) {
+  const urls = [];
+  for (let i = 1; i <= dir.count; i++) urls.push(`/img/${dir.path}/${i}.gif`);
+  return urls;
+}
+
+function GifPickerModal({ onSelect, onClose }) {
+  const [activeDir, setActiveDir] = useState(GIF_DIRS[0]);
+  const [search, setSearch]       = useState('');
+  const [preview, setPreview]     = useState(null);
+
+  const gifs = buildGifs(activeDir);
+  const filtered = search
+    ? gifs.filter(u => u.toLowerCase().includes(search.toLowerCase()))
+    : gifs;
+
+  return (
+    <div className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-[#111] border border-dark-border w-full max-w-4xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-dark-border shrink-0">
+          <h3 className="text-lg font-bebas uppercase text-lime-green flex items-center gap-2">
+            <Images size={18} /> Selecionar GIF de Treino
+          </h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-white"><X size={20} /></button>
+        </div>
+
+        <div className="flex flex-1 min-h-0">
+
+          {/* Sidebar — grupos musculares */}
+          <div className="w-36 shrink-0 border-r border-dark-border overflow-y-auto">
+            {GIF_DIRS.map(dir => (
+              <button
+                key={dir.path}
+                onClick={() => { setActiveDir(dir); setSearch(''); setPreview(null); }}
+                className={`w-full text-left px-3 py-2.5 text-xs font-semibold transition-colors border-b border-dark-border/50 ${
+                  activeDir.path === dir.path
+                    ? 'bg-lime-green/10 text-lime-green border-l-2 border-l-lime-green'
+                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                {dir.label}
+                <span className="block text-[10px] text-gray-600 font-normal">{dir.count} gifs</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Conteúdo */}
+          <div className="flex-1 flex flex-col min-w-0">
+
+            {/* Busca */}
+            <div className="p-3 border-b border-dark-border shrink-0">
+              <div className="flex items-center gap-2 bg-black border border-dark-border px-3 py-2">
+                <Search size={14} className="text-gray-500" />
+                <input
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder={`Buscar em ${activeDir.label}...`}
+                  className="flex-1 bg-transparent text-white text-sm focus:outline-none placeholder-gray-600"
+                />
+                {search && <button onClick={() => setSearch('')} className="text-gray-600 hover:text-white"><X size={12} /></button>}
+              </div>
+            </div>
+
+            <div className="flex flex-1 min-h-0">
+
+              {/* Grid de GIFs */}
+              <div className="flex-1 overflow-y-auto p-3">
+                <p className="text-[10px] text-gray-600 uppercase tracking-widest mb-2">
+                  {activeDir.label} · {filtered.length} imagens
+                </p>
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                  {filtered.map((url, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setPreview(url)}
+                      className={`aspect-square border-2 overflow-hidden transition-all hover:border-lime-green ${
+                        preview === url ? 'border-lime-green' : 'border-dark-border'
+                      }`}
+                    >
+                      <img
+                        src={url}
+                        alt={`gif-${i + 1}`}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Preview */}
+              {preview && (
+                <div className="w-48 shrink-0 border-l border-dark-border p-3 flex flex-col gap-3">
+                  <p className="text-[10px] text-gray-500 uppercase tracking-widest">Preview</p>
+                  <img src={preview} alt="preview" className="w-full border border-dark-border" />
+                  <p className="text-[10px] text-gray-600 break-all">{preview}</p>
+                  <button
+                    onClick={() => { onSelect(preview); onClose(); }}
+                    className="w-full bg-lime-green text-black font-bold py-2 text-xs uppercase hover:bg-neon-green transition-colors"
+                  >
+                    Usar este GIF
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const MUSCLES   = ['Peito','Costas','Pernas','Quadríceps','Posterior','Glúteos','Ombro','Tríceps','Bíceps','Abdômen','Core','Panturrilha','Trapézio','Full Body','Cardio'];
 const WEEK_DAYS = ['SEG','TER','QUA','QUI','SEX','SAB','DOM'];
@@ -99,6 +227,7 @@ export default function AdminTreinos() {
   const [dayModal, setDayModal]   = useState(null);
   const [exModal, setExModal]     = useState(null);
   const [cycleModal, setCycleModal] = useState(false);
+  const [gifPicker, setGifPicker] = useState(false);
 
   const [tplForm, setTplForm]     = useState(emptyTpl);
   const [dayForm, setDayForm]     = useState(emptyDay);
@@ -411,8 +540,26 @@ export default function AdminTreinos() {
               <input type="number" className={inp} value={exForm.rest_seconds} onChange={e => setExForm({ ...exForm, rest_seconds: +e.target.value })} />
             </Field>
           </div>
-          <Field label="URL do vídeo (opcional)">
-            <input className={inp} value={exForm.video_url} onChange={e => setExForm({ ...exForm, video_url: e.target.value })} placeholder="https://youtube.com/..." />
+          <Field label="URL do vídeo / GIF">
+            <div className="flex gap-2">
+              <input
+                className={`${inp} flex-1`}
+                value={exForm.video_url}
+                onChange={e => setExForm({ ...exForm, video_url: e.target.value })}
+                placeholder="https://... ou selecione um GIF →"
+              />
+              <button
+                type="button"
+                onClick={() => setGifPicker(true)}
+                className="shrink-0 flex items-center gap-1.5 bg-dark-card border border-lime-green/40 text-lime-green px-3 py-2 text-xs font-bold uppercase hover:bg-lime-green/10 transition-colors"
+                title="Selecionar GIF da biblioteca"
+              >
+                <Images size={14} /> GIF
+              </button>
+            </div>
+            {exForm.video_url && /\.gif/i.test(exForm.video_url) && (
+              <img src={exForm.video_url} alt="preview" className="mt-2 h-20 border border-dark-border object-contain" />
+            )}
           </Field>
           <Field label="Observações">
             <textarea rows={2} className={`${inp} resize-none`} value={exForm.notes} onChange={e => setExForm({ ...exForm, notes: e.target.value })} />
@@ -422,6 +569,13 @@ export default function AdminTreinos() {
             <Save size={15} /> {saving ? 'Salvando...' : 'Salvar Exercício'}
           </button>
         </Modal>
+      )}
+
+      {gifPicker && (
+        <GifPickerModal
+          onSelect={url => setExForm(f => ({ ...f, video_url: url }))}
+          onClose={() => setGifPicker(false)}
+        />
       )}
 
       {/* Modal Ciclo */}
