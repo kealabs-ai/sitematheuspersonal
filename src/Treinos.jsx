@@ -181,6 +181,80 @@ function HistoryModal({ onClose }) {
   );
 }
 
+function isGif(url) {
+  return /\.gif(\?.*)?$/i.test(url);
+}
+
+function isVideo(url) {
+  return /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(url) || url.includes('youtube') || url.includes('youtu.be') || url.includes('vimeo');
+}
+
+function getYoutubeEmbed(url) {
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]+)/);
+  return match ? `https://www.youtube.com/embed/${match[1]}?autoplay=1` : null;
+}
+
+function MediaButton({ url }) {
+  const [open, setOpen] = useState(false);
+  const gif = isGif(url);
+  const video = isVideo(url);
+  const youtubeEmbed = (video && !gif) ? getYoutubeEmbed(url) : null;
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="w-20 flex items-center justify-center gap-1 bg-black border border-blue-500/40 text-blue-400 text-[10px] font-bold py-2 hover:bg-blue-500/10 hover:border-blue-400 transition-all"
+      >
+        <PlayCircle size={13} /> {gif ? 'GIF' : 'Vídeo'}
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4"
+            onClick={() => setOpen(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-lg bg-dark-card border border-dark-border p-4"
+              onClick={e => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setOpen(false)}
+                className="absolute top-3 right-3 text-gray-500 hover:text-white transition-colors z-10"
+              >
+                <X size={20} />
+              </button>
+
+              {gif && (
+                <img src={url} alt="Execução" className="w-full rounded" />
+              )}
+
+              {video && youtubeEmbed && (
+                <div className="aspect-video">
+                  <iframe
+                    src={youtubeEmbed}
+                    className="w-full h-full"
+                    allow="autoplay; encrypted-media"
+                    allowFullScreen
+                  />
+                </div>
+              )}
+
+              {video && !youtubeEmbed && (
+                <video src={url} controls autoPlay className="w-full" />
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
 const muscleColors = {
   'Peito':       'bg-red-500/10 text-red-400 border-red-500/20',
   'Costas':      'bg-blue-500/10 text-blue-400 border-blue-500/20',
@@ -677,12 +751,15 @@ export default function Treinos() {
                           className="w-20 bg-black border border-dark-border text-white text-xs text-center p-2 focus:outline-none focus:border-lime-green transition-colors"
                         />
                         {ex.video_url && (
-                          <a
-                            href={ex.video_url} target="_blank" rel="noopener noreferrer"
-                            className="w-20 flex items-center justify-center gap-1 bg-black border border-blue-500/40 text-blue-400 text-[10px] font-bold py-2 hover:bg-blue-500/10 hover:border-blue-400 transition-all"
+                          <MediaButton url={ex.video_url} />
+                        )}
+                        {!activeLog && (
+                          <button
+                            onClick={() => handleSelect(todayDay)}
+                            className="w-20 flex items-center justify-center gap-1 bg-lime-green text-black text-[10px] font-bold py-2 hover:bg-neon-green transition-all"
                           >
-                            <PlayCircle size={13} /> Vídeo
-                          </a>
+                            <Dumbbell size={11} /> Treino
+                          </button>
                         )}
                       </div>
                     </div>
