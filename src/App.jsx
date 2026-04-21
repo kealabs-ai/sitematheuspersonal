@@ -483,7 +483,7 @@ const pricingPlans = [
   },
   {
     name: 'DIAMANTE',
-    price: '99,99',
+    price: '109,90',
     duration: '1 mês',
     months: 1,
     description: 'Tudo do plano mensal + Plano Nutricional personalizado.',
