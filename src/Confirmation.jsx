@@ -14,6 +14,15 @@ const Confirmation = () => {
     return parseFloat(String(price).replace(/\./g, '').replace(',', '.'));
   };
 
+  const getFrequencyLabel = () => {
+    const months = plan?.months || 1;
+    if (months === 1) return 'Mensal';
+    if (months === 3) return '3 Meses';
+    if (months === 6) return '6 Meses';
+    if (months === 12) return '12 Meses (Anual)';
+    return `${months} Meses`;
+  };
+
   useEffect(() => {
     if (!plan || !userData) {
       navigate('/');
@@ -53,7 +62,7 @@ const Confirmation = () => {
               </div>
               <div className="flex justify-between border-b border-dark-border pb-2">
                 <span>Frequência:</span>
-                <span>{plan.frequency}</span>
+                <span>{getFrequencyLabel()}</span>
               </div>
               <div className="flex justify-between border-b border-dark-border pb-2">
                 <span>Subtotal:</span>
