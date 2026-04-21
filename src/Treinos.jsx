@@ -753,14 +753,6 @@ export default function Treinos() {
                         {ex.video_url && (
                           <MediaButton url={ex.video_url} />
                         )}
-                        {!activeLog && (
-                          <button
-                            onClick={() => handleSelect(todayDay)}
-                            className="w-20 flex items-center justify-center gap-1 bg-lime-green text-black text-[10px] font-bold py-2 hover:bg-neon-green transition-all"
-                          >
-                            <Dumbbell size={11} /> Treino
-                          </button>
-                        )}
                       </div>
                     </div>
                   </div>
