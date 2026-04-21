@@ -252,7 +252,7 @@ const GOAL_OPTIONS = [
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
 
-export default function OnboardingModal({ userName, onComplete }) {
+export default function OnboardingModal({ userName, userGender, onComplete }) {
   const [step, setStep]     = useState(0); // 0=loading, 1=gênero, 2=objetivo, 3=criando, 4=sucesso
   const [gender, setGender] = useState(null);
   const [goal, setGoal]     = useState(null);
@@ -261,11 +261,12 @@ export default function OnboardingModal({ userName, onComplete }) {
   useEffect(() => {
     users.me()
       .then(user => {
-        setGender(user?.gender || null);
-        if (user?.goal) setGoal(user.goal);
-        setStep(1);
+        const g = userGender || user?.gender || null;
+        setGender(g);
+        // Se já tem gênero, pula direto para escolha do objetivo
+        setStep(g ? 2 : 1);
       })
-      .catch(() => setStep(1));
+      .catch(() => setStep(userGender ? 2 : 1));
   }, []);
 
   // Dispara criação quando step muda para 3

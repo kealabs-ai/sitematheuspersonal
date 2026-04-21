@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Dumbbell, TrendingUp, Salad, User, Flame, Calendar, Trophy } from 'lucide-react';
-import { dashboard, getUser } from './services/alunoApi';
+import { dashboard, getUser, users } from './services/alunoApi';
 import { useBlockBack } from './hooks/useBlockBack';
 import OnboardingModal from './OnboardingModal';
 import BottomNav from './BottomNav';
@@ -33,23 +33,17 @@ export default function Dashboard() {
   const [summary, setSummary]           = useState(null);
   const [loading, setLoading]           = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [userGender, setUserGender]     = useState(null);
 
   useEffect(() => {
-    const hasFlag = !!localStorage.getItem('onboarding_done');
-
-    dashboard.summary()
-      .then(data => {
+    Promise.all([dashboard.summary(), users.me()])
+      .then(([data, me]) => {
         setSummary(data);
-        const hasPlan = Array.isArray(data?.week) && data.week.length > 0;
-        if (!hasFlag && !hasPlan) {
-          setShowOnboarding(true);
-        } else if (hasPlan && !hasFlag) {
-          localStorage.setItem('onboarding_done', '1');
-        }
+        setUserGender(me?.gender || null);
+        const hasGoal = !!(me?.goal || me?.objective);
+        if (!hasGoal) setShowOnboarding(true);
       })
-      .catch(() => {
-        if (!hasFlag) setShowOnboarding(true);
-      })
+      .catch(() => setShowOnboarding(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -74,7 +68,11 @@ export default function Dashboard() {
       <div className="fixed bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(0,100,180,0.06)_0%,transparent_70%)] animate-ai-pulse pointer-events-none z-0" style={{ animationDelay: '2s' }} />
 
       {showOnboarding && (
-        <OnboardingModal userName={user.name} onComplete={() => { setShowOnboarding(false); window.location.reload(); }} />
+        <OnboardingModal
+          userName={user.name}
+          userGender={userGender}
+          onComplete={() => { setShowOnboarding(false); window.location.reload(); }}
+        />
       )}
 
       <main className="max-w-2xl md:max-w-5xl mx-auto px-4 md:px-8 py-6 space-y-6">
