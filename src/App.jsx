@@ -242,13 +242,112 @@ const AboutSection = () => {
 };;
 
 const services = [
-  { icon: <Dumbbell size={48} />, title: 'Treinamento de Força', description: 'Desenvolva força máxima e hipertrofia com periodização avançada' },
-  { icon: <TrendingUp size={48} />, title: 'Condicionamento', description: 'HIIT e treinos funcionais para resistência e performance' },
-  { icon: <Target size={48} />, title: 'Nutrição Esportiva', description: 'Planos alimentares personalizados para seus objetivos' },
-  { icon: <Award size={48} />, title: 'Acompanhamento', description: 'Suporte contínuo e ajustes em tempo real' },
+  {
+    icon: <Dumbbell size={48} />,
+    title: 'Treinamento de Força',
+    description: 'Desenvolva força máxima e hipertrofia com periodização avançada',
+    details: [
+      'Periodização linear e ondulatória',
+      'Treinos de 4 a 6 dias por semana',
+      'Foco em hipertrofia e ganho de força',
+      'Exercícios compostos e isolados',
+      'Progressão de carga monitorada',
+      'Adaptado para academia ou home gym',
+    ],
+    about: 'Programa estruturado com base científica para maximizar o ganho de massa muscular e força. Cada treino é montado de acordo com seu nível, equipamentos disponíveis e objetivos específicos.',
+  },
+  {
+    icon: <TrendingUp size={48} />,
+    title: 'Condicionamento',
+    description: 'HIIT e treinos funcionais para resistência e performance',
+    details: [
+      'Protocolos HIIT e Tabata',
+      'Treinos funcionais e circuitos',
+      'Melhora de resistência cardiovascular',
+      'Queima calórica acelerada',
+      'Exercícios com e sem equipamentos',
+      'Progressão gradual de intensidade',
+    ],
+    about: 'Treinos de alta intensidade projetados para melhorar seu condicionamento físico, acelerar o metabolismo e aumentar a resistência. Ideal para quem quer emagrecer mantendo a massa muscular.',
+  },
+  {
+    icon: <Target size={48} />,
+    title: 'Nutrição Esportiva',
+    description: 'Planos alimentares personalizados para seus objetivos',
+    details: [
+      'Plano alimentar individualizado',
+      'Cálculo de macronutrientes',
+      'Estratégias de cutting e bulking',
+      'Sugestões de suplementação',
+      'Receitas práticas e saudáveis',
+      'Ajustes semanais conforme evolução',
+    ],
+    about: 'Disponível exclusivamente no Plano Diamante. Um plano nutricional completo elaborado para potencializar seus resultados no treino, com orientações práticas para o dia a dia.',
+    badge: '💎 Plano Diamante',
+  },
+  {
+    icon: <Award size={48} />,
+    title: 'Acompanhamento',
+    description: 'Suporte contínuo e ajustes em tempo real',
+    details: [
+      'Feedback semanal detalhado',
+      'Suporte via WhatsApp',
+      'Ajustes no treino conforme evolução',
+      'Análise de métricas e progresso',
+      'Motivação e orientação constante',
+      'Relatórios de desempenho',
+    ],
+    about: 'Você nunca estará sozinho na sua jornada. Acompanhamento próximo com feedbacks semanais, ajustes no plano e suporte direto para garantir que você continue evoluindo.',
+  },
 ];
 
+const ServiceModal = ({ service, onClose }) => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm px-4" onClick={onClose}>
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95, y: 20 }}
+      className="bg-dark-card border-2 border-lime-green w-full max-w-md p-8 relative"
+      onClick={e => e.stopPropagation()}
+    >
+      <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors">
+        <X size={20} />
+      </button>
+
+      <div className="text-lime-green mb-4">{service.icon}</div>
+
+      <h3 className="text-3xl font-bebas uppercase text-white mb-1">{service.title}</h3>
+
+      {service.badge && (
+        <span className="inline-block text-xs font-bold uppercase bg-purple-400/10 border border-purple-400/40 text-purple-400 px-3 py-1 mb-3">
+          {service.badge}
+        </span>
+      )}
+
+      <p className="text-gray-400 text-sm leading-relaxed mb-5">{service.about}</p>
+
+      <ul className="space-y-2 mb-6">
+        {service.details.map((d, i) => (
+          <li key={i} className="flex items-center gap-2 text-sm text-gray-300">
+            <span className="text-lime-green">✓</span> {d}
+          </li>
+        ))}
+      </ul>
+
+      <a
+        href="#consultoria"
+        onClick={onClose}
+        className="block w-full text-center py-3 font-bold uppercase text-sm bg-lime-green text-black hover:bg-neon-green transition-all"
+      >
+        Ver Planos
+      </a>
+    </motion.div>
+  </div>
+);
+
 const ServicesSection = () => {
+  const [selected, setSelected] = useState(null);
+
   return (
     <section id="serviços" className="py-20 px-4">
       <div className="container mx-auto">
@@ -261,26 +360,35 @@ const ServicesSection = () => {
           <h3 className="text-5xl md:text-6xl font-bebas uppercase mb-4">
             <span className="text-lime-green">Meus</span> Serviços
           </h3>
-          <p className="text-gray-400 text-lg">Soluções completas para sua evolução</p>
+          <p className="text-gray-400 text-lg">Clique em um serviço para ver os detalhes</p>
         </motion.div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {services.map((service, index) => (
-            <motion.div 
+            <motion.button
               key={index}
-              className="bg-dark-card border border-dark-border p-8 hover:border-lime-green transition-all group"
+              onClick={() => setSelected(service)}
+              className="bg-dark-card border border-dark-border p-8 hover:border-lime-green transition-all group text-left cursor-pointer w-full"
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
+              whileHover={{ y: -4 }}
             >
               <div className="text-lime-green mb-4 group-hover:scale-110 transition-transform">{service.icon}</div>
               <h4 className="text-2xl font-bebas mb-3 uppercase">{service.title}</h4>
-              <p className="text-gray-400 text-sm leading-relaxed">{service.description}</p>
-            </motion.div>
+              <p className="text-gray-400 text-sm leading-relaxed mb-4">{service.description}</p>
+              <span className="text-lime-green text-xs uppercase font-semibold tracking-wide border-b border-lime-green/40 pb-0.5 group-hover:border-lime-green transition-colors">
+                Ver detalhes →
+              </span>
+            </motion.button>
           ))}
         </div>
       </div>
+
+      <AnimatePresence>
+        {selected && <ServiceModal service={selected} onClose={() => setSelected(null)} />}
+      </AnimatePresence>
     </section>
   );
 };
