@@ -55,8 +55,37 @@ export default function Dashboard() {
 
   const user         = summary?.user ?? getUser() ?? {};
   const stats        = summary?.stats ?? { streak: 0, trainings_this_week: 0, days_active: 0 };
-  const WEEK_LABEL   = { 1:'SEG', 2:'TER', 3:'QUA', 4:'QUI', 5:'SEX', 6:'SAB', 7:'DOM' };
-  const week         = (summary?.week ?? []).map(d => ({ ...d, day: d.day ?? WEEK_LABEL[d.week_day] ?? '?', status: d.is_rest ? 'rest' : (d.status === 'pending' ? 'upcoming' : (d.status ?? 'upcoming')) }));
+  const WEEK_LABEL   = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
+
+  // Gera sempre os 7 dias da semana atual (seg-dom) com base na data de hoje
+  const today        = new Date();
+  const todayDow     = today.getDay(); // 0=dom, 1=seg...
+  const startOfWeek  = new Date(today);
+  startOfWeek.setDate(today.getDate() - ((todayDow + 6) % 7)); // segunda-feira
+
+  const apiWeekDone  = new Set(
+    (summary?.week ?? [])
+      .filter(d => {
+        if (!d.date) return false;
+        const dDate = new Date(d.date);
+        return dDate >= startOfWeek && dDate <= today && (d.status === 'done' || d.status === 'completed');
+      })
+      .map(d => new Date(d.date).getDay())
+  );
+
+  const week = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(startOfWeek);
+    date.setDate(startOfWeek.getDate() + i);
+    const dow = date.getDay();
+    const isToday = date.toDateString() === today.toDateString();
+    const isFuture = date > today;
+    const isDone = apiWeekDone.has(dow);
+    return {
+      day: WEEK_LABEL[dow],
+      status: isDone ? 'done' : isToday ? 'today' : isFuture ? 'upcoming' : 'upcoming',
+    };
+  });
+
   const todayWorkout = summary?.today_workout ?? null;
   const badgesEarned = summary?.badges_earned ?? 0;
   const badgesTotal  = summary?.badges_total ?? 0;
