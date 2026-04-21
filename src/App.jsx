@@ -1059,6 +1059,24 @@ const Footer = () => {
         </div>
         
         <div className="text-center pt-8 border-t border-dark-border">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <span className="text-gray-500 text-xs uppercase tracking-wide">Protegido por</span>
+            <a
+              href="https://letsencrypt.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 bg-[#003A70] px-3 py-1.5 hover:opacity-90 transition-opacity"
+              title="Let's Encrypt - SSL gratuito"
+            >
+              <svg width="18" height="18" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M32 4L8 16v16c0 13.3 10.3 25.7 24 28 13.7-2.3 24-14.7 24-28V16L32 4z" fill="#003A70"/>
+                <path d="M32 4L8 16v16c0 13.3 10.3 25.7 24 28 13.7-2.3 24-14.7 24-28V16L32 4z" stroke="#00A8E0" strokeWidth="2"/>
+                <path d="M22 32h20M32 22v20" stroke="#00A8E0" strokeWidth="3" strokeLinecap="round"/>
+                <circle cx="32" cy="32" r="8" stroke="#00A8E0" strokeWidth="2"/>
+              </svg>
+              <span className="text-white text-xs font-bold tracking-wide">Let's Encrypt</span>
+            </a>
+          </div>
           <p className="text-gray-600 text-sm">
             &copy; {new Date().getFullYear()} <span className="text-lime-green font-semibold">Matheus Personal</span>. Todos os direitos reservados.
           </p>
