@@ -386,8 +386,115 @@ const pricingPlans = [
 
 const WHATSAPP = '5535998572602';
 
+const planDetails = {
+  BRONZE: {
+    features: [
+      '✅ Treino personalizado mensal',
+      '✅ Acesso ao app com vídeos',
+      '✅ Suporte via WhatsApp',
+      '✅ Feedback semanal',
+      '✅ Ajustes no plano conforme evolução',
+      '❌ Plano nutricional',
+    ],
+    ideal: 'Ideal para quem quer experimentar a consultoria online sem compromisso de longo prazo.',
+  },
+  PRATA: {
+    features: [
+      '✅ Treino personalizado por 3 meses',
+      '✅ Acesso ao app com vídeos',
+      '✅ Suporte via WhatsApp',
+      '✅ Feedback semanal',
+      '✅ Ajustes no plano conforme evolução',
+      '✅ Revisão completa do treino a cada mês',
+      '❌ Plano nutricional',
+    ],
+    ideal: 'Ideal para quem busca resultados consistentes com um compromisso de médio prazo.',
+  },
+  OURO: {
+    features: [
+      '✅ Treino personalizado por 6 meses',
+      '✅ Acesso ao app com vídeos',
+      '✅ Suporte via WhatsApp',
+      '✅ Feedback semanal',
+      '✅ Ajustes no plano conforme evolução',
+      '✅ Revisão completa do treino a cada mês',
+      '✅ Relatório de evolução bimestral',
+      '❌ Plano nutricional',
+    ],
+    ideal: 'Ideal para quem quer transformação real com o melhor custo-benefício.',
+  },
+  DIAMANTE: {
+    features: [
+      '✅ Treino personalizado mensal',
+      '✅ Acesso ao app com vídeos',
+      '✅ Suporte VIP via WhatsApp',
+      '✅ Feedback semanal',
+      '✅ Ajustes no plano conforme evolução',
+      '✅ Plano nutricional personalizado',
+      '✅ Acompanhamento nutricional no app',
+      '✅ Prioridade no atendimento',
+    ],
+    ideal: 'Ideal para quem quer o pacote completo: treino + nutrição com acompanhamento premium.',
+  },
+};
+
+const PlanModal = ({ plan, onClose, onContract }) => {
+  const details = planDetails[plan.name] ?? { features: [], ideal: '' };
+  const color = plan.diamond ? 'purple-400' : 'lime-green';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm px-4" onClick={onClose}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="bg-dark-card border-2 w-full max-w-md p-8 relative"
+        style={{ borderColor: plan.diamond ? '#c084fc' : '#84cc16' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors">
+          <X size={20} />
+        </button>
+
+        <h3 className={`text-4xl font-bebas uppercase mb-1 ${plan.diamond ? 'text-purple-400' : 'text-lime-green'}`}>
+          Plano {plan.name}
+        </h3>
+        <p className="text-gray-400 text-sm mb-1 uppercase tracking-widest">{plan.duration}</p>
+        <div className="flex items-end gap-1 mb-4">
+          <span className="text-gray-400 text-sm mb-1">R$</span>
+          <span className="text-5xl font-bebas text-white leading-none">{plan.price}</span>
+          <span className="text-gray-400 text-sm mb-1">/mês</span>
+          {plan.monthlyTotal && (
+            <span className="text-gray-500 text-xs mb-1 ml-2">· Total R$ {plan.monthlyTotal}</span>
+          )}
+        </div>
+
+        <p className={`text-sm mb-5 ${plan.diamond ? 'text-purple-300' : 'text-lime-green'}`}>{details.ideal}</p>
+
+        <ul className="space-y-2 mb-6">
+          {details.features.map((f, i) => (
+            <li key={i} className="text-sm text-gray-300">{f}</li>
+          ))}
+        </ul>
+
+        <button
+          onClick={onContract}
+          className={`w-full py-3 font-bold uppercase text-sm transition-all ${
+            plan.diamond
+              ? 'bg-purple-400 text-black hover:bg-purple-300'
+              : 'bg-lime-green text-black hover:bg-neon-green'
+          }`}
+        >
+          Contratar Agora
+        </button>
+      </motion.div>
+    </div>
+  );
+};
+
 const PricingSection = () => {
   const navigate = useNavigate();
+  const [selectedPlan, setSelectedPlan] = useState(null);
 
   const handlePlanClick = (plan) => {
     navigate('/cart', { state: { plan } });
@@ -459,9 +566,19 @@ const PricingSection = () => {
                   </div>
                 )}
               </div>
-              <p className="text-gray-300 text-sm leading-relaxed mb-6 min-h-[60px]">
+              <p className="text-gray-300 text-sm leading-relaxed mb-4 min-h-[60px]">
                 {plan.description}
               </p>
+              <button
+                onClick={() => setSelectedPlan(plan)}
+                className={`w-full text-center py-2 px-4 text-xs uppercase font-semibold transition-all mb-2 border ${
+                  plan.diamond
+                    ? 'border-purple-400/40 text-purple-400 hover:bg-purple-400/10'
+                    : 'border-lime-green/40 text-lime-green hover:bg-lime-green/10'
+                }`}
+              >
+                Ver detalhes
+              </button>
               <button 
                 onClick={() => handlePlanClick(plan)}
                 className={`w-full text-center py-3 px-4 font-bold uppercase transition-all text-sm ${
@@ -478,6 +595,16 @@ const PricingSection = () => {
           ))}
         </div>
       </div>
+
+      <AnimatePresence>
+        {selectedPlan && (
+          <PlanModal
+            plan={selectedPlan}
+            onClose={() => setSelectedPlan(null)}
+            onContract={() => { setSelectedPlan(null); handlePlanClick(selectedPlan); }}
+          />
+        )}
+      </AnimatePresence>
     </section>
   );
 };
