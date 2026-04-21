@@ -35,15 +35,21 @@ export default function Dashboard() {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
+    const hasFlag = !!localStorage.getItem('onboarding_done');
+
     dashboard.summary()
       .then(data => {
         setSummary(data);
-        const hasFlag = !!localStorage.getItem('onboarding_done');
         const hasPlan = Array.isArray(data?.week) && data.week.length > 0;
-        if (!hasFlag && !hasPlan) setShowOnboarding(true);
-        else if (hasPlan && !hasFlag) localStorage.setItem('onboarding_done', '1');
+        if (!hasFlag && !hasPlan) {
+          setShowOnboarding(true);
+        } else if (hasPlan && !hasFlag) {
+          localStorage.setItem('onboarding_done', '1');
+        }
       })
-      .catch(() => {})
+      .catch(() => {
+        if (!hasFlag) setShowOnboarding(true);
+      })
       .finally(() => setLoading(false));
   }, []);
 
