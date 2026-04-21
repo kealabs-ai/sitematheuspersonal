@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { users, workouts as workoutsApi } from './services/alunoApi';
+import { users } from './services/alunoApi';
 
 // ─── Planos de treino por gênero + objetivo ───────────────────────────────────
 
@@ -197,47 +197,6 @@ const PLANOS = {
   },
 };
 
-// ─── Criação do plano via API ─────────────────────────────────────────────────
-
-async function criarPlanoCompleto(gender, goal) {
-  const plano = PLANOS[gender]?.[goal];
-  if (!plano) throw new Error('Plano não encontrado');
-
-  const planRes = await workoutsApi.createPlan({
-    name: plano.name,
-    description: `Plano de ${goal} para ${gender === 'male' ? 'homem' : 'mulher'}`,
-    goal,
-    gender,
-  });
-
-  const planId = planRes?.plan_id ?? planRes?.id ?? planRes?.data?.plan_id ?? planRes?.data?.id;
-  if (!planId) throw new Error(`Falha ao criar plano: ${JSON.stringify(planRes)}`);
-
-  for (const day of plano.days) {
-    const dayRes = await workoutsApi.createDay(planId, {
-      name: day.name,
-      day_of_week: day.day,
-      duration_min: day.duration_min,
-      is_rest: day.status === 'rest',
-    });
-
-    const dayId = dayRes?.day_id ?? dayRes?.id ?? dayRes?.data?.day_id ?? dayRes?.data?.id;
-    if (!dayId || day.exercises.length === 0) continue;
-
-    for (const ex of day.exercises) {
-      await workoutsApi.createExercise(dayId, {
-        name: ex.name,
-        sets: ex.sets,
-        reps: ex.reps,
-        rest_seconds: ex.rest_seconds,
-        muscle_group: ex.muscle_group,
-      });
-    }
-  }
-
-  return planId;
-}
-
 // ─── Opções de seleção ────────────────────────────────────────────────────────
 
 const GENDER_OPTIONS = [
@@ -269,24 +228,17 @@ export default function OnboardingModal({ userName, userGender, onComplete }) {
       .catch(() => setStep(userGender ? 2 : 1));
   }, []);
 
-  // Dispara criação quando step muda para 3
+  // Dispara salvamento quando step muda para 3
   useEffect(() => {
     if (step !== 3) return;
     setError('');
 
-    const run = async () => {
-      try {
-        await users.update({ gender, goal });
-        await criarPlanoCompleto(gender ?? 'male', goal);
-        localStorage.setItem('onboarding_done', '1');
-        setStep(4);
-      } catch (err) {
-        setError(err.message || 'Erro ao criar plano. Tente novamente.');
+    users.update({ gender, goal })
+      .then(() => setStep(4))
+      .catch(err => {
+        setError(err.message || 'Erro ao salvar preferências. Tente novamente.');
         setStep(2);
-      }
-    };
-
-    run();
+      });
   }, [step]);
 
   const SelectionGrid = ({ options, value, onChange }) => (
@@ -368,12 +320,12 @@ export default function OnboardingModal({ userName, userGender, onComplete }) {
             </motion.div>
           )}
 
-          {/* STEP 3 — Criando */}
+          {/* STEP 3 — Salvando */}
           {step === 3 && (
             <motion.div key="step3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-8">
               <div className="text-6xl mb-6 animate-bounce">⚙️</div>
-              <h2 className="text-3xl font-bebas uppercase text-lime-green mb-2">Montando seu plano...</h2>
-              <p className="text-gray-400 text-sm">Criando treinos personalizados para você</p>
+              <h2 className="text-3xl font-bebas uppercase text-lime-green mb-2">Salvando preferências...</h2>
+              <p className="text-gray-400 text-sm">Configurando seu perfil de treino</p>
               <div className="mt-6 flex justify-center gap-1">
                 {[0, 1, 2].map(i => (
                   <div key={i} className="w-2 h-2 bg-lime-green rounded-full animate-pulse" style={{ animationDelay: `${i * 0.2}s` }} />
@@ -390,7 +342,7 @@ export default function OnboardingModal({ userName, userGender, onComplete }) {
               <p className="text-gray-300 text-sm mb-1">
                 Seu plano de <span className="text-lime-green font-bold">{goal}</span> foi configurado com sucesso.
               </p>
-              <p className="text-gray-500 text-xs mb-8">4 dias de treino + 3 dias de descanso por semana</p>
+              <p className="text-gray-500 text-xs mb-8">Seu personal irá montar seu plano em breve 💪</p>
               <button
                 onClick={onComplete}
                 className="w-full bg-lime-green text-black font-bold py-4 uppercase hover:bg-neon-green transition-all"

@@ -80,9 +80,6 @@ export const workouts = {
   finishLog:     (logId, completed)  => post(`${BASE}/aluno/workouts/logs/${logId}/finish`, { completed }),
   history:       ()                  => get(`${BASE}/aluno/workouts/logs/history`),
   streak:        ()                  => get(`${BASE}/aluno/workouts/streak`),
-  createPlan:    (data)              => post(`${BASE}/aluno/workouts/plans`, data),
-  createDay:     (planId, data)      => post(`${BASE}/aluno/workouts/plans/${planId}/days`, data),
-  createExercise:(dayId, data)       => post(`${BASE}/aluno/workouts/days/${dayId}/exercises`, data),
 };
 
 // ─────────────────────────────────────────────
