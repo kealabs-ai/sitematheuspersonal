@@ -102,6 +102,12 @@ const Register = () => {
 
     if (name === 'phone') {
       value = value.replace(/\D/g, '');
+      if (formData.countryCode === '+55') {
+        if (value.length <= 11) {
+          value = value.replace(/(\d{2})(\d)/, '($1) $2');
+          value = value.replace(/(\d{5})(\d{1,4})$/, '$1-$2');
+        }
+      }
     }
 
     if (name === 'cep') {
@@ -131,12 +137,10 @@ const Register = () => {
     }
 
     if (name === 'cpf') {
-      value = value.replace(/\D/g, '');
-      if (value.length <= 11) {
-        value = value.replace(/(\d{3})(\d)/, '$1.$2');
-        value = value.replace(/(\d{3})(\d)/, '$1.$2');
-        value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-      }
+      value = value.replace(/\D/g, '').slice(0, 11);
+      value = value.replace(/(\d{3})(\d)/, '$1.$2');
+      value = value.replace(/(\d{3}\.\d{3})(\d)/, '$1.$2');
+      value = value.replace(/(\d{3}\.\d{3}\.\d{3})(\d{1,2})$/, '$1-$2');
     }
 
     setFormData({ ...formData, [name]: value });
@@ -167,7 +171,7 @@ const Register = () => {
       const userBody = {
         name: formData.name,
         email: formData.email,
-        phone: formData.phone,
+        phone: formData.phone.replace(/\D/g, ''),
         cpf: formData.cpf,
         birth_date: formData.birth_date || null,
         cep: formData.cep,
@@ -357,9 +361,9 @@ const Register = () => {
                     value={formData.phone}
                     onChange={handleChange}
                     required
-                    maxLength="15"
+                    maxLength={formData.countryCode === '+55' ? 15 : 20}
                     className="flex-1 p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
-                    placeholder="(00) 00000-0000"
+                    placeholder={formData.countryCode === '+55' ? '(00) 00000-0000' : '000000000'}
                   />
                 </div>
               </div>
