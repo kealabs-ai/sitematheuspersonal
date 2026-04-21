@@ -206,7 +206,7 @@ function MediaButton({ url }) {
         onClick={() => setOpen(true)}
         className="w-20 flex items-center justify-center gap-1 bg-black border border-blue-500/40 text-blue-400 text-[10px] font-bold py-2 hover:bg-blue-500/10 hover:border-blue-400 transition-all"
       >
-        <PlayCircle size={13} /> {gif ? 'GIF' : 'Vídeo'}
+        <PlayCircle size={13} /> {gif ? 'Treino' : 'Vídeo'}
       </button>
 
       <AnimatePresence>
