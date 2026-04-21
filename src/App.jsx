@@ -847,126 +847,30 @@ const TestimonialsSection = () => {
   );
 };
 
-const results = [
-  {
-    name: 'Aluno 1',
-    period: '3 meses',
-    before: '/img/antes.jpg',
-    after: '/img/depois.jpg',
-    highlight: '/img/resultado.jpg',
-    tag: 'Hipertrofia',
-  },
+const galleryImages = [
+  { src: '/img/antes_e_depois_a.jpg', label: 'Transformação A' },
+  { src: '/img/antes_e_depois_b.jpg', label: 'Transformação B' },
+  { src: '/img/antes_e_depois_c.jpg', label: 'Transformação C' },
+  { src: '/img/antes_e_depois_d.jpg', label: 'Transformação D' },
 ];
 
-function ImgWithFallback({ src, alt, className, style }) {
-  const [err, setErr] = useState(false);
-  if (err) {
-    return (
-      <div className={`${className} bg-dark-border flex items-center justify-center`} style={style}>
-        <span className="text-gray-700 text-xs uppercase tracking-wide">{alt}</span>
-      </div>
-    );
-  }
-  return <img src={src} alt={alt} className={className} style={style} onError={() => setErr(true)} draggable={false} />;
-}
-
-function ResultCard({ result, index }) {
-  const [slider, setSlider] = useState(50);
-  const [flipped, setFlipped] = useState(false);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: index * 0.12 }}
-      className="flex flex-col bg-dark-card border border-dark-border overflow-hidden group"
-    >
-      {/* Slider antes/depois */}
-      <div className="relative w-full aspect-[3/4] overflow-hidden select-none cursor-col-resize">
-        {/* DEPOIS (fundo) */}
-        <ImgWithFallback
-          src={result.after}
-          alt="Depois"
-          className="absolute inset-0 w-full h-full object-cover object-top"
-        />
-        {/* ANTES (clip) */}
-        <ImgWithFallback
-          src={result.before}
-          alt="Antes"
-          className="absolute inset-0 w-full h-full object-cover object-top pointer-events-none"
-          style={{ clipPath: `polygon(0 0, ${slider}% 0, ${slider}% 100%, 0 100%)` }}
-        />
-        {/* Linha divisória */}
-        <div
-          className="absolute inset-y-0 w-0.5 bg-lime-green z-20 pointer-events-none"
-          style={{ left: `${slider}%` }}
-        >
-          <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 bg-lime-green rounded-full flex items-center justify-center shadow-xl">
-            <ChevronLeft size={14} color="black" />
-            <ChevronRight size={14} color="black" />
-          </div>
-        </div>
-        {/* Input range invisível */}
-        <input
-          type="range" min="0" max="100" value={slider}
-          onChange={e => setSlider(Number(e.target.value))}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-col-resize z-30"
-        />
-        {/* Labels */}
-        <span className="absolute bottom-3 left-3 z-20 bg-black/70 text-white text-[10px] font-bold uppercase px-2 py-1 pointer-events-none">
-          Antes
-        </span>
-        <span className="absolute bottom-3 right-3 z-20 bg-lime-green text-black text-[10px] font-bold uppercase px-2 py-1 pointer-events-none">
-          Depois
-        </span>
-        {/* Tag */}
-        {result.tag && (
-          <span className="absolute top-3 left-3 z-20 bg-black/60 text-lime-green text-[10px] font-bold uppercase border border-lime-green/40 px-2 py-0.5 pointer-events-none">
-            {result.tag}
-          </span>
-        )}
-      </div>
-
-      {/* Info */}
-      <div className="p-4 flex items-center justify-between">
-        <div>
-          <p className="text-white font-bebas text-xl uppercase leading-none">{result.name}</p>
-          <p className="text-gray-500 text-xs mt-0.5">Resultado em {result.period}</p>
-        </div>
-        {result.highlight && (
-          <button
-            onClick={() => setFlipped(f => !f)}
-            className="text-[10px] text-lime-green border border-lime-green/30 px-2 py-1 hover:bg-lime-green/10 transition-colors uppercase font-bold"
-          >
-            {flipped ? 'Fechar' : 'Ver foto'}
-          </button>
-        )}
-      </div>
-
-      {/* Foto destaque (expandível) */}
-      <AnimatePresence>
-        {flipped && result.highlight && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="overflow-hidden"
-          >
-            <ImgWithFallback
-              src={result.highlight}
-              alt="Resultado"
-              className="w-full object-cover object-top max-h-72"
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-}
-
 const ResultsSection = () => {
+  const [lightbox, setLightbox] = useState(null);
+
+  const prev = () => setLightbox(i => (i - 1 + galleryImages.length) % galleryImages.length);
+  const next = () => setLightbox(i => (i + 1) % galleryImages.length);
+
+  useEffect(() => {
+    if (lightbox === null) return;
+    const onKey = (e) => {
+      if (e.key === 'ArrowLeft') prev();
+      if (e.key === 'ArrowRight') next();
+      if (e.key === 'Escape') setLightbox(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [lightbox]);
+
   return (
     <section id="resultados" className="py-20 px-4">
       <div className="container mx-auto">
@@ -982,9 +886,29 @@ const ResultsSection = () => {
           <p className="text-gray-400 text-lg">Transformações reais de alunos reais</p>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          {results.map((r, i) => (
-            <ResultCard key={i} result={r} index={i} />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-6xl mx-auto">
+          {galleryImages.map((img, i) => (
+            <motion.button
+              key={i}
+              onClick={() => setLightbox(i)}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              whileHover={{ scale: 1.02 }}
+              className="relative overflow-hidden aspect-[3/4] bg-dark-card border border-dark-border group"
+            >
+              <img
+                src={img.src}
+                alt={img.label}
+                className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs font-bold uppercase tracking-widest border border-white/60 px-3 py-1">
+                  Ver foto
+                </span>
+              </div>
+            </motion.button>
           ))}
         </div>
 
@@ -992,11 +916,66 @@ const ResultsSection = () => {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="text-center text-gray-600 text-xs mt-10 uppercase tracking-widest"
+          className="text-center text-gray-600 text-xs mt-8 uppercase tracking-widest"
         >
-          Arraste o divisor para comparar · Resultados individuais podem variar
+          Resultados individuais podem variar
         </motion.p>
       </div>
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightbox !== null && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center px-4"
+            onClick={() => setLightbox(null)}
+          >
+            <button onClick={() => setLightbox(null)} className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors z-10">
+              <X size={28} />
+            </button>
+
+            <button
+              onClick={e => { e.stopPropagation(); prev(); }}
+              className="absolute left-4 text-gray-400 hover:text-white transition-colors z-10 p-2"
+            >
+              <ChevronLeft size={36} />
+            </button>
+
+            <motion.img
+              key={lightbox}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              src={galleryImages[lightbox].src}
+              alt={galleryImages[lightbox].label}
+              className="max-h-[90vh] max-w-full object-contain"
+              onClick={e => e.stopPropagation()}
+            />
+
+            <button
+              onClick={e => { e.stopPropagation(); next(); }}
+              className="absolute right-4 text-gray-400 hover:text-white transition-colors z-10 p-2"
+            >
+              <ChevronRight size={36} />
+            </button>
+
+            <div className="absolute bottom-4 flex gap-2">
+              {galleryImages.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={e => { e.stopPropagation(); setLightbox(i); }}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    i === lightbox ? 'bg-lime-green scale-125' : 'bg-gray-600 hover:bg-gray-400'
+                  }`}
+                />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 };
