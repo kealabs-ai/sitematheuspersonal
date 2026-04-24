@@ -217,7 +217,7 @@ const AboutSection = () => {
                 <img
                   src={matheusPhoto}
                   alt="Matheus Castro"
-                  className="w-full h-full object-cover" style={{ objectPosition: '15% 0%' }}
+                  className="w-full h-full object-cover" style={{ objectPosition: '15% 10%' }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
               </div>
