@@ -213,11 +213,11 @@ const AboutSection = () => {
               transition={{ duration: 0.6 }}
               className="mb-4"
             >
-              <div className="w-[300px] h-[300px] rounded-full overflow-hidden">
+              <div className="w-[220px] h-[220px] rounded-full overflow-hidden">
                 <img
                   src={matheusPhoto}
                   alt="Matheus Castro"
-                  className="w-full h-full object-cover" style={{ objectPosition: '15% 8%' }}
+                  className="w-full h-full object-cover" style={{ objectPosition: '15% 0%' }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
               </div>
