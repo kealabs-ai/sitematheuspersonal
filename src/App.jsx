@@ -191,7 +191,7 @@ const AboutSection = () => {
               Registro CREF - <span className="text-lime-green font-bold">035480-G/MG</span>
             </p>
             <p className="text-lg text-gray-300 mb-4 leading-relaxed">
-              Tenho <span className="text-lime-green font-bold">30 anos</span> e sou personal trainer, especialista em <span className="text-lime-green font-bold">treinos de hipertrofia e emagrecimento</span>.
+              Tenho <span className="text-lime-green font-bold">31 anos</span> e sou personal trainer, especialista em <span className="text-lime-green font-bold">treinos de hipertrofia e emagrecimento</span>.
             </p>
             <p className="text-lg text-gray-300 mb-4 leading-relaxed">
               Com a experiência de já ter transformado a vida de <span className="text-lime-green font-bold">mais de 300 alunos</span>, meu foco é te guiar em uma jornada de <span className="text-lime-green font-bold">resultados reais</span>, seja para emagrecimento, ganho de massa ou mais qualidade de vida.
@@ -217,7 +217,7 @@ const AboutSection = () => {
                 <img
                   src={matheusPhoto}
                   alt="Matheus Castro"
-                  className="w-full h-full object-cover" style={{ objectPosition: '15% 20%' }}
+                  className="w-full h-full object-cover" style={{ objectPosition: '15% 8%' }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
               </div>
@@ -258,7 +258,7 @@ const services = [
   },
   {
     icon: <TrendingUp size={48} />,
-    title: 'Condicionamento',
+    title: 'Emagrecimento',
     description: 'HIIT e treinos funcionais para resistência e performance',
     details: [
       'Protocolos HIIT e Tabata',
