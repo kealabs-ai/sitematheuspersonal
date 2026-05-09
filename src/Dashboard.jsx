@@ -70,15 +70,25 @@ export default function Dashboard() {
   const todayDow     = today.getDay(); // 0=dom, 1=seg...
   const startOfWeek  = new Date(today);
   startOfWeek.setDate(today.getDate() - ((todayDow + 6) % 7)); // segunda-feira
+  startOfWeek.setHours(0, 0, 0, 0);
 
-  const apiWeekDone  = new Set(
+  const weekEnd = new Date(startOfWeek);
+  weekEnd.setDate(startOfWeek.getDate() + 7);
+
+  // Mapeia o status dos treinos da semana atual vindo da API
+  const apiWeekStatus = new Map(
     (summary?.week ?? [])
       .filter(d => {
-        if (!d.date) return false;
-        const dDate = new Date(d.date);
-        return dDate >= startOfWeek && dDate <= today && (d.status === 'done' || d.status === 'completed');
+        if (!d.date) return false; // Somente considera treinos com data de execução
+        const dt = new Date(d.date.includes('T') ? d.date : d.date + 'T00:00:00');
+        return dt >= startOfWeek && dt < weekEnd;
       })
-      .map(d => new Date(d.date).getDay())
+      .map(d => {
+        const dow = d.date 
+          ? new Date(d.date.includes('T') ? d.date : d.date + 'T00:00:00').getDay() 
+          : (d.week_day === 7 ? 0 : d.week_day); // Converte 1-7 (API) para 0-6 (JS)
+        return [dow, d.status?.toLowerCase()];
+      })
   );
 
   const week = Array.from({ length: 7 }, (_, i) => {
@@ -87,10 +97,14 @@ export default function Dashboard() {
     const dow = date.getDay();
     const isToday = date.toDateString() === today.toDateString();
     const isFuture = date > today;
-    const isDone = apiWeekDone.has(dow);
+    
+    const statusFromApi = apiWeekStatus.get(dow);
+    const isDone = statusFromApi === 'done' || statusFromApi === 'completed';
+    const isRest = statusFromApi === 'rest' || statusFromApi === 'descanso';
+
     return {
       day: WEEK_LABEL[dow],
-      status: isDone ? 'done' : isToday ? 'today' : isFuture ? 'upcoming' : 'upcoming',
+      status: isDone ? 'done' : isRest ? 'rest' : isToday ? 'today' : 'upcoming',
     };
   });
 
@@ -175,6 +189,7 @@ export default function Dashboard() {
                 <div>
                   <p className="text-lime-green text-xs uppercase tracking-widest font-bold mb-1">
                     <Dumbbell size={12} className="inline mr-1" />Hoje
+                    {summary?.plan_name && <span className="text-gray-400 font-normal"> • {summary.plan_name}</span>}
                   </p>
                   <h2 className="text-2xl font-bebas text-white">{todayWorkout.name}</h2>
                   <p className="text-gray-400 text-sm mt-1">{todayWorkout.exercises_count} exercícios · {todayWorkout.duration_min} min</p>

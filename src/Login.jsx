@@ -21,10 +21,19 @@ const Login = () => {
         saveSession(data);
         navigate('/dashboard');
       } else {
-        setError(data.message ?? 'Credenciais inválidas.');
+        const detail = data.detail ?? data.message ?? '';
+        if (detail.toLowerCase().includes('senha')) {
+          setError('Senha incorreta. Verifique e tente novamente.');
+        } else if (detail.toLowerCase().includes('encontrado')) {
+          setError('E-mail não cadastrado. Verifique o endereço digitado.');
+        } else if (detail.toLowerCase().includes('inativa')) {
+          setError('Sua conta está inativa. Entre em contato com o Matheus.');
+        } else {
+          setError('Não foi possível entrar. Verifique seus dados e tente novamente.');
+        }
       }
     } catch {
-      setError('Erro de conexão. Tente novamente.');
+      setError('Erro de conexão. Verifique sua internet e tente novamente.');
     } finally {
       setLoading(false);
     }

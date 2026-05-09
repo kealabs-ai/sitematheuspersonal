@@ -155,7 +155,7 @@ const LEVEL_COLORS = {
   'Avançado':      'text-red-400 border-red-400/30',
 };
 
-const emptyTpl = { name: '', description: '', goal: '', gender: 'masculino', level: 'Iniciante' };
+const emptyTpl = { name: '', description: '', goal: '', gender: 'masculino', level: 'Iniciante', months: '' };
 const emptyDay  = { name: '', day_of_week: 'SEG', duration_min: 60, is_rest: false };
 const emptyEx = { name: '', sets: 3, reps: '12', rest_seconds: 60, muscle_groups: [], video_url: '', notes: '' };
 
@@ -328,13 +328,14 @@ export default function AdminTreinos() {
   // ── Template ──
   const saveTpl = async () => {
     setSaving(true);
+    const payload = { ...tplForm, months: tplForm.months === '' ? null : +tplForm.months };
     if (tplModal === 'new') {
-      await adminWorkouts.createTemplate(tplForm).catch(() => null);
+      await adminWorkouts.createTemplate(payload).catch(() => null);
       const updated = await adminWorkouts.templates().catch(() => null);
       if (updated) setTemplates(norm(updated, 'templates'));
     } else {
-      await adminWorkouts.updateTemplate(tid(tplModal), tplForm).catch(() => {});
-      setTemplates(p => p.map(t => tid(t) === tid(tplModal) ? { ...t, ...tplForm } : t));
+      await adminWorkouts.updateTemplate(tid(tplModal), payload).catch(() => {});
+      setTemplates(p => p.map(t => tid(t) === tid(tplModal) ? { ...t, ...payload } : t));
     }
     setSaving(false); setTplModal(null);
   };
@@ -355,6 +356,7 @@ export default function AdminTreinos() {
       description: tpl.description ?? '',
       gender: tpl.gender ?? 'masculino',
       level: tpl.level ?? 'Iniciante',
+      months: tpl.months ?? null,
     }).catch(() => null);
     if (!res?.template_id) return;
     const newId = res.template_id;
@@ -490,6 +492,11 @@ export default function AdminTreinos() {
                     {tpl.description && <p className="text-gray-500 text-xs truncate">{tpl.description}</p>}
                   </div>
                   {tpl.goal && <span className="text-[10px] text-gray-500 border border-dark-border px-2 py-0.5 ml-2 shrink-0">{tpl.goal}</span>}
+                  {tpl.months != null && (
+                    <span className="text-[10px] text-cyan-400 border border-cyan-400/30 px-2 py-0.5 ml-1 shrink-0">
+                      {tpl.months}m
+                    </span>
+                  )}
                   {tpl.level && (
                     <span className={`text-[10px] border px-2 py-0.5 ml-1 shrink-0 ${LEVEL_COLORS[tpl.level] ?? 'text-gray-500 border-dark-border'}`}>
                       {tpl.level}
@@ -507,7 +514,7 @@ export default function AdminTreinos() {
                 <div className="flex gap-1 shrink-0 ml-2">
                   <button onClick={() => cloneTpl(tpl)}
                     className="p-1.5 text-gray-500 hover:text-lime-green transition-colors" title="Clonar template"><Copy size={14} /></button>
-                  <button onClick={() => { setTplForm({ name: tpl.name, description: tpl.description ?? '', goal: tpl.goal ?? '', gender: tpl.gender ?? 'masculino', level: tpl.level ?? 'Iniciante' }); setTplModal(tpl); }}
+                  <button onClick={() => { setTplForm({ name: tpl.name, description: tpl.description ?? '', goal: tpl.goal ?? '', gender: tpl.gender ?? 'masculino', level: tpl.level ?? 'Iniciante', months: tpl.months ?? '' }); setTplModal(tpl); }}
                     className="p-1.5 text-gray-500 hover:text-lime-green transition-colors"><Pencil size={14} /></button>
                   <button onClick={() => deleteTpl(tid(tpl))}
                     className="p-1.5 text-gray-500 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
@@ -681,6 +688,20 @@ export default function AdminTreinos() {
                   {lv}
                 </button>
               ))}
+            </div>
+          </Field>
+          <Field label="Validade do treino">
+            <div className="flex items-center gap-3">
+              <input
+                type="number"
+                min="1"
+                className={`${inp} w-28 text-center`}
+                value={tplForm.months}
+                onChange={e => setTplForm({ ...tplForm, months: e.target.value === '' ? '' : +e.target.value })}
+                placeholder="Ex: 2"
+              />
+              <span className="text-gray-400 text-sm font-semibold">meses</span>
+              <span className="text-gray-600 text-xs">Deixe vazio para sem limite</span>
             </div>
           </Field>
           <Field label="Descrição">

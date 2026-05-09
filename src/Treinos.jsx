@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   CheckCircle, Circle, Dumbbell, Clock, PlayCircle,
   BedDouble, X, ListChecks, ChevronDown, ChevronUp, History, CalendarDays,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { workouts as workoutsApi } from './services/alunoApi';
 import { useBlockBack } from './hooks/useBlockBack';
@@ -12,24 +13,194 @@ import AppFooter from './AppFooter';
 import { ShimmerButton } from './components/magicui/shimmer-button';
 
 const WORKOUT_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
-const WEEK_LABELS = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
+const WEEK_LABELS = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB', 'DOM'];
+
+const toLocalISO = (date) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
 
 function getWeekDays() {
   const today = new Date();
-  const sunday = new Date(today);
-  sunday.setDate(today.getDate() - today.getDay());
+  const todayDow = today.getDay(); // 0=dom, 1=seg...
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - ((todayDow + 6) % 7)); // segunda-feira
+  startOfWeek.setHours(0, 0, 0, 0);
+
   return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(sunday);
-    d.setDate(sunday.getDate() + i);
+    const d = new Date(startOfWeek);
+    d.setDate(startOfWeek.getDate() + i);
     return {
       label: WEEK_LABELS[i],
-      iso: d.toISOString().split('T')[0],
+      iso: toLocalISO(d),
       isToday: d.toDateString() === today.toDateString(),
     };
   });
 }
 
-function WeekBar({ weekLogs, onHistoryClick }) {
+// ─── Modal calendário ────────────────────────────────────────────────────────
+function CalendarModal({ onClose }) {
+  const [logs, setLogs]       = useState([]);
+  const [loading, setLoading] = useState(true);
+  const today = new Date();
+  const [viewYear, setViewYear]   = useState(today.getFullYear());
+  const [viewMonth, setViewMonth] = useState(today.getMonth()); // 0-based
+  const [selected, setSelected]   = useState(null); // iso selecionado
+
+  useEffect(() => {
+    workoutsApi.history().catch(() => ({}))
+      .then(d => {
+        const raw = d.logs ?? d.history ?? [];
+        // Normaliza para UTC→local e filtra apenas finalizados
+        const finished = raw.filter(l => l.completed && l.finished_at).map(l => {
+          const hasTimezone = /Z$|[+-]\d{2}:\d{2}$/.test(l.finished_at);
+          const norm = l.finished_at.includes('T') ? (hasTimezone ? l.finished_at : l.finished_at + 'Z') : l.finished_at + 'T00:00:00';
+          return { ...l, localIso: toLocalISO(new Date(norm)) };
+        });
+        setLogs(finished);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Mapa iso → log
+  const logMap = {};
+  logs.forEach(l => { if (!logMap[l.localIso]) logMap[l.localIso] = l; });
+
+  const MONTH_NAMES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const DAY_LABELS  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+  // Dias do mês em exibição
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay(); // 0=dom
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const cells = Array(firstDay).fill(null).concat(
+    Array.from({ length: daysInMonth }, (_, i) => {
+      const d = new Date(viewYear, viewMonth, i + 1);
+      return toLocalISO(d);
+    })
+  );
+  // Completa para múltiplo de 7
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const prevMonth = () => { if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); } else setViewMonth(m => m - 1); setSelected(null); };
+  const nextMonth = () => { if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); } else setViewMonth(m => m + 1); setSelected(null); };
+
+  const todayIso = toLocalISO(today);
+  const selectedLog = selected ? logMap[selected] : null;
+
+  const dur = (start, end) => {
+    if (!start || !end) return null;
+    const mins = Math.round((new Date(end) - new Date(start)) / 60000);
+    return mins > 0 ? `${mins} min` : null;
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/80 px-4 pb-4 md:pb-0" onClick={onClose}>
+      <motion.div
+        initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
+        className="w-full max-w-sm bg-dark-card border border-dark-border flex flex-col"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-dark-border">
+          <p className="font-bebas text-xl text-white flex items-center gap-2">
+            <CalendarDays size={18} className="text-lime-green" /> Calendário de Treinos
+          </p>
+          <button onClick={onClose} className="text-gray-500 hover:text-white"><X size={18} /></button>
+        </div>
+
+        <div className="p-4 space-y-4">
+          {/* Navegação mês */}
+          <div className="flex items-center justify-between">
+            <button onClick={prevMonth} className="text-gray-500 hover:text-white p-1"><ChevronLeft size={18} /></button>
+            <span className="text-white font-bold text-sm">{MONTH_NAMES[viewMonth]} {viewYear}</span>
+            <button
+              onClick={nextMonth}
+              disabled={viewYear === today.getFullYear() && viewMonth === today.getMonth()}
+              className="text-gray-500 hover:text-white p-1 disabled:opacity-30 disabled:cursor-not-allowed"
+            ><ChevronRight size={18} /></button>
+          </div>
+
+          {loading ? (
+            <p className="text-gray-500 text-xs text-center py-6 animate-pulse">Carregando...</p>
+          ) : (
+            <>
+              {/* Labels dias da semana */}
+              <div className="grid grid-cols-7 gap-1">
+                {DAY_LABELS.map(l => (
+                  <div key={l} className="text-center text-[9px] font-bold text-gray-600 uppercase">{l}</div>
+                ))}
+              </div>
+
+              {/* Grid dias */}
+              <div className="grid grid-cols-7 gap-1">
+                {cells.map((iso, i) => {
+                  if (!iso) return <div key={i} />;
+                  const hasLog  = !!logMap[iso];
+                  const isToday = iso === todayIso;
+                  const isSel   = iso === selected;
+                  const isFuture = iso > todayIso;
+                  return (
+                    <button
+                      key={iso}
+                      disabled={!hasLog}
+                      onClick={() => setSelected(isSel ? null : iso)}
+                      className={`relative aspect-square flex flex-col items-center justify-center text-[11px] font-bold border transition-all
+                        ${ isSel          ? 'border-lime-green bg-lime-green/20 text-lime-green'
+                          : hasLog        ? 'border-lime-green/40 bg-lime-green/8 text-lime-green hover:bg-lime-green/15 cursor-pointer'
+                          : isToday       ? 'border-lime-green/30 text-lime-green/60'
+                          : isFuture      ? 'border-transparent text-gray-700'
+                          : 'border-transparent text-gray-600' }`}
+                    >
+                      {parseInt(iso.split('-')[2], 10)}
+                      {hasLog && (
+                        <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-lime-green" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Detalhe do dia selecionado */}
+              {selectedLog && (
+                <div className="border border-lime-green/30 bg-lime-green/5 p-3 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bebas text-2xl text-lime-green leading-none">{selectedLog.training ?? '✓'}</span>
+                    <div>
+                      <p className="text-white text-sm font-semibold">{selectedLog.day_name ?? 'Treino'}</p>
+                      <p className="text-gray-500 text-xs flex items-center gap-1">
+                        <CalendarDays size={10} />
+                        {new Date(selected + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}
+                        {dur(selectedLog.started_at, selectedLog.finished_at) && (
+                          <><Clock size={10} className="ml-1" /> {dur(selectedLog.started_at, selectedLog.finished_at)}</>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Legenda */}
+              <div className="flex items-center gap-4 pt-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-lime-green" />
+                  <span className="text-[10px] text-gray-500">Treino finalizado</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 border border-lime-green/30" />
+                  <span className="text-[10px] text-gray-500">Hoje</span>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+function WeekBar({ weekLogs, onHistoryClick, onCalendarClick }) {
   const days = getWeekDays();
   const doneCount = days.filter(d => weekLogs[d.iso]).length;
   return (
@@ -43,6 +214,12 @@ function WeekBar({ weekLogs, onHistoryClick }) {
           <span className="text-xs text-gray-600">
             <span className="text-lime-green font-bold">{doneCount}</span>/{days.length} dias
           </span>
+          <button
+            onClick={onCalendarClick}
+            className="flex items-center gap-1.5 text-[11px] text-gray-500 border border-dark-border px-2.5 py-1 hover:border-lime-green hover:text-lime-green transition-colors"
+          >
+            <CalendarDays size={12} /> Calendário
+          </button>
           <button
             onClick={onHistoryClick}
             className="flex items-center gap-1.5 text-[11px] text-gray-500 border border-dark-border px-2.5 py-1 hover:border-lime-green hover:text-lime-green transition-colors"
@@ -404,13 +581,16 @@ export default function Treinos() {
   const [loading, setLoading]         = useState(true);
   const [loadingEx, setLoadingEx]     = useState(false);
   const [isRest, setIsRest]           = useState(false);
+  const [planName, setPlanName]       = useState('');
+  const [templateName, setTemplateName] = useState('');
   const [showModal, setShowModal]     = useState(false);
   const [weeklyResult, setWeeklyResult]         = useState(null);
   const [showWeightWarning, setShowWeightWarning] = useState(false);
   const [pendingFinish, setPendingFinish]         = useState(false);
   const [showExercises, setShowExercises] = useState(true);
   const [weekLogs, setWeekLogs]       = useState({});
-  const [showHistory, setShowHistory] = useState(false);
+  const [showHistory, setShowHistory]   = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
   const planRef = useRef(null);
 
   useEffect(() => {
@@ -420,6 +600,8 @@ export default function Treinos() {
     ]).then(([planData, histData]) => {
       if (!planData.detail && !planData.error) {
         planRef.current = planData.plan;
+        setPlanName(planData.plan?.name || '');
+        setTemplateName(planData.plan?.template_name || '');
         const days = (planData.plan?.days ?? []).map((d, i) => ({
           ...d,
           originalIsRest: d.is_rest ?? false,
@@ -439,15 +621,25 @@ export default function Treinos() {
 
   const buildWeekLogs = (histData) => {
     const logs = histData.logs ?? histData.history ?? [];
-    const weekStart = new Date();
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    const today = new Date();
+    const todayDow = today.getDay();
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - ((todayDow + 6) % 7));
     weekStart.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 7);
+
     const map = {};
     logs.forEach(l => {
-      const d = new Date(l.finished_at ?? l.started_at ?? l.date ?? '');
-      if (isNaN(d) || d < weekStart) return;
-      const iso = d.toISOString().split('T')[0];
-      if (!map[iso]) map[iso] = { label: l.training ?? l.workout_label ?? l.day_label ?? '✓', name: l.day_name ?? '' };
+      // Apenas treinos finalizados (completed=true e com finished_at)
+      if (!l.completed || !l.finished_at) return;
+      const dateRaw = l.finished_at;
+      const hasTimezone = /Z$|[+-]\d{2}:\d{2}$/.test(dateRaw);
+      const normalized = dateRaw.includes('T') ? (hasTimezone ? dateRaw : dateRaw + 'Z') : dateRaw + 'T00:00:00';
+      const d = new Date(normalized);
+      if (isNaN(d) || d < weekStart || d >= weekEnd) return;
+      const iso = toLocalISO(d);
+      if (!map[iso]) map[iso] = { label: l.training ?? '✓', name: l.day_name ?? '' };
     });
     setWeekLogs(map);
   };
@@ -493,8 +685,8 @@ export default function Treinos() {
     await workoutsApi.finishLog(logId, true).catch(() => {});
     setActiveLog(null);
 
-    // Atualiza barra imediatamente com o treino finalizado
-    const todayIso = new Date().toISOString().split('T')[0];
+    // Atualiza barra imediatamente com o treino finalizado (Data Local)
+    const todayIso = toLocalISO(new Date());
     const finishedDay = trainDays.find(d => d.id === dayId);
     setWeekLogs(prev => ({ ...prev, [todayIso]: { label: finishedDay?.workoutLabel ?? '✓', name: finishedDay?.name ?? '' } }));
 
@@ -503,12 +695,21 @@ export default function Treinos() {
     buildWeekLogs(histData);
 
     const allLogs = histData.logs ?? histData.history ?? [];
-    const weekStart = new Date();
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    const today = new Date();
+    const todayDow = today.getDay();
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - ((todayDow + 6) % 7));
     weekStart.setHours(0, 0, 0, 0);
+
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 7);
+
     const weeklyDone = allLogs.filter(l => {
-      const d = new Date(l.finished_at ?? l.started_at ?? l.date);
-      return d >= weekStart && l.completed !== false;
+      if (!l.completed || !l.finished_at) return false;
+      const hasTimezone = /Z$|[+-]\d{2}:\d{2}$/.test(l.finished_at);
+      const normalized = l.finished_at.includes('T') ? (hasTimezone ? l.finished_at : l.finished_at + 'Z') : l.finished_at + 'T00:00:00';
+      const d = new Date(normalized);
+      return d >= weekStart && d < weekEnd;
     }).length;
     const weeklyGoal = planRef.current?.weekly_goal ?? trainDays.length ?? 3;
     setWeeklyResult({ weeklyDone, weeklyGoal });
@@ -576,6 +777,7 @@ export default function Treinos() {
           />
         )}
         {showHistory && <HistoryModal onClose={() => setShowHistory(false)} />}
+        {showCalendar && <CalendarModal onClose={() => setShowCalendar(false)} />}
         {showWeightWarning && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4" onClick={() => setShowWeightWarning(false)}>
             <motion.div
@@ -647,6 +849,9 @@ export default function Treinos() {
                 <div className="min-w-0">
                   <p className="text-lime-green text-xs font-bold uppercase tracking-widest flex items-center gap-1 flex-wrap">
                     <Dumbbell size={12} /> Treino de hoje
+                    {templateName && (
+                      <span className="text-gray-400 font-normal normal-case tracking-normal"> • {templateName}</span>
+                    )}
                     {userGoal && (
                       <span className="text-[10px] border border-lime-green/40 px-1.5 py-0.5 font-normal">
                         {userGoal}
@@ -671,22 +876,32 @@ export default function Treinos() {
                 </div>
                 <div className="flex flex-col gap-2 items-end shrink-0">
                   {!activeLog ? (
-                    <>
-                      <ShimmerButton
-                        onClick={() => setShowModal(true)}
-                        shimmerColor="#ffffff"
-                        background="rgba(0,180,216,1)"
-                        className="px-4 py-2 text-sm whitespace-nowrap"
-                      >
-                        Iniciar ▶
-                      </ShimmerButton>
-                      <button
-                        onClick={() => { setIsRest(true); }}
-                        className="text-[11px] text-blue-400/70 hover:text-blue-400 flex items-center gap-1 transition-colors"
-                      >
-                        <BedDouble size={11} /> Descansar hoje
-                      </button>
-                    </>
+                    weekLogs[toLocalISO(new Date())] ? (
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-1.5 border border-lime-green/40 bg-lime-green/5 px-3 py-2">
+                          <CheckCircle size={13} className="text-lime-green shrink-0" />
+                          <span className="text-lime-green text-[11px] font-bold whitespace-nowrap">Treino registrado</span>
+                        </div>
+                        <span className="text-[10px] text-gray-600">Volte amanhã 💪</span>
+                      </div>
+                    ) : (
+                      <>
+                        <ShimmerButton
+                          onClick={() => setShowModal(true)}
+                          shimmerColor="#ffffff"
+                          background="rgba(0,180,216,1)"
+                          className="px-4 py-2 text-sm whitespace-nowrap"
+                        >
+                          Iniciar ▶
+                        </ShimmerButton>
+                        <button
+                          onClick={() => { setIsRest(true); }}
+                          className="text-[11px] text-blue-400/70 hover:text-blue-400 flex items-center gap-1 transition-colors"
+                        >
+                          <BedDouble size={11} /> Descansar hoje
+                        </button>
+                      </>
+                    )
                   ) : (
                     <button
                       onClick={() => setShowExercises(v => !v)}
@@ -795,7 +1010,7 @@ export default function Treinos() {
         </AnimatePresence>
 
         {/* ── Barra semanal ── */}
-        <WeekBar weekLogs={weekLogs} onHistoryClick={() => setShowHistory(true)} />
+        <WeekBar weekLogs={weekLogs} onHistoryClick={() => setShowHistory(true)} onCalendarClick={() => setShowCalendar(true)} />
 
         <p className="text-center text-gray-700 text-xs pb-4">
           <button onClick={() => navigate('/dashboard')} className="hover:text-lime-green transition-colors">
