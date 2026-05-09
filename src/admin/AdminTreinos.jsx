@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, X, Save, ChevronDown, ChevronRight, Dumbbell, RefreshCw, Images, Search } from 'lucide-react';
-import { adminWorkouts, adminUsers } from '../services/adminApi';
+import { Plus, Pencil, Trash2, X, Save, ChevronDown, ChevronRight, Dumbbell, Images, Search, Copy, GripVertical } from 'lucide-react';
+import { ShimmerButton } from '../components/magicui/shimmer-button';
+import { adminWorkouts } from '../services/adminApi';
+import {
+  DndContext, closestCenter, PointerSensor, useSensor, useSensors,
+} from '@dnd-kit/core';
+import {
+  SortableContext, verticalListSortingStrategy,
+  useSortable, arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+const IconMars  = () => <span className="text-[15px] leading-none">♂</span>;
+const IconVenus = () => <span className="text-[15px] leading-none">♀</span>;
 
 const GIF_DIRS = [
   { label: 'Peito',      path: '1- PEITO',       count: 70 },
@@ -132,8 +144,18 @@ function GifPickerModal({ onSelect, onClose }) {
 
 const MUSCLES   = ['Peito','Costas','Pernas','Quadríceps','Posterior','Glúteos','Ombro','Tríceps','Bíceps','Abdômen','Core','Panturrilha','Trapézio','Full Body','Cardio'];
 const WEEK_DAYS = ['SEG','TER','QUA','QUI','SEX','SAB','DOM'];
+const WEEK_DAY_NUM = { SEG:1, TER:2, QUA:3, QUI:4, SEX:5, SAB:6, DOM:7 };
+const WEEK_DAY_LABEL = { 1:'SEG', 2:'TER', 3:'QUA', 4:'QUI', 5:'SEX', 6:'SAB', 7:'DOM' };
+const dayLabel = (d) => d?.day_of_week ?? WEEK_DAY_LABEL[d?.week_day] ?? '—';
 
-const emptyTpl  = { name: '', description: '', goal: '' };
+const LEVELS = ['Iniciante', 'Intermediário', 'Avançado'];
+const LEVEL_COLORS = {
+  'Iniciante':     'text-green-400 border-green-400/30',
+  'Intermediário': 'text-yellow-400 border-yellow-400/30',
+  'Avançado':      'text-red-400 border-red-400/30',
+};
+
+const emptyTpl = { name: '', description: '', goal: '', gender: 'masculino', level: 'Iniciante' };
 const emptyDay  = { name: '', day_of_week: 'SEG', duration_min: 60, is_rest: false };
 const emptyEx = { name: '', sets: 3, reps: '12', rest_seconds: 60, muscle_groups: [], video_url: '', notes: '' };
 
@@ -179,8 +201,6 @@ function MuscleChips({ selected, onChange }) {
     </div>
   );
 }
-const emptyCycle = { user_id: '', template_id: '', start_date: '', notes: '' };
-
 const tid = (t) => t?.template_id ?? t?.id_template ?? t?.id;
 const did = (d) => d?.day_id      ?? d?.id_day      ?? d?.id;
 const eid = (e) => e?.exercise_id ?? e?.id_exercise ?? e?.id;
@@ -188,6 +208,22 @@ const eid = (e) => e?.exercise_id ?? e?.id_exercise ?? e?.id;
 const norm = (d, key) => Array.isArray(d) ? d : (d?.[key] ?? d?.data ?? []);
 
 const inp = 'w-full bg-black border border-dark-border text-white text-sm p-2.5 focus:outline-none focus:border-lime-green transition-colors';
+
+function SortableDay({ day, children }) {
+  const id = String(did(day));
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`border border-dark-border bg-dark-card overflow-hidden ${
+        isDragging ? 'opacity-50 ring-1 ring-lime-green' : ''
+      }`}
+    >
+      {children({ dragHandleProps: { ...attributes, ...listeners } })}
+    </div>
+  );
+}
 
 function Modal({ title, onClose, children }) {
   return (
@@ -214,7 +250,6 @@ function Field({ label, children }) {
 
 export default function AdminTreinos() {
   const [templates, setTemplates]   = useState([]);
-  const [students, setStudents]     = useState([]);
   const [loading, setLoading]       = useState(true);
   const [expanded, setExpanded]       = useState(null);
   const [expandedDay, setExpandedDay] = useState(null);
@@ -226,21 +261,46 @@ export default function AdminTreinos() {
   const [tplModal, setTplModal]   = useState(null);
   const [dayModal, setDayModal]   = useState(null);
   const [exModal, setExModal]     = useState(null);
-  const [cycleModal, setCycleModal] = useState(false);
   const [gifPicker, setGifPicker] = useState(false);
 
   const [tplForm, setTplForm]     = useState(emptyTpl);
   const [dayForm, setDayForm]     = useState(emptyDay);
   const [exForm, setExForm]       = useState(emptyEx);
-  const [cycleForm, setCycleForm] = useState(emptyCycle);
   const [saving, setSaving]       = useState(false);
+  const [confirmModal, setConfirmModal] = useState(null);
+  const [pendingOrder, setPendingOrder] = useState({}); // { [templateId]: true }
+  const [savingOrder, setSavingOrder]   = useState({});
+
+  const confirm = (message, onConfirm) => setConfirmModal({ message, onConfirm });
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+
+  const handleDragEnd = (templateId, event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    setDays(prev => {
+      const list = prev[templateId] ?? [];
+      const oldIndex = list.findIndex(d => String(did(d)) === active.id);
+      const newIndex = list.findIndex(d => String(did(d)) === over.id);
+      const reordered = arrayMove(list, oldIndex, newIndex);
+      return { ...prev, [templateId]: reordered };
+    });
+    setPendingOrder(p => ({ ...p, [templateId]: true }));
+  };
+
+  const saveOrder = async (templateId) => {
+    setSavingOrder(p => ({ ...p, [templateId]: true }));
+    const list = days[templateId] ?? [];
+    await Promise.all(
+      list.map((d, i) => adminWorkouts.updateDay(did(d), { sort_order: i + 1 }).catch(() => {}))
+    );
+    setSavingOrder(p => ({ ...p, [templateId]: false }));
+    setPendingOrder(p => ({ ...p, [templateId]: false }));
+  };
 
   useEffect(() => {
-    Promise.all([adminWorkouts.templates(), adminUsers.listAll()])
-      .then(([t, u]) => {
-        setTemplates(norm(t, 'templates'));
-        setStudents(norm(u, 'users'));
-      })
+    adminWorkouts.templates()
+      .then(t => setTemplates(norm(t, 'templates')))
       .finally(() => setLoading(false));
   }, []);
 
@@ -279,33 +339,100 @@ export default function AdminTreinos() {
     setSaving(false); setTplModal(null);
   };
 
-  const deleteTpl = async (id) => {
-    if (!confirm('Excluir este template?')) return;
-    await adminWorkouts.deleteTemplate(id).catch(() => {});
-    setTemplates(p => p.filter(t => tid(t) !== id));
-    if (expanded === id) setExpanded(null);
+  const deleteTpl = (id) => confirm(
+    'Excluir este template? Todos os dias e exercícios serão removidos.',
+    async () => {
+      await adminWorkouts.deleteTemplate(id).catch(() => {});
+      setTemplates(p => p.filter(t => tid(t) !== id));
+      if (expanded === id) setExpanded(null);
+    }
+  );
+
+  const cloneTpl = async (tpl) => {
+    const res = await adminWorkouts.createTemplate({
+      name: `${tpl.name} (cópia)`,
+      goal: tpl.goal ?? '',
+      description: tpl.description ?? '',
+      gender: tpl.gender ?? 'masculino',
+      level: tpl.level ?? 'Iniciante',
+    }).catch(() => null);
+    if (!res?.template_id) return;
+    const newId = res.template_id;
+    // clona os dias e exercícios
+    const srcDays = days[tid(tpl)] ?? [];
+    const daysToClone = srcDays.length ? srcDays : norm(await adminWorkouts.templateDays(tid(tpl)).catch(() => ({})), 'days');
+    for (const day of daysToClone) {
+      const dr = await adminWorkouts.createDay(newId, {
+        name: day.name, day_of_week: dayLabel(day),
+        duration_min: day.duration_min ?? 60, is_rest: !!day.is_rest,
+        week_day: day.week_day,
+      }).catch(() => null);
+      if (!dr?.day_id) continue;
+      const exs = exercises[did(day)] ?? norm(await adminWorkouts.dayExercises(did(day)).catch(() => ({})), 'exercises');
+      for (const ex of exs) {
+        await adminWorkouts.createExercise(dr.day_id, {
+          name: ex.name, sets: ex.sets, reps: ex.reps,
+          rest_seconds: ex.rest_seconds, muscle_group: ex.muscle_group,
+          video_url: ex.video_url ?? '', notes: ex.notes ?? '',
+        }).catch(() => null);
+      }
+    }
+    const updated = await adminWorkouts.templates().catch(() => null);
+    if (updated) setTemplates(norm(updated, 'templates'));
+  };
+
+  const cloneDay = async (templateId, day) => {
+    const exs = exercises[did(day)] ?? norm(await adminWorkouts.dayExercises(did(day)).catch(() => ({})), 'exercises');
+    const res = await adminWorkouts.createDay(templateId, {
+      name: `${day.name} (cópia)`, day_of_week: dayLabel(day),
+      duration_min: day.duration_min ?? 60, is_rest: !!day.is_rest,
+      week_day: day.week_day,
+    }).catch(() => null);
+    if (!res?.day_id) return;
+    for (const ex of exs) {
+      await adminWorkouts.createExercise(res.day_id, {
+        name: ex.name, sets: ex.sets, reps: ex.reps,
+        rest_seconds: ex.rest_seconds, muscle_group: ex.muscle_group,
+        video_url: ex.video_url ?? '', notes: ex.notes ?? '',
+      }).catch(() => null);
+    }
+    const updated = await adminWorkouts.templateDays(templateId).catch(() => null);
+    if (updated) setDays(p => ({ ...p, [templateId]: norm(updated, 'days') }));
+  };
+
+  const cloneEx = async (dayId, ex) => {
+    await adminWorkouts.createExercise(dayId, {
+      name: `${ex.name} (cópia)`, sets: ex.sets, reps: ex.reps,
+      rest_seconds: ex.rest_seconds, muscle_group: ex.muscle_group,
+      video_url: ex.video_url ?? '', notes: ex.notes ?? '',
+    }).catch(() => null);
+    const updated = await adminWorkouts.dayExercises(dayId).catch(() => null);
+    if (updated) setExercises(p => ({ ...p, [dayId]: norm(updated, 'exercises') }));
   };
 
   // ── Dia ──
   const saveDay = async () => {
     setSaving(true);
     const { templateId, day } = dayModal;
+    const payload = { ...dayForm, week_day: WEEK_DAY_NUM[dayForm.day_of_week] ?? 1 };
     if (!day) {
-      await adminWorkouts.createDay(templateId, dayForm).catch(() => null);
+      await adminWorkouts.createDay(templateId, payload).catch(() => null);
       const updated = await adminWorkouts.templateDays(templateId).catch(() => null);
       if (updated) setDays(p => ({ ...p, [templateId]: norm(updated, 'days') }));
     } else {
-      await adminWorkouts.updateDay(did(day), dayForm).catch(() => {});
-      setDays(p => ({ ...p, [templateId]: (p[templateId] ?? []).map(d => did(d) === did(day) ? { ...d, ...dayForm } : d) }));
+      await adminWorkouts.updateDay(did(day), payload).catch(() => {});
+      setDays(p => ({ ...p, [templateId]: (p[templateId] ?? []).map(d => did(d) === did(day) ? { ...d, ...payload } : d) }));
     }
     setSaving(false); setDayModal(null);
   };
 
-  const deleteDay = async (templateId, dayId) => {
-    if (!confirm('Excluir este dia?')) return;
-    await adminWorkouts.deleteDay(dayId).catch(() => {});
-    setDays(p => ({ ...p, [templateId]: (p[templateId] ?? []).filter(d => did(d) !== dayId) }));
-  };
+  const deleteDay = (templateId, dayId) => confirm(
+    'Excluir este dia de treino e todos os seus exercícios?',
+    async () => {
+      await adminWorkouts.deleteDay(dayId).catch(() => {});
+      setDays(p => ({ ...p, [templateId]: (p[templateId] ?? []).filter(d => did(d) !== dayId) }));
+    }
+  );
 
   // ── Exercício ──
   const saveEx = async () => {
@@ -323,31 +450,17 @@ export default function AdminTreinos() {
     setSaving(false); setExModal(null);
   };
 
-  const deleteEx = async (dayId, exId) => {
-    if (!confirm('Excluir exercício?')) return;
-    await adminWorkouts.deleteExercise(exId).catch(() => {});
-    setExercises(p => ({ ...p, [dayId]: (p[dayId] ?? []).filter(e => eid(e) !== exId) }));
-  };
-
-  // ── Ciclo ──
-  const saveCycle = async () => {
-    setSaving(true);
-    await adminWorkouts.createCycle({
-      user_id:     Number(cycleForm.user_id),
-      template_id: Number(cycleForm.template_id),
-      start_date:  cycleForm.start_date,
-      ...(cycleForm.notes && { notes: cycleForm.notes }),
-    }).catch(() => null);
-    setSaving(false); setCycleModal(false); setCycleForm(emptyCycle);
-  };
+  const deleteEx = (dayId, exId) => confirm(
+    'Excluir este exercício?',
+    async () => {
+      await adminWorkouts.deleteExercise(exId).catch(() => {});
+      setExercises(p => ({ ...p, [dayId]: (p[dayId] ?? []).filter(e => eid(e) !== exId) }));
+    }
+  );
 
   return (
     <div className="space-y-4">
       <div className="flex justify-end gap-2">
-        <button onClick={() => { setCycleForm(emptyCycle); setCycleModal(true); }}
-          className="flex items-center gap-2 bg-dark-card border border-dark-border text-gray-300 font-bold px-4 py-2.5 text-sm uppercase hover:border-lime-green hover:text-lime-green transition-colors">
-          <RefreshCw size={14} /> Atribuir Ciclo
-        </button>
         <button onClick={() => { setTplForm(emptyTpl); setTplModal('new'); }}
           className="flex items-center gap-2 bg-lime-green text-black font-bold px-4 py-2.5 text-sm uppercase hover:bg-neon-green transition-colors">
           <Plus size={16} /> Novo Template
@@ -377,9 +490,24 @@ export default function AdminTreinos() {
                     {tpl.description && <p className="text-gray-500 text-xs truncate">{tpl.description}</p>}
                   </div>
                   {tpl.goal && <span className="text-[10px] text-gray-500 border border-dark-border px-2 py-0.5 ml-2 shrink-0">{tpl.goal}</span>}
+                  {tpl.level && (
+                    <span className={`text-[10px] border px-2 py-0.5 ml-1 shrink-0 ${LEVEL_COLORS[tpl.level] ?? 'text-gray-500 border-dark-border'}`}>
+                      {tpl.level}
+                    </span>
+                  )}
+                  {tpl.gender && (
+                    <span className={`inline-flex items-center gap-1 text-[10px] border px-2 py-0.5 ml-1 shrink-0 capitalize ${
+                      tpl.gender === 'feminino' ? 'text-pink-400 border-pink-400/30' : 'text-blue-400 border-blue-400/30'
+                    }`}>
+                      {tpl.gender === 'feminino' ? <IconVenus /> : <IconMars />}
+                      {tpl.gender}
+                    </span>
+                  )}
                 </button>
                 <div className="flex gap-1 shrink-0 ml-2">
-                  <button onClick={() => { setTplForm({ name: tpl.name, description: tpl.description ?? '', goal: tpl.goal ?? '' }); setTplModal(tpl); }}
+                  <button onClick={() => cloneTpl(tpl)}
+                    className="p-1.5 text-gray-500 hover:text-lime-green transition-colors" title="Clonar template"><Copy size={14} /></button>
+                  <button onClick={() => { setTplForm({ name: tpl.name, description: tpl.description ?? '', goal: tpl.goal ?? '', gender: tpl.gender ?? 'masculino', level: tpl.level ?? 'Iniciante' }); setTplModal(tpl); }}
                     className="p-1.5 text-gray-500 hover:text-lime-green transition-colors"><Pencil size={14} /></button>
                   <button onClick={() => deleteTpl(tid(tpl))}
                     className="p-1.5 text-gray-500 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
@@ -391,68 +519,104 @@ export default function AdminTreinos() {
                 <div className="border-t border-dark-border bg-black/30 px-4 py-3 space-y-2">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-xs text-gray-500 uppercase tracking-widest">Dias</p>
-                    <button onClick={() => { setDayForm(emptyDay); setDayModal({ templateId: tid(tpl) }); }}
-                      className="flex items-center gap-1 text-xs text-lime-green border border-lime-green/30 px-2.5 py-1 hover:bg-lime-green/10 transition-colors">
-                      <Plus size={12} /> Adicionar Dia
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {pendingOrder[tid(tpl)] && (
+                        <button
+                          onClick={() => saveOrder(tid(tpl))}
+                          disabled={savingOrder[tid(tpl)]}
+                          className="flex items-center gap-1 text-xs text-lime-green bg-lime-green/10 border border-lime-green/40 px-2.5 py-1 hover:bg-lime-green/20 transition-colors disabled:opacity-50"
+                        >
+                          <Save size={11} />
+                          {savingOrder[tid(tpl)] ? 'Salvando...' : 'Salvar ordem'}
+                        </button>
+                      )}
+                      <button onClick={() => { setDayForm(emptyDay); setDayModal({ templateId: tid(tpl) }); }}
+                        className="flex items-center gap-1 text-xs text-lime-green border border-lime-green/30 px-2.5 py-1 hover:bg-lime-green/10 transition-colors">
+                        <Plus size={12} /> Adicionar Dia
+                      </button>
+                    </div>
                   </div>
 
                   {loadingDays[tid(tpl)] && <p className="text-gray-600 text-xs animate-pulse">Carregando dias...</p>}
 
-                  {(days[tid(tpl)] ?? []).map((day, di) => (
-                    <div key={did(day) ?? di} className="border border-dark-border bg-dark-card overflow-hidden">
-                      <div className="flex items-center justify-between px-3 py-2.5">
-                        <button onClick={() => toggleDay(did(day))} className="flex items-center gap-2 flex-1 text-left min-w-0">
-                          {expandedDay === did(day)
-                            ? <ChevronDown size={13} className="text-lime-green shrink-0" />
-                            : <ChevronRight size={13} className="text-gray-600 shrink-0" />}
-                          <span className="text-[10px] font-bold text-gray-400 border border-dark-border px-1.5 py-0.5 uppercase shrink-0">
-                            {day.day_of_week ?? '—'}
-                          </span>
-                          <span className="text-white text-sm truncate">{day.name}</span>
-                          {day.is_rest ? <span className="text-blue-400 text-[10px] shrink-0">Descanso</span> : null}
-                          {day.duration_min > 0 && <span className="text-gray-600 text-xs shrink-0">{day.duration_min}min</span>}
-                        </button>
-                        <div className="flex gap-1 shrink-0">
-                          <button onClick={e => { e.stopPropagation(); if (expandedDay !== did(day)) setExpandedDay(did(day)); setExForm(emptyEx); setExModal({ dayId: did(day) }); }}
-                            className="p-1 text-gray-600 hover:text-lime-green transition-colors" title="Adicionar exercício">
-                            <Plus size={13} />
-                          </button>
-                          <button onClick={e => { e.stopPropagation(); setDayForm({ name: day.name, day_of_week: day.day_of_week ?? 'SEG', duration_min: day.duration_min ?? 60, is_rest: !!day.is_rest }); setDayModal({ templateId: tid(tpl), day }); }}
-                            className="p-1 text-gray-600 hover:text-lime-green transition-colors"><Pencil size={13} /></button>
-                          <button onClick={e => { e.stopPropagation(); deleteDay(tid(tpl), did(day)); }}
-                            className="p-1 text-gray-600 hover:text-red-400 transition-colors"><Trash2 size={13} /></button>
-                        </div>
-                      </div>
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={(e) => handleDragEnd(tid(tpl), e)}
+                  >
+                    <SortableContext
+                      items={(days[tid(tpl)] ?? []).map(d => String(did(d)))}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {(days[tid(tpl)] ?? []).map((day, di) => (
+                        <SortableDay key={did(day) ?? di} day={day}>
+                          {({ dragHandleProps }) => (
+                            <>
+                              <div className="flex items-center justify-between px-3 py-2.5">
+                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                  <span {...dragHandleProps} className="text-gray-600 hover:text-gray-400 cursor-grab active:cursor-grabbing shrink-0 touch-none">
+                                    <GripVertical size={14} />
+                                  </span>
+                                  <button onClick={() => toggleDay(did(day))} className="flex items-center gap-2 flex-1 text-left min-w-0">
+                                    {expandedDay === did(day)
+                                      ? <ChevronDown size={13} className="text-lime-green shrink-0" />
+                                      : <ChevronRight size={13} className="text-gray-600 shrink-0" />}
+                                    <span className="text-[10px] font-bold text-gray-400 border border-dark-border px-1.5 py-0.5 uppercase shrink-0">
+                                      {dayLabel(day)}
+                                    </span>
+                                    <span className="text-white text-sm truncate">{day.name}</span>
+                                    {day.is_rest ? <span className="text-blue-400 text-[10px] shrink-0">Descanso</span> : null}
+                                    {day.duration_min > 0 && <span className="text-gray-600 text-xs shrink-0">{day.duration_min}min</span>}
+                                  </button>
+                                </div>
+                                <div className="flex gap-1 shrink-0">
+                                  <button onClick={e => { e.stopPropagation(); if (expandedDay !== did(day)) setExpandedDay(did(day)); setExForm(emptyEx); setExModal({ dayId: did(day) }); }}
+                                    className="p-1 text-gray-600 hover:text-lime-green transition-colors" title="Adicionar exercício">
+                                    <Plus size={13} />
+                                  </button>
+                                  <button onClick={e => { e.stopPropagation(); cloneDay(tid(tpl), day); }}
+                                    className="p-1 text-gray-600 hover:text-lime-green transition-colors" title="Clonar dia"><Copy size={13} /></button>
+                                  <button onClick={e => { e.stopPropagation(); setDayForm({ name: day.name, day_of_week: dayLabel(day), duration_min: day.duration_min ?? 60, is_rest: !!day.is_rest }); setDayModal({ templateId: tid(tpl), day }); }}
+                                    className="p-1 text-gray-600 hover:text-lime-green transition-colors"><Pencil size={13} /></button>
+                                  <button onClick={e => { e.stopPropagation(); deleteDay(tid(tpl), did(day)); }}
+                                    className="p-1 text-gray-600 hover:text-red-400 transition-colors"><Trash2 size={13} /></button>
+                                </div>
+                              </div>
 
-                      {expandedDay === did(day) && (
-                        <div className="border-t border-dark-border px-3 pb-2 pt-1 space-y-1">
-                          {loadingExs[did(day)] && <p className="text-gray-600 text-xs py-2 animate-pulse">Carregando exercícios...</p>}
-                          {!loadingExs[did(day)] && (exercises[did(day)] ?? []).length === 0 && (
-                            <p className="text-gray-700 text-xs py-1">Nenhum exercício. Clique em + para adicionar.</p>
+                              {expandedDay === did(day) && (
+                                <div className="border-t border-dark-border px-3 pb-2 pt-1 space-y-1">
+                                  {loadingExs[did(day)] && <p className="text-gray-600 text-xs py-2 animate-pulse">Carregando exercícios...</p>}
+                                  {!loadingExs[did(day)] && (exercises[did(day)] ?? []).length === 0 && (
+                                    <p className="text-gray-700 text-xs py-1">Nenhum exercício. Clique em + para adicionar.</p>
+                                  )}
+                                  {(exercises[did(day)] ?? []).map((ex, ei) => (
+                                    <div key={eid(ex) ?? ei} className="flex items-center justify-between py-1.5 border-b border-dark-border/50 last:border-0">
+                                      <div className="min-w-0">
+                                        <span className="text-white text-xs font-medium">{ex.name}</span>
+                                        <span className="text-gray-500 text-[10px] ml-2">
+                                          {ex.sets}×{ex.reps}
+                                          {ex.muscle_group && ` · ${ex.muscle_group}`}
+                                          {ex.rest_seconds > 0 && ` · ${ex.rest_seconds}s`}
+                                        </span>
+                                      </div>
+                                      <div className="flex gap-1 shrink-0">
+                                        <button onClick={() => cloneEx(did(day), ex)}
+                                          className="p-1 text-gray-600 hover:text-lime-green transition-colors" title="Clonar exercício"><Copy size={12} /></button>
+                                        <button onClick={() => { setExForm({ name: ex.name, sets: ex.sets ?? 3, reps: ex.reps ?? '12', rest_seconds: ex.rest_seconds ?? 60, muscle_groups: toArr(ex.muscle_group), video_url: ex.video_url ?? '', notes: ex.notes ?? '' }); setExModal({ dayId: did(day), ex }); }}
+                                          className="p-1 text-gray-600 hover:text-lime-green transition-colors"><Pencil size={12} /></button>
+                                        <button onClick={() => deleteEx(did(day), eid(ex))}
+                                          className="p-1 text-gray-600 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </>
                           )}
-                          {(exercises[did(day)] ?? []).map((ex, ei) => (
-                            <div key={eid(ex) ?? ei} className="flex items-center justify-between py-1.5 border-b border-dark-border/50 last:border-0">
-                              <div className="min-w-0">
-                                <span className="text-white text-xs font-medium">{ex.name}</span>
-                                <span className="text-gray-500 text-[10px] ml-2">
-                                  {ex.sets}×{ex.reps}
-                                  {ex.muscle_group && ` · ${ex.muscle_group}`}
-                                  {ex.rest_seconds > 0 && ` · ${ex.rest_seconds}s`}
-                                </span>
-                              </div>
-                              <div className="flex gap-1 shrink-0">
-                                <button onClick={() => { setExForm({ name: ex.name, sets: ex.sets ?? 3, reps: ex.reps ?? '12', rest_seconds: ex.rest_seconds ?? 60, muscle_groups: toArr(ex.muscle_group), video_url: ex.video_url ?? '', notes: ex.notes ?? '' }); setExModal({ dayId: did(day), ex }); }}
-                                  className="p-1 text-gray-600 hover:text-lime-green transition-colors"><Pencil size={12} /></button>
-                                <button onClick={() => deleteEx(did(day), eid(ex))}
-                                  className="p-1 text-gray-600 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                        </SortableDay>
+                      ))}
+                    </SortableContext>
+                  </DndContext>
 
                   {!loadingDays[tid(tpl)] && (days[tid(tpl)] ?? []).length === 0 && (
                     <p className="text-gray-700 text-xs">Nenhum dia configurado.</p>
@@ -472,6 +636,52 @@ export default function AdminTreinos() {
           </Field>
           <Field label="Objetivo">
             <input className={inp} value={tplForm.goal} onChange={e => setTplForm({ ...tplForm, goal: e.target.value })} placeholder="Ex: Hipertrofia" />
+          </Field>
+          <Field label="Gênero">
+            <div className="grid grid-cols-2 gap-2">
+              <ShimmerButton
+                type="button"
+                onClick={() => setTplForm({ ...tplForm, gender: 'masculino' })}
+                shimmerColor="#60a5fa"
+                background={tplForm.gender === 'masculino' ? 'rgba(37,99,235,0.15)' : 'rgba(10,10,10,1)'}
+                className={`w-full justify-center py-3 gap-2 border transition-colors ${
+                  tplForm.gender === 'masculino' ? 'border-blue-400' : 'border-dark-border'
+                }`}
+              >
+                <IconMars />
+                <span className={`text-sm font-bold ${
+                  tplForm.gender === 'masculino' ? 'text-blue-400' : 'text-gray-500'
+                }`}>Masculino</span>
+              </ShimmerButton>
+              <ShimmerButton
+                type="button"
+                onClick={() => setTplForm({ ...tplForm, gender: 'feminino' })}
+                shimmerColor="#f472b6"
+                background={tplForm.gender === 'feminino' ? 'rgba(219,39,119,0.15)' : 'rgba(10,10,10,1)'}
+                className={`w-full justify-center py-3 gap-2 border transition-colors ${
+                  tplForm.gender === 'feminino' ? 'border-pink-400' : 'border-dark-border'
+                }`}
+              >
+                <IconVenus />
+                <span className={`text-sm font-bold ${
+                  tplForm.gender === 'feminino' ? 'text-pink-400' : 'text-gray-500'
+                }`}>Feminino</span>
+              </ShimmerButton>
+            </div>
+          </Field>
+          <Field label="Nível">
+            <div className="grid grid-cols-3 gap-2">
+              {LEVELS.map(lv => (
+                <button key={lv} type="button" onClick={() => setTplForm({ ...tplForm, level: lv })}
+                  className={`py-2.5 text-xs font-bold border transition-colors ${
+                    tplForm.level === lv
+                      ? `${LEVEL_COLORS[lv]} bg-white/5`
+                      : 'border-dark-border text-gray-600 hover:border-gray-500'
+                  }`}>
+                  {lv}
+                </button>
+              ))}
+            </div>
           </Field>
           <Field label="Descrição">
             <textarea rows={2} className={`${inp} resize-none`} value={tplForm.description} onChange={e => setTplForm({ ...tplForm, description: e.target.value })} />
@@ -578,36 +788,33 @@ export default function AdminTreinos() {
         />
       )}
 
-      {/* Modal Ciclo */}
-      {cycleModal && (
-        <Modal title="Atribuir Ciclo de Treino" onClose={() => setCycleModal(false)}>
-          <Field label="Aluno">
-            <select className={inp} value={cycleForm.user_id} onChange={e => setCycleForm({ ...cycleForm, user_id: e.target.value })}>
-              <option value="">Selecione o aluno...</option>
-              {students.map(s => (
-                <option key={s.id ?? s.id_user} value={s.id ?? s.id_user}>{s.name} — {s.email}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Template de treino">
-            <select className={inp} value={cycleForm.template_id} onChange={e => setCycleForm({ ...cycleForm, template_id: e.target.value })}>
-              <option value="">Selecione o template...</option>
-              {templates.map(t => (
-                <option key={tid(t)} value={tid(t)}>{t.name}{t.goal ? ` — ${t.goal}` : ''}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Data de início">
-            <input type="date" className={inp} value={cycleForm.start_date} onChange={e => setCycleForm({ ...cycleForm, start_date: e.target.value })} />
-          </Field>
-          <Field label="Observações">
-            <textarea rows={2} className={`${inp} resize-none`} value={cycleForm.notes} onChange={e => setCycleForm({ ...cycleForm, notes: e.target.value })} />
-          </Field>
-          <button onClick={saveCycle} disabled={saving || !cycleForm.user_id || !cycleForm.template_id || !cycleForm.start_date}
-            className="w-full flex items-center justify-center gap-2 bg-lime-green text-black font-bold py-3 uppercase text-sm hover:bg-neon-green transition-colors disabled:opacity-50">
-            <Save size={15} /> {saving ? 'Salvando...' : 'Atribuir Ciclo'}
-          </button>
-        </Modal>
+      {/* Modal de confirmação de exclusão */}
+      {confirmModal && (
+        <div className="fixed inset-0 bg-black/80 z-[70] flex items-center justify-center p-4"
+          onClick={() => setConfirmModal(null)}>
+          <div className="bg-[#111] border border-red-500/30 w-full max-w-sm p-6 space-y-5"
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-start gap-3">
+              <div className="shrink-0 w-9 h-9 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center">
+                <Trash2 size={16} className="text-red-400" />
+              </div>
+              <div>
+                <p className="text-white font-semibold text-sm">Confirmar exclusão</p>
+                <p className="text-gray-400 text-xs mt-1">{confirmModal.message}</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmModal(null)}
+                className="flex-1 py-2.5 text-sm font-bold border border-dark-border text-gray-400 hover:border-gray-500 hover:text-white transition-colors">
+                Cancelar
+              </button>
+              <button onClick={() => { confirmModal.onConfirm(); setConfirmModal(null); }}
+                className="flex-1 py-2.5 text-sm font-bold bg-red-500/10 border border-red-500/50 text-red-400 hover:bg-red-500/20 transition-colors">
+                Excluir
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

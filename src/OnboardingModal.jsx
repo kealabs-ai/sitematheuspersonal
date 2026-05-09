@@ -5,7 +5,7 @@ import { users } from './services/alunoApi';
 // ─── Planos de treino por gênero + objetivo ───────────────────────────────────
 
 const PLANOS = {
-  male: {
+  masculino: {
     Hipertrofia: {
       name: 'Hipertrofia Masculino',
       days: [
@@ -99,7 +99,7 @@ const PLANOS = {
       ],
     },
   },
-  female: {
+  feminino: {
     Hipertrofia: {
       name: 'Hipertrofia Feminino',
       days: [
@@ -200,8 +200,8 @@ const PLANOS = {
 // ─── Opções de seleção ────────────────────────────────────────────────────────
 
 const GENDER_OPTIONS = [
-  { value: 'male',   label: 'Masculino', icon: '♂️' },
-  { value: 'female', label: 'Feminino',  icon: '♀️' },
+  { value: 'masculino', label: 'Masculino', icon: '♂️' },
+  { value: 'feminino',  label: 'Feminino',  icon: '♀️' },
 ];
 
 const GOAL_OPTIONS = [
@@ -218,14 +218,8 @@ export default function OnboardingModal({ userName, userGender, onComplete }) {
   const [error, setError]   = useState('');
 
   useEffect(() => {
-    users.me()
-      .then(user => {
-        const g = userGender || user?.gender || null;
-        setGender(g);
-        // Se já tem gênero, pula direto para escolha do objetivo
-        setStep(g ? 2 : 1);
-      })
-      .catch(() => setStep(userGender ? 2 : 1));
+    setGender(userGender || null);
+    setStep(userGender ? 2 : 1);
   }, []);
 
   // Dispara salvamento quando step muda para 3
@@ -234,10 +228,27 @@ export default function OnboardingModal({ userName, userGender, onComplete }) {
     setError('');
 
     users.update({ gender, goal })
-      .then(() => setStep(4))
-      .catch(err => {
-        setError(err.message || 'Erro ao salvar preferências. Tente novamente.');
-        setStep(2);
+      .then(res => {
+        // FastAPI retorna 404 como JSON com 'detail', ou o Traefik retorna HTML
+        // Em ambos os casos, consideramos sucesso parcial e deixamos o aluno prosseguir
+        if (res?.status === 404 || (res?.error && res?.status)) {
+          // Backend indisponível — salva localmente e prossegue
+          try {
+            const stored = JSON.parse(localStorage.getItem('user') || '{}');
+            localStorage.setItem('user', JSON.stringify({ ...stored, gender, goal }));
+          } catch {}
+          setStep(4);
+          return;
+        }
+        setStep(4);
+      })
+      .catch(() => {
+        // Falha de rede — salva localmente e prossegue
+        try {
+          const stored = JSON.parse(localStorage.getItem('user') || '{}');
+          localStorage.setItem('user', JSON.stringify({ ...stored, gender, goal }));
+        } catch {}
+        setStep(4);
       });
   }, [step]);
 

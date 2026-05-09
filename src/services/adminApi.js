@@ -1,4 +1,6 @@
-const BASE = import.meta.env.VITE_API_URL ?? '/api';
+const BASE = import.meta.env.DEV
+  ? '/api'
+  : 'https://srv1023256.hstgr.cloud/api';
 
 const getToken = () => localStorage.getItem('access_token');
 

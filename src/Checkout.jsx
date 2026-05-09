@@ -326,7 +326,7 @@ const Checkout = () => {
                   </div>
                 </div>
 
-                {formData.paymentMethod !== 'pix' && (
+                {formData.paymentMethod === 'credit' && (
                 <div className="bg-dark-card border border-dark-border p-6">
                   <h3 className="text-2xl font-bebas uppercase mb-4 text-lime-green flex items-center gap-2">
                     <CreditCard size={24} />
@@ -386,7 +386,7 @@ const Checkout = () => {
                           required
                           className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
                         >
-                          {[1,2,3,4,5,6].map(n => (
+                          {Array.from({ length: plan?.months ?? 1 }, (_, i) => i + 1).map(n => (
                             <option key={n} value={String(n)}>
                               {n}x de R$ {(totalPrice / n).toFixed(2).replace('.', ',')} sem juros
                             </option>

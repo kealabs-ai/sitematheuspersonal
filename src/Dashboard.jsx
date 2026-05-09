@@ -36,14 +36,22 @@ export default function Dashboard() {
   const [userGender, setUserGender]     = useState(null);
 
   useEffect(() => {
+    const localUser = (() => { try { return JSON.parse(localStorage.getItem('user') || '{}'); } catch { return {}; } })();
+
     Promise.all([dashboard.summary(), users.me()])
       .then(([data, me]) => {
         setSummary(data);
-        setUserGender(me?.gender || null);
-        const hasGoal = !!(me?.goal || me?.objective);
+        const gender = me?.gender || localUser?.gender || null;
+        setUserGender(gender);
+        const hasGoal = !!(me?.goal || me?.objective || localUser?.goal);
         if (!hasGoal) setShowOnboarding(true);
       })
-      .catch(() => setShowOnboarding(true))
+      .catch(() => {
+        // API indisponível — usa dados locais
+        setUserGender(localUser?.gender || null);
+        const hasGoal = !!(localUser?.goal);
+        if (!hasGoal) setShowOnboarding(true);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -162,9 +170,8 @@ export default function Dashboard() {
         {/* Treino do dia */}
         {todayWorkout && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <ShineBorder className="bg-black" color={['#00B4D8', '#0096C7']}>
-              <button onClick={() => navigate('/dashboard/treinos')}
-                className="w-full p-5 text-left hover:bg-lime-green/5 transition-all group">
+            <ShineBorder className="bg-black cursor-pointer" color={['#00B4D8', '#0096C7']} onClick={() => navigate('/dashboard/treinos')}>
+              <div className="w-full p-5 text-left hover:bg-lime-green/5 transition-all group">
                 <div>
                   <p className="text-lime-green text-xs uppercase tracking-widest font-bold mb-1">
                     <Dumbbell size={12} className="inline mr-1" />Hoje
@@ -173,11 +180,11 @@ export default function Dashboard() {
                   <p className="text-gray-400 text-sm mt-1">{todayWorkout.exercises_count} exercícios · {todayWorkout.duration_min} min</p>
                 </div>
                 <div className="mt-4">
-                  <ShimmerButton className="w-full justify-center py-2.5" shimmerColor="#ffffff" background="rgba(0,180,216,1)">
+                  <ShimmerButton onClick={e => e.stopPropagation()} className="w-full justify-center py-2.5 pointer-events-none" shimmerColor="#ffffff" background="rgba(0,180,216,1)">
                     <Dumbbell size={14} /> Iniciar Treino
                   </ShimmerButton>
                 </div>
-              </button>
+              </div>
             </ShineBorder>
           </motion.div>
         )}

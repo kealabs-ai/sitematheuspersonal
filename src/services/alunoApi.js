@@ -1,4 +1,6 @@
-const BASE = import.meta.env.VITE_API_URL ?? '/api';
+const BASE = import.meta.env.DEV
+  ? '/api'
+  : 'https://srv1023256.hstgr.cloud/api';
 
 // --- Helpers ---
 
@@ -65,6 +67,7 @@ export const users = {
   addMetric:      (data)                            => post(`${BASE}/aluno/users/me/metrics`, data),
   feedback:       (message)                         => post(`${BASE}/aluno/users/me/feedback`, { message }),
   uploadAvatar:   (data)                            => post(`${BASE}/aluno/users/me/avatar`, data),
+  recurringBilling:  (enabled) => post(`${BASE}/aluno/users/me/recurring-billing?enabled=${enabled}`),
   notifPrefs:     ()                                => get(`${BASE}/aluno/users/me/notification-preferences`),
   updateNotifPrefs: (data)                          => post(`${BASE}/aluno/users/me/notification-preferences`, data),
 };

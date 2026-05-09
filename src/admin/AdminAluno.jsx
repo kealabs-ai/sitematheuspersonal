@@ -97,8 +97,13 @@ export default function AdminAluno() {
   const doAssignW = async () => {
     if (!assignW) return;
     setAssigningW(true);
-    await adminWorkouts.createCycle({ user_id: uid(selected), template_id: Number(assignW), start_date: new Date().toISOString().split('T')[0] }).catch(() => {});
     const plan = wPlans.find(p => String(p.id ?? p.id_user) === String(assignW));
+    await adminWorkouts.createCycle({
+      user_id:     uid(selected),
+      template_id: Number(assignW),
+      plan_name:   plan?.name ?? 'Plano',
+      valid_from:  new Date().toISOString().split('T')[0],
+    }).catch(() => {});
     setAssignedW(plan?.name ?? 'Plano atribuído');
     setAssigningW(false);
   };
@@ -240,7 +245,9 @@ export default function AdminAluno() {
                     <select value={assignW} onChange={e => setAssignW(e.target.value)} className={inp}>
                       <option value="">Selecionar plano...</option>
                       {wPlans.map((p, i) => (
-                        <option key={p.id ?? p.id_user ?? i} value={p.id ?? p.id_user}>{p.name}</option>
+                        <option key={p.id ?? p.id_user ?? i} value={p.id ?? p.id_user}>
+                          {p.name}{p.gender ? ` (${p.gender})` : ''}
+                        </option>
                       ))}
                     </select>
                   </Field>

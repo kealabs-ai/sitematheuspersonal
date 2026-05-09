@@ -98,11 +98,13 @@ export default function Perfil() {
   const [notifOpen, setNotifOpen]         = useState(false);
   const [notifPrefs, setNotifPrefs]       = useState(null);
   const [notifSaving, setNotifSaving]     = useState(false);
-  const [imcModalOpen, setImcModalOpen]   = useState(false);
+  const [recurringBilling, setRecurringBilling] = useState(false);
+  const [recurringLoading, setRecurringLoading] = useState(false);
   const [avatar, setAvatar]               = useState(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
-  const avatarInputRef                    = React.useRef(null);
+  const [imcModalOpen, setImcModalOpen]       = useState(false);
+  const avatarInputRef                        = React.useRef(null);
 
   const PRESET_AVATARS = [
     'https://api.dicebear.com/8.x/adventurer/svg?seed=gym1&backgroundColor=1a1a2e&hair=short01&eyes=variant01',
@@ -139,7 +141,8 @@ export default function Perfil() {
       setUser(data);
       setDraft(data);
       if (data.latest_metrics) setMetrics(data.latest_metrics);
-      if (data.avatar_url) setAvatar(data.avatar_url); // carrega avatar do banco
+      if (data.avatar_url) setAvatar(data.avatar_url);
+      setRecurringBilling(!!data.recurring_billing);
     }).catch(() => {});
   }, []);
 
@@ -251,6 +254,13 @@ export default function Perfil() {
   const renewDays  = renewDate ? daysUntil(renewDate) : null;
   const cycle      = detectCycle(user?.plan_start, user?.plan_renewal);
   const cycleLabel = { 1: 'Mensal', 3: 'Trimestral', 6: 'Semestral' }[cycle] ?? 'Mensal';
+
+  const toggleRecurring = async (val) => {
+    setRecurringLoading(true);
+    await usersApi.recurringBilling(val).catch(() => {});
+    setRecurringBilling(val);
+    setRecurringLoading(false);
+  };
 
   const saveEdit = async () => {
     setSaving(true);
@@ -367,6 +377,31 @@ export default function Perfil() {
                   </span>
                 )}
               </p>
+            </div>
+            <div className="col-span-2 flex items-center justify-between pt-2 border-t border-white/10">
+              <div>
+                <p className="text-white text-sm font-medium">Cobrança recorrente</p>
+                <p className="text-gray-500 text-xs mt-0.5">Renovação automática mensal via cartão</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={recurringBilling}
+                onClick={() => !recurringLoading && toggleRecurring(!recurringBilling)}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none ${
+                  recurringBilling ? 'bg-lime-green' : 'bg-dark-border'
+                } ${recurringLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              >
+                {recurringLoading ? (
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    <span className="w-3 h-3 border-2 border-white/60 border-t-transparent rounded-full animate-spin" />
+                  </span>
+                ) : (
+                  <span className={`inline-block h-4 w-4 rounded-full bg-white shadow-md transform transition-transform duration-200 ${
+                    recurringBilling ? 'translate-x-6' : 'translate-x-1'
+                  }`} />
+                )}
+              </button>
             </div>
           </div>
         </motion.div>

@@ -6,9 +6,12 @@
 -- Templates de treino (reutilizáveis, sem user_id)
 CREATE TABLE IF NOT EXISTS workout_templates (
   id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  trainer_id  INT NOT NULL,
   name        VARCHAR(100) NOT NULL,
   description TEXT,
   goal        VARCHAR(100),
+  level       VARCHAR(50) DEFAULT 'Iniciante',
+  gender      ENUM('masculino','feminino') NOT NULL DEFAULT 'masculino',
   active      TINYINT(1) DEFAULT 1,
   created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
 );

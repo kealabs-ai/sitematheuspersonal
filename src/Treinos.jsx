@@ -274,7 +274,7 @@ const muscleColors = {
 };
 
 // ─── Modal seleção A/B/C ─────────────────────────────────────────────────────
-function WorkoutSelectModal({ trainDays, suggested, userGoal, onSelect, onRest, onClose }) {
+function WorkoutSelectModal({ trainDays, suggested, userGoal, templateGender, onSelect, onRest, onClose }) {
   const goalColor = userGoal === 'Emagrecimento' ? 'text-orange-400 border-orange-400/40' : 'text-lime-green border-lime-green/40';
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/70 px-4 pb-4 md:pb-0">
@@ -287,11 +287,20 @@ function WorkoutSelectModal({ trainDays, suggested, userGoal, onSelect, onRest, 
             <p className="font-bebas text-xl text-white flex items-center gap-2">
               <ListChecks size={18} className="text-lime-green" /> Escolha o treino de hoje
             </p>
-            {userGoal && (
-              <span className={`text-[10px] font-bold uppercase border px-2 py-0.5 mt-1 inline-block ${goalColor}`}>
-                {userGoal === 'Hipertrofia' ? '💪' : '🔥'} {userGoal}
-              </span>
-            )}
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              {userGoal && (
+                <span className={`text-[10px] font-bold uppercase border px-2 py-0.5 inline-block ${goalColor}`}>
+                  {userGoal === 'Hipertrofia' ? '💪' : '🔥'} {userGoal}
+                </span>
+              )}
+              {templateGender && (
+                <span className={`text-[10px] font-bold uppercase border px-2 py-0.5 inline-block capitalize ${
+                  templateGender === 'feminino' ? 'text-pink-400 border-pink-400/40' : 'text-blue-400 border-blue-400/40'
+                }`}>
+                  {templateGender === 'feminino' ? '♀️' : '♂️'} {templateGender}
+                </span>
+              )}
+            </div>
           </div>
           <button onClick={onClose} className="text-gray-500 hover:text-white"><X size={18} /></button>
         </div>
@@ -387,6 +396,7 @@ export default function Treinos() {
   const [suggested, setSuggested]     = useState(null); // sugerido pela API para hoje
   const [todayDay, setTodayDay]       = useState(null); // dia corrente (escolhido ou sugerido)
   const [userGoal, setUserGoal]       = useState(null); // objetivo do aluno
+  const [templateGender, setTemplateGender] = useState(null);
   const [exercises, setExercises]     = useState({});
   const [checked, setChecked]         = useState({});
   const [weights, setWeights]         = useState({});
@@ -417,6 +427,7 @@ export default function Treinos() {
         }));
         setAllDays(days);
         setUserGoal(planData.plan?.user_goal ?? null);
+        setTemplateGender(planData.plan?.gender ?? null);
         const s = days.find(d => d.status === 'today' && !d.is_rest);
         setSuggested(s ?? null);
         setTodayDay(s ?? null);
@@ -442,10 +453,11 @@ export default function Treinos() {
   };
 
   const fetchExercises = async (dayId) => {
-    if (exercises[dayId]) return;
+    if (exercises[dayId] !== undefined) return;
     setLoadingEx(true);
     const data = await workoutsApi.dayExercises(dayId).catch(() => ({}));
-    setExercises(prev => ({ ...prev, [dayId]: data.exercises ?? [] }));
+    const exList = Array.isArray(data.exercises) ? data.exercises : [];
+    setExercises(prev => ({ ...prev, [dayId]: exList }));
     setLoadingEx(false);
   };
 
@@ -550,6 +562,7 @@ export default function Treinos() {
             trainDays={trainDays}
             suggested={suggested}
             userGoal={userGoal}
+            templateGender={templateGender}
             onSelect={handleSelect}
             onRest={() => { setIsRest(true); setShowModal(false); setActiveLog(null); }}
             onClose={() => setShowModal(false)}
@@ -632,11 +645,18 @@ export default function Treinos() {
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-lime-green text-xs font-bold uppercase tracking-widest flex items-center gap-1">
+                  <p className="text-lime-green text-xs font-bold uppercase tracking-widest flex items-center gap-1 flex-wrap">
                     <Dumbbell size={12} /> Treino de hoje
                     {userGoal && (
-                      <span className="ml-2 text-[10px] border border-lime-green/40 px-1.5 py-0.5 font-normal">
+                      <span className="text-[10px] border border-lime-green/40 px-1.5 py-0.5 font-normal">
                         {userGoal}
+                      </span>
+                    )}
+                    {templateGender && (
+                      <span className={`text-[10px] border px-1.5 py-0.5 font-normal capitalize ${
+                        templateGender === 'feminino' ? 'border-pink-400/40 text-pink-400' : 'border-blue-400/40 text-blue-400'
+                      }`}>
+                        {templateGender === 'feminino' ? '♀️' : '♂️'} {templateGender}
                       </span>
                     )}
                   </p>
