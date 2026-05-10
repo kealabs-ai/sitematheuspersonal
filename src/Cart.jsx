@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Trash2, ShoppingCart, Plus, Tag } from 'lucide-react';
+import { ArrowLeft, Trash2, ShoppingCart, Tag } from 'lucide-react';
 import ProgressIndicator from './ProgressIndicator';
 import api from './services/api';
 
@@ -129,13 +129,6 @@ const Cart = () => {
             <h1 className="text-5xl font-bebas uppercase">
               Seu <span className="text-lime-green">Carrinho</span>
             </h1>
-            <button
-              onClick={() => navigate('/#consultoria')}
-              className="border-2 border-lime-green text-lime-green font-bold py-2 px-6 uppercase hover:bg-lime-green hover:text-black transition-all flex items-center gap-2"
-            >
-              <Plus size={20} />
-              Adicionar Plano
-            </button>
           </div>
 
           {cartItems.map((item, index) => (

@@ -4,6 +4,7 @@ import { ArrowLeft, Lock, Shield, CreditCard, Copy, Check } from 'lucide-react';
 import ProgressIndicator from './ProgressIndicator';
 import { QRCodeSVG } from 'qrcode.react';
 import api from './services/api';
+import { friendlyError } from './utils/friendlyError';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -144,7 +145,7 @@ const Checkout = () => {
         (!!orderId && !orderResult?.error);
 
       if (!orderId) {
-        setError(orderResult?.message || orderResult?.error || 'Erro ao criar pedido: ID não retornado');
+        setError(friendlyError(orderResult));
         return;
       }
 
@@ -184,8 +185,7 @@ const Checkout = () => {
       console.log('%c[JORNADA 3/4] POST /asaas/checkout response', 'color:#a78bfa;font-weight:bold', checkoutData);
 
       if (!checkoutRes.ok) {
-        const errMsg = checkoutData?.message || checkoutData?.detail || checkoutData?.error;
-        setError(typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg) || 'Erro ao processar pagamento');
+        setError(friendlyError(checkoutData));
         return;
       }
 
@@ -219,7 +219,7 @@ const Checkout = () => {
 
     } catch (err) {
       console.error('Erro ao processar pagamento:', err);
-      setError('Erro ao processar pagamento. Tente novamente.');
+      setError('Não foi possível processar seu pagamento. Verifique os dados do cartão e tente novamente.');
     } finally {
       setLoading(false);
     }

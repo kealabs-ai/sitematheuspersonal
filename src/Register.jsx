@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, User } from 'lucide-react';
 import ProgressIndicator from './ProgressIndicator';
 import api from './services/api';
+import { friendlyError } from './utils/friendlyError';
 
 const COUNTRY_CODES = [
   { code: '+55',  flag: '🇧🇷', name: 'Brasil' },
@@ -136,6 +137,11 @@ const Register = () => {
       return;
     }
 
+    if (name === 'email') {
+      setFormData(prev => ({ ...prev, email: value, username: value }));
+      return;
+    }
+
     if (name === 'cpf') {
       value = value.replace(/\D/g, '').slice(0, 11);
       value = value.replace(/(\d{3})(\d)/, '$1.$2');
@@ -160,13 +166,8 @@ const Register = () => {
     setLoading(true);
     setError('');
 
-    console.log('%c[JORNADA 1/4] Plano recebido no Register', 'color:#84cc16;font-weight:bold', plan);
-    
     try {
-      const now = new Date().toISOString().slice(0, 19);
       const planName = plan?.name ?? null;
-
-      if (!planName) console.warn('[JORNADA] ATENÇÃO: plan.name está null/undefined! Objeto plan:', plan);
 
       const userBody = {
         name: formData.name,
@@ -188,10 +189,7 @@ const Register = () => {
         role: 'student',
       };
 
-      console.log('%c[JORNADA 2/4] POST /users body', 'color:#84cc16;font-weight:bold', { ...userBody, password: '[HIDDEN]' });
-
       const result = await api.createUser(userBody);
-      console.log('%c[JORNADA 2/4] POST /users response', 'color:#84cc16;font-weight:bold', result);
 
       const userId = result?.userId || result?.id;
       const isSuccess = result?.success === true || result?.status === 'success';
@@ -206,40 +204,10 @@ const Register = () => {
           }
         });
       } else {
-        const msg = (result?.message || result?.error || result?.detail || '');
-        const msgLower = msg.toLowerCase();
-        const isDuplicate =
-          result?.code === 'DUPLICATE' ||
-          result?.status === 409 ||
-          msgLower.includes('duplicate entry') ||
-          msgLower.includes('er_dup_entry') ||
-          msg.includes('1062') ||
-          msgLower.includes('already exists') ||
-          msgLower.includes('já cadastrado');
-
-        if (isDuplicate) {
-          const fieldMap = [
-            { keys: ['email'],    label: 'E-mail' },
-            { keys: ['cpf'],      label: 'CPF' },
-            { keys: ['username'], label: 'Nome de usuário' },
-            { keys: ['phone', 'telefone'], label: 'Telefone' },
-          ];
-          const matched = fieldMap.find(({ keys }) => keys.some(k => msgLower.includes(k)));
-          const fieldLabel = result?.field
-            ? ({ email: 'E-mail', cpf: 'CPF', username: 'Nome de usuário', phone: 'Telefone' }[result.field] || result.field)
-            : matched?.label;
-
-          setError(
-            fieldLabel
-              ? `Já existe um ${fieldLabel} cadastrado. Faça o login.`
-              : 'Já existe uma conta com esses dados. Faça o login.'
-          );
-        } else {
-          setError(result?.message || 'Erro ao criar usuário');
-        }
+        setError(friendlyError(result));
       }
     } catch (err) {
-      setError('Erro ao conectar com o servidor');
+      setError('Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -497,7 +465,7 @@ const Register = () => {
                 <div className="space-y-6">
                   <div>
                     <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
-                      Nome de Usuário *
+                      E-mail *
                     </label>
                     <input
                       type="text"
@@ -506,7 +474,7 @@ const Register = () => {
                       onChange={handleChange}
                       required
                       className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
-                      placeholder="Escolha um nome de usuário"
+                      placeholder={formData.email || 'seu@email.com'}
                     />
                   </div>
 
