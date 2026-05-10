@@ -1,6 +1,6 @@
 import React from 'react';
 import { Instagram, MessageCircle, Globe } from 'lucide-react';
-import matheusPhoto from './assets/matheus_personal.jpg';
+import matheusPhoto from './assets/matheus_personal.jpeg';
 
 const LinkBio = () => {
   const links = [

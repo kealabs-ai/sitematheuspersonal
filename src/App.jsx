@@ -4,7 +4,7 @@ import { motion, useAnimation, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ArrowRight, Menu, X, Dumbbell, Target, TrendingUp, Award, Instagram, Phone, MessageSquare } from 'lucide-react';
 import kealabsLogo from './assets/kealabs_logo_strategic_white.png';
 import matheusLogo from './assets/logotipo_matheus_personal.png';
-import matheusPhoto from './assets/matheus_personal.jpg';
+import matheusPhoto from './assets/matheus_personal.jpeg';
 
 const App = () => {
   return (
@@ -848,10 +848,12 @@ const TestimonialsSection = () => {
 };
 
 const galleryImages = [
-  { src: '/img/antes_e_depois_a.jpg', label: 'Transformação A' },
-  { src: '/img/antes_e_depois_b.jpg', label: 'Transformação B' },
-  { src: '/img/antes_e_depois_c.jpg', label: 'Transformação C' },
-  { src: '/img/antes_e_depois_d.jpg', label: 'Transformação D' },
+  { src: '/img/antes_e_depois_01.jpeg', label: 'Transformação 1' },
+  { src: '/img/antes_e_depois_02.jpeg', label: 'Transformação 2' },
+  { src: '/img/antes_e_depois_03.jpeg', label: 'Transformação 3' },
+  { src: '/img/antes_e_depois_04.jpeg', label: 'Transformação 4' },
+  { src: '/img/antes_e_depois_05.jpeg', label: 'Transformação 5' },
+  { src: '/img/antes_e_depois_06.jpeg', label: 'Transformação 6' },
 ];
 
 const ResultsSection = () => {
@@ -886,7 +888,7 @@ const ResultsSection = () => {
           <p className="text-gray-400 text-lg">Transformações reais de alunos reais</p>
         </motion.div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-6xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-w-6xl mx-auto">
           {galleryImages.map((img, i) => (
             <motion.button
               key={i}
