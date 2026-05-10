@@ -198,7 +198,7 @@ export default function AdminFinanceiro() {
                       <div className="border-t border-dark-border px-4 py-3 bg-black/30 space-y-3">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                           {[['Nº Pedido', o.order_number ?? `#${o.id_order}`], ['Método', o.payment_method ?? '—'], ['Parcelas', o.installments ? `${o.installments}x` : '1x'], ['Status pgto', o.payment_status ?? '—']].map(([label, val]) => (
-                            <div key={label}>
+                            <div key={`${o.id_order}-${label}`}>
                               <p className="text-gray-600 uppercase tracking-wide mb-0.5">{label}</p>
                               <p className="text-white font-semibold">{val}</p>
                             </div>
@@ -208,7 +208,7 @@ export default function AdminFinanceiro() {
                           <div className="space-y-1">
                             <p className="text-[10px] text-gray-600 uppercase tracking-widest">Itens</p>
                             {o.items.map((it, i) => (
-                              <div key={i} className="flex justify-between text-xs">
+                              <div key={`${o.id_order}-item-${it.id ?? i}`} className="flex justify-between text-xs">
                                 <span className="text-gray-400">{it.plan_name} · {it.plan_frequency}</span>
                                 <span className="text-white">{fmt(it.plan_price)} × {it.quantity}</span>
                               </div>

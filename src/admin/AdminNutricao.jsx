@@ -59,7 +59,6 @@ export default function AdminNutricao() {
       adminNutrition.plans(),
       adminUsers.listAll(),
     ]).then(([plansData, usersData]) => {
-      console.log('[AdminNutricao] plans raw:', plansData);
       // Aceita qualquer envelope: { plans } | { data } | { results } | array direto
       const p =
         Array.isArray(plansData) ? plansData :

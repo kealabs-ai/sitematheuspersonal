@@ -27,6 +27,7 @@ const del  = (url)       => req('DELETE', url);
 export const adminUsers = {
   listAll: () => get(`${BASE}/aluno/users/all`),
   update:  (id, data) => post(`${BASE}/aluno/users/admin/${id}`, data),
+  metrics: (id) => get(`${BASE}/aluno/users/${id}/metrics`),
 };
 
 // ─── Vídeos ───────────────────────────────────
