@@ -481,15 +481,6 @@ const pricingPlans = [
     description: 'Treino personalizado com acompanhamento completo por 6 meses.',
     popular: true,
   },
-  {
-    name: 'DIAMANTE',
-    price: '109,90',
-    duration: '1 mês',
-    months: 1,
-    description: 'Tudo do plano mensal + Plano Nutricional personalizado.',
-    popular: false,
-    diamond: true,
-  },
 ];
 
 const WHATSAPP = '5535998572602';
