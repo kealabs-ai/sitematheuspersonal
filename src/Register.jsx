@@ -4,6 +4,7 @@ import { ArrowLeft, User } from 'lucide-react';
 import ProgressIndicator from './ProgressIndicator';
 import api from './services/api';
 import { friendlyError } from './utils/friendlyError';
+import { Footer } from './App';
 
 const COUNTRY_CODES = [
   { code: '+55',  flag: '🇧🇷', name: 'Brasil' },
@@ -219,7 +220,7 @@ const Register = () => {
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg text-white">
+    <div className="bg-dark-bg text-white">
       <div className="container mx-auto px-4 py-20">
         <div className="max-w-3xl mx-auto">
           <ProgressIndicator currentStep={2} />
@@ -579,6 +580,7 @@ const Register = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

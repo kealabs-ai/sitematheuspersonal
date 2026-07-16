@@ -5,6 +5,7 @@ import ProgressIndicator from './ProgressIndicator';
 import { QRCodeSVG } from 'qrcode.react';
 import api from './services/api';
 import { friendlyError } from './utils/friendlyError';
+import { Footer } from './App';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -243,7 +244,7 @@ const Checkout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-dark-bg text-white">
+    <div className="bg-dark-bg text-white">
       <div className="container mx-auto px-4 py-20">
         <div className="max-w-5xl mx-auto">
           <ProgressIndicator currentStep={3} />
@@ -579,6 +580,7 @@ const Checkout = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

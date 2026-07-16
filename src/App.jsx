@@ -1025,7 +1025,7 @@ const ContactSection = () => {
   );
 };
 
-const Footer = () => {
+export const Footer = () => {
   return (
     <footer className="py-12 px-4 bg-black border-t border-dark-border">
       <div className="container mx-auto">
