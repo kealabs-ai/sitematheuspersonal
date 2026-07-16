@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Trash2, ShoppingCart, Tag } from 'lucide-react';
 import ProgressIndicator from './ProgressIndicator';
 import api from './services/api';
+import { Footer } from './App';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -112,7 +113,7 @@ const Cart = () => {
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg text-white">
+    <div className="bg-dark-bg text-white">
       <div className="container mx-auto px-4 py-20">
         <div className="max-w-4xl mx-auto">
           <ProgressIndicator currentStep={1} />
@@ -245,6 +246,7 @@ const Cart = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
