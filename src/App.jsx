@@ -775,6 +775,7 @@ const OnlineSection = () => {
 const TestimonialsSection = () => {
   const [testimonials, setTestimonials] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [current, setCurrent] = useState(0);
 
   useEffect(() => {
     fetch('https://srv1023256.hstgr.cloud/api/feedbacks')
@@ -783,6 +784,9 @@ const TestimonialsSection = () => {
       .catch(() => setTestimonials([]))
       .finally(() => setLoading(false));
   }, []);
+
+  const prev = () => setCurrent(i => (i - 1 + testimonials.length) % testimonials.length);
+  const next = () => setCurrent(i => (i + 1) % testimonials.length);
 
   return (
     <section id="depoimentos" className="py-20 px-4 bg-dark-card">
@@ -804,33 +808,53 @@ const TestimonialsSection = () => {
         ) : testimonials.length === 0 ? (
           <p className="text-center text-gray-500">Nenhum depoimento ainda.</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
-            {testimonials.map((t, index) => (
+          <div className="relative max-w-2xl mx-auto">
+            <AnimatePresence mode="wait">
               <motion.div
-                key={t.id ?? index}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: (index % 4) * 0.1 }}
-                className="bg-black border border-dark-border p-6 relative"
+                key={current}
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -40 }}
+                transition={{ duration: 0.3 }}
+                className="bg-black border border-dark-border p-8 relative"
               >
                 <div className="absolute top-4 right-4 text-6xl text-lime-green/20 font-serif">&ldquo;</div>
                 <div className="mb-4">
-                  <h4 className="text-xl font-bold text-white">{t.name}</h4>
-                  {t.age && <p className="text-sm text-gray-500">{t.age} anos</p>}
-                  {t.city && <p className="text-gray-500 text-xs">{t.city}</p>}
-                  {t.title && <p className="text-lime-green text-sm font-semibold mt-1">{t.title}</p>}
+                  <h4 className="text-xl font-bold text-white">{testimonials[current].name}</h4>
+                  {testimonials[current].age && <p className="text-sm text-gray-500">{testimonials[current].age} anos</p>}
+                  {testimonials[current].city && <p className="text-gray-500 text-xs">{testimonials[current].city}</p>}
+                  {testimonials[current].title && <p className="text-lime-green text-sm font-semibold mt-1">{testimonials[current].title}</p>}
                 </div>
                 <p className="text-gray-300 text-sm leading-relaxed mb-4 italic">
-                  &ldquo;{t.testimonial}&rdquo;
+                  &ldquo;{testimonials[current].testimonial}&rdquo;
                 </p>
                 <div className="flex gap-1">
-                  {[...Array(Number(t.rating) || 5)].map((_, i) => (
+                  {[...Array(Number(testimonials[current].rating) || 5)].map((_, i) => (
                     <span key={i} className="text-lime-green text-lg">&#9733;</span>
                   ))}
                 </div>
               </motion.div>
-            ))}
+            </AnimatePresence>
+
+            <div className="flex items-center justify-between mt-6">
+              <button onClick={prev} className="text-gray-400 hover:text-lime-green transition-colors p-2">
+                <ChevronLeft size={28} />
+              </button>
+              <div className="flex gap-2">
+                {testimonials.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrent(i)}
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      i === current ? 'bg-lime-green scale-125' : 'bg-gray-600 hover:bg-gray-400'
+                    }`}
+                  />
+                ))}
+              </div>
+              <button onClick={next} className="text-gray-400 hover:text-lime-green transition-colors p-2">
+                <ChevronRight size={28} />
+              </button>
+            </div>
           </div>
         )}
       </div>
