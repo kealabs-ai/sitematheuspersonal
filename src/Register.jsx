@@ -471,10 +471,9 @@ const Register = () => {
                       type="text"
                       name="username"
                       value={formData.username}
-                      onChange={handleChange}
-                      required
-                      className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
-                      placeholder={formData.email || 'seu@email.com'}
+                      readOnly
+                      className="w-full p-4 bg-black border border-dark-border text-gray-400 cursor-not-allowed"
+                      placeholder="seu@email.com"
                     />
                   </div>
 
