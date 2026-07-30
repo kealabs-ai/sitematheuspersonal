@@ -134,7 +134,7 @@ const Header = () => {
 
 const HeroSection = () => {
   return (
-    <section id="início" className="min-h-screen flex items-center justify-center relative overflow-hidden px-4 pt-24">
+    <section id="início" className="min-h-screen flex items-center justify-center relative overflow-hidden px-4 pt-24 scroll-mt-20">
       <div className="absolute inset-0 bg-gradient-to-br from-black via-dark-bg to-black opacity-90"></div>
       <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?fit=crop&w=1950&q=80')] bg-cover bg-center opacity-20"></div>
       
@@ -173,7 +173,7 @@ const HeroSection = () => {
 
 const AboutSection = () => {
   return (
-    <section id="sobre" className="py-20 px-4 bg-dark-card">
+    <section id="sobre" className="py-20 px-4 bg-dark-card scroll-mt-20">
       <div className="container mx-auto max-w-6xl">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <motion.div
@@ -346,7 +346,7 @@ const ServicesSection = () => {
   const [selected, setSelected] = useState(null);
 
   return (
-    <section id="serviços" className="py-20 px-4">
+    <section id="serviços" className="py-20 px-4 scroll-mt-20">
       <div className="container mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -399,7 +399,7 @@ const personalPlans = [
 
 const PersonalSection = () => {
   return (
-    <section id="personal" className="py-20 px-4">
+    <section id="personal" className="py-20 px-4 scroll-mt-20">
       <div className="container mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -597,7 +597,7 @@ const PricingSection = () => {
   };
 
   return (
-    <section id="consultoria" className="py-20 px-4 bg-dark-card">
+    <section id="consultoria" className="py-20 px-4 bg-dark-card scroll-mt-20">
       <div className="container mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -715,7 +715,7 @@ const OnlineSection = () => {
   ];
 
   return (
-    <section id="beneficios" className="py-20 px-4">
+    <section id="beneficios" className="py-20 px-4 scroll-mt-20">
       <div className="container mx-auto max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -786,7 +786,7 @@ const TestimonialsSection = () => {
   const next = () => setCurrent(i => (i + 1) % testimonials.length);
 
   return (
-    <section id="depoimentos" className="py-20 px-4 bg-dark-card">
+    <section id="depoimentos" className="py-20 px-4 bg-dark-card scroll-mt-20">
       <div className="container mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -886,7 +886,7 @@ const ResultsSection = () => {
   }, [lightbox]);
 
   return (
-    <section id="resultados" className="py-20 px-4">
+    <section id="resultados" className="py-20 px-4 scroll-mt-20">
       <div className="container mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -996,7 +996,7 @@ const ResultsSection = () => {
 
 const ContactSection = () => {
   return (
-    <section id="contato" className="py-20 px-4 bg-dark-card">
+    <section id="contato" className="py-20 px-4 bg-dark-card scroll-mt-20">
       <div className="container mx-auto max-w-3xl">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
