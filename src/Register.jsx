@@ -1,0 +1,588 @@
+import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { ArrowLeft, User } from 'lucide-react';
+import ProgressIndicator from './ProgressIndicator';
+import api from './services/api';
+import { friendlyError } from './utils/friendlyError';
+import { Footer } from './App';
+
+const COUNTRY_CODES = [
+  { code: '+55',  flag: '🇧🇷', name: 'Brasil' },
+  { code: '+1',   flag: '🇺🇸', name: 'EUA/Canadá' },
+  { code: '+351', flag: '🇵🇹', name: 'Portugal' },
+  { code: '+54',  flag: '🇦🇷', name: 'Argentina' },
+  { code: '+56',  flag: '🇨🇱', name: 'Chile' },
+  { code: '+57',  flag: '🇨🇴', name: 'Colômbia' },
+  { code: '+52',  flag: '🇲🇽', name: 'México' },
+  { code: '+598', flag: '🇺🇾', name: 'Uruguai' },
+  { code: '+595', flag: '🇵🇾', name: 'Paraguai' },
+  { code: '+51',  flag: '🇵🇪', name: 'Peru' },
+  { code: '+58',  flag: '🇻🇪', name: 'Venezuela' },
+  { code: '+593', flag: '🇪🇨', name: 'Equador' },
+  { code: '+591', flag: '🇧🇴', name: 'Bolívia' },
+  { code: '+44',  flag: '🇬🇧', name: 'Reino Unido' },
+  { code: '+49',  flag: '🇩🇪', name: 'Alemanha' },
+  { code: '+33',  flag: '🇫🇷', name: 'França' },
+  { code: '+34',  flag: '🇪🇸', name: 'Espanha' },
+  { code: '+39',  flag: '🇮🇹', name: 'Itália' },
+  { code: '+81',  flag: '🇯🇵', name: 'Japão' },
+  { code: '+86',  flag: '🇨🇳', name: 'China' },
+  { code: '+61',  flag: '🇦🇺', name: 'Austrália' },
+];
+
+const validateCPF = (cpf) => {
+  const nums = cpf.replace(/\D/g, '');
+  if (nums.length !== 11 || /^(\d)\1{10}$/.test(nums)) return false;
+  let sum = 0;
+  for (let i = 0; i < 9; i++) sum += parseInt(nums[i]) * (10 - i);
+  let rest = (sum * 10) % 11;
+  if (rest === 10 || rest === 11) rest = 0;
+  if (rest !== parseInt(nums[9])) return false;
+  sum = 0;
+  for (let i = 0; i < 10; i++) sum += parseInt(nums[i]) * (11 - i);
+  rest = (sum * 10) % 11;
+  if (rest === 10 || rest === 11) rest = 0;
+  return rest === parseInt(nums[10]);
+};
+
+const Register = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const plan = location.state?.plan;
+  const coupon = location.state?.coupon;
+  const discountedTotal = location.state?.total;
+
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    cpf: '',
+    birth_date: '',
+    username: '',
+    password: '',
+    confirmPassword: '',
+    countryCode: '+55',
+    cep: '',
+    address: '',
+    number: '',
+    complement: '',
+    neighborhood: '',
+    city: '',
+    state: '',
+  });
+
+  const [cepLoading, setCepLoading] = useState(false);
+
+  const parsePlanPrice = (price) => {
+    if (typeof price === 'number') return price;
+    return parseFloat(String(price).replace(/\./g, '').replace(',', '.'));
+  };
+
+  const getFrequencyLabel = () => {
+    const months = plan?.months || 1;
+    if (months === 1) return 'Mensal';
+    if (months === 3) return '3 Meses';
+    if (months === 6) return '6 Meses';
+    if (months === 12) return '12 Meses (Anual)';
+    return `${months} Meses`;
+  };
+
+  const calculatePlanTotal = () => {
+    const priceValue = parsePlanPrice(plan?.price);
+    const months = plan?.months || 1;
+    return priceValue * months;
+  };
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+
+
+  const handleChange = (e) => {
+    let value = e.target.value;
+    const name = e.target.name;
+
+    if (name === 'phone') {
+      value = value.replace(/\D/g, '');
+      if (formData.countryCode === '+55') {
+        if (value.length <= 11) {
+          value = value.replace(/(\d{2})(\d)/, '($1) $2');
+          value = value.replace(/(\d{5})(\d{1,4})$/, '$1-$2');
+        }
+      }
+    }
+
+    if (name === 'cep') {
+      value = value.replace(/\D/g, '');
+      if (value.length <= 8) {
+        value = value.replace(/(\d{5})(\d)/, '$1-$2');
+      }
+      setFormData(prev => ({ ...prev, cep: value }));
+      if (value.replace(/\D/g, '').length === 8) {
+        setCepLoading(true);
+        fetch(`https://viacep.com.br/ws/${value.replace(/\D/g, '')}/json/`)
+          .then(r => r.json())
+          .then(d => {
+            if (!d.erro) {
+              setFormData(prev => ({
+                ...prev,
+                address: d.logradouro || '',
+                neighborhood: d.bairro || '',
+                city: d.localidade || '',
+                state: d.uf || '',
+              }));
+            }
+          })
+          .finally(() => setCepLoading(false));
+      }
+      return;
+    }
+
+    if (name === 'email') {
+      setFormData(prev => ({ ...prev, email: value, username: value }));
+      return;
+    }
+
+    if (name === 'cpf') {
+      value = value.replace(/\D/g, '').slice(0, 11);
+      value = value.replace(/(\d{3})(\d)/, '$1.$2');
+      value = value.replace(/(\d{3}\.\d{3})(\d)/, '$1.$2');
+      value = value.replace(/(\d{3}\.\d{3}\.\d{3})(\d{1,2})$/, '$1-$2');
+    }
+
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (formData.password !== formData.confirmPassword) {
+      setError('As senhas não coincidem!');
+      return;
+    }
+    if (!validateCPF(formData.cpf)) {
+      setError('CPF inválido. Verifique o número digitado.');
+      return;
+    }
+    
+    setLoading(true);
+    setError('');
+
+    try {
+      const planName = plan?.name ?? null;
+
+      const userBody = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone.replace(/\D/g, ''),
+        cpf: formData.cpf,
+        birth_date: formData.birth_date || null,
+        cep: formData.cep,
+        address: formData.address,
+        number: formData.number,
+        complement: formData.complement,
+        neighborhood: formData.neighborhood,
+        city: formData.city,
+        state: formData.state,
+        country_code: formData.countryCode,
+        username: formData.username,
+        password: formData.password,
+        plan: planName,
+        role: 'student',
+      };
+
+      const result = await api.createUser(userBody);
+
+      const userId = result?.userId || result?.id;
+      const isSuccess = result?.success === true || result?.status === 'success';
+
+      if (isSuccess && userId) {
+        navigate('/checkout', {
+          state: {
+            plan,
+            userData: { ...userBody, userId },
+            coupon,
+            total: discountedTotal
+          }
+        });
+      } else {
+        setError(friendlyError(result));
+      }
+    } catch (err) {
+      setError('Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!plan) {
+    navigate('/');
+    return null;
+  }
+
+  return (
+    <div className="bg-dark-bg text-white">
+      <div className="container mx-auto px-4 py-20">
+        <div className="max-w-3xl mx-auto">
+          <ProgressIndicator currentStep={2} />
+          
+          <button
+            onClick={() => navigate('/cart', { state: { plan } })}
+            className="flex items-center gap-2 text-lime-green hover:text-neon-green mb-8 transition-colors"
+          >
+            <ArrowLeft size={20} />
+            Voltar ao Carrinho
+          </button>
+
+          <h1 className="text-5xl font-bebas uppercase mb-4">
+            <span className="text-lime-green">Cadastro</span> de Usuário
+          </h1>
+
+
+
+          <div className="bg-dark-card border border-dark-border p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <User size={32} className="text-lime-green" />
+              <h2 className="text-2xl font-bebas uppercase text-lime-green">
+                Informações Pessoais
+              </h2>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                  Nome Completo *
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
+                  placeholder="Digite seu nome completo"
+                />
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                    E-mail *
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
+                    placeholder="seu@email.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                    CPF *
+                  </label>
+                  <input
+                    type="text"
+                    name="cpf"
+                    value={formData.cpf}
+                    onChange={handleChange}
+                    required
+                    maxLength="14"
+                    className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
+                    placeholder="000.000.000-00"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                  Data de Nascimento
+                </label>
+                <input
+                  type="date"
+                  name="birth_date"
+                  value={formData.birth_date}
+                  onChange={handleChange}
+                  className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                  Telefone/WhatsApp *
+                </label>
+                <div className="flex gap-2">
+                  <select
+                    name="countryCode"
+                    value={formData.countryCode}
+                    onChange={handleChange}
+                    className="w-44 p-4 bg-black border border-dark-border text-white text-sm focus:outline-none focus:border-lime-green transition-colors"
+                  >
+                    {COUNTRY_CODES.map(({ code, flag, name }) => (
+                      <option key={code} value={code}>{flag} {code} {name}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    required
+                    maxLength={formData.countryCode === '+55' ? 15 : 20}
+                    className="flex-1 p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
+                    placeholder={formData.countryCode === '+55' ? '(00) 00000-0000' : '000000000'}
+                  />
+                </div>
+              </div>
+
+              <div className="border-t border-dark-border pt-6 mt-6">
+                <h3 className="text-xl font-bebas uppercase mb-4 text-lime-green">
+                  Endereço
+                </h3>
+
+                <div className="space-y-6">
+                  <div className="grid md:grid-cols-3 gap-6">
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                        CEP *
+                      </label>
+                      <input
+                        type="text"
+                        name="cep"
+                        value={formData.cep}
+                        onChange={handleChange}
+                        required
+                        maxLength="9"
+                        className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
+                        placeholder="00000-000"
+                      />
+                      {cepLoading && <p className="text-xs text-gray-400 mt-1">Buscando endereço...</p>}
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                        Endereço *
+                      </label>
+                      <input
+                        type="text"
+                        name="address"
+                        value={formData.address}
+                        onChange={handleChange}
+                        required
+                        className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
+                        placeholder="Rua, Avenida..."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                        Número *
+                      </label>
+                      <input
+                        type="text"
+                        name="number"
+                        value={formData.number}
+                        onChange={handleChange}
+                        required
+                        className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
+                        placeholder="123"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                        Complemento
+                      </label>
+                      <input
+                        type="text"
+                        name="complement"
+                        value={formData.complement}
+                        onChange={handleChange}
+                        className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
+                        placeholder="Apto, Bloco..."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-3 gap-6">
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                        Bairro *
+                      </label>
+                      <input
+                        type="text"
+                        name="neighborhood"
+                        value={formData.neighborhood}
+                        onChange={handleChange}
+                        required
+                        className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
+                        placeholder="Bairro"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                        Cidade *
+                      </label>
+                      <input
+                        type="text"
+                        name="city"
+                        value={formData.city}
+                        onChange={handleChange}
+                        required
+                        className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
+                        placeholder="Cidade"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                        Estado *
+                      </label>
+                      <input
+                        type="text"
+                        name="state"
+                        value={formData.state}
+                        onChange={handleChange}
+                        required
+                        maxLength="2"
+                        className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
+                        placeholder="SP"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-dark-border pt-6 mt-6">
+                <h3 className="text-xl font-bebas uppercase mb-4 text-lime-green">
+                  Dados de Acesso
+                </h3>
+                
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                      E-mail *
+                    </label>
+                    <input
+                      type="text"
+                      name="username"
+                      value={formData.username}
+                      readOnly
+                      className="w-full p-4 bg-black border border-dark-border text-gray-400 cursor-not-allowed"
+                      placeholder="seu@email.com"
+                    />
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                        Senha *
+                      </label>
+                      <input
+                        type="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                        minLength="6"
+                        autoComplete="new-password"
+                        className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
+                        placeholder="Mínimo 6 caracteres"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                        Confirmar Senha *
+                      </label>
+                      <input
+                        type="password"
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        required
+                        minLength="6"
+                        autoComplete="new-password"
+                        className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
+                        placeholder="Repita a senha"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-black border border-lime-green/30 p-4 text-sm text-gray-300">
+                <p>* Campos obrigatórios</p>
+              </div>
+
+              {error && (
+                 <div className="bg-red-500/10 border border-red-500 p-4 text-red-400 text-sm">
+                  {error}
+                  {error.includes('Faça o login') && (
+                    <a href="/login" className="block mt-2 text-lime-green font-bold underline hover:text-neon-green">
+                      Ir para o Login →
+                    </a>
+                  )}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-lime-green text-black font-bold py-4 uppercase hover:bg-neon-green transition-all text-lg disabled:opacity-50"
+              >
+                {loading ? 'Criando conta...' : 'Continuar para Pagamento'}
+              </button>
+            </form>
+          </div>
+
+          {/* Resumo do Plano */}
+          <div className="mt-6 bg-dark-card border border-dark-border p-6">
+            <h3 className="text-xl font-bebas uppercase mb-4 text-lime-green">
+              Plano Selecionado
+            </h3>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Plano {plan.name}</span>
+                <span className="text-white font-bold">R$ {parsePlanPrice(plan.price).toFixed(2).replace('.', ',')}/mês</span>
+              </div>
+              <div className="flex justify-between text-sm text-gray-400">
+                <span>Frequência:</span>
+                <span className="text-white font-semibold">{getFrequencyLabel()}</span>
+              </div>
+              
+              <div className="border-t border-dark-border pt-3 mt-3">
+                <div className="flex justify-between text-gray-400 mb-2">
+                  <span>Subtotal:</span>
+                  <span className="text-white">{(plan?.months || 1)} × R$ {parsePlanPrice(plan.price).toFixed(2).replace('.', ',')} = R$ {calculatePlanTotal().toFixed(2).replace('.', ',')}</span>
+                </div>
+                
+                {coupon && discountedTotal && (
+                  <div className="flex justify-between text-lime-green mt-2">
+                    <span>Desconto ({coupon.code}):</span>
+                    <span>-R$ {(calculatePlanTotal() - discountedTotal).toFixed(2).replace('.', ',')}</span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="border-t border-dark-border pt-3 mt-3 flex justify-between items-center">
+                <span className="text-lg font-bebas uppercase">Total:</span>
+                <span className="text-2xl font-bebas text-lime-green">
+                  R$ {(discountedTotal || calculatePlanTotal()).toFixed(2).replace('.', ',')}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <Footer />
+    </div>
+  );
+};
+
+export default Register;

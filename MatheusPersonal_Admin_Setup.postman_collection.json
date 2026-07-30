@@ -1,0 +1,183 @@
+{
+  "info": {
+    "name": "Matheus Personal — Admin Setup",
+    "_postman_id": "mp-admin-setup-001",
+    "description": "Criação e gerenciamento do usuário administrador.\nBase URL: https://srv1023256.hstgr.cloud/api\n\nFluxo recomendado:\n1. Criar usuário admin (POST /admin/users/create)\n2. Fazer login (POST /auth/login)\n3. Usar o access_token nas demais requests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url",     "value": "https://srv1023256.hstgr.cloud/api", "type": "string" },
+    { "key": "access_token", "value": "", "type": "string" },
+    { "key": "admin_id",     "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "1. Criar Usuário Admin",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const res = pm.response.json();",
+              "if (res.id) {",
+              "  pm.collectionVariables.set('admin_id', res.id);",
+              "  console.log('Admin criado. ID:', res.id);",
+              "}",
+              "pm.test('Status 201', () => pm.response.to.have.status(201));",
+              "pm.test('Retornou ID', () => pm.expect(res.id).to.exist);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Matheus Castro\",\n  \"email\": \"admin@matheuspersonal.com.br\",\n  \"password\": \"Admin@2025!\",\n  \"phone\": \"(35) 99857-2602\",\n  \"role\": \"admin\",\n  \"plan\": \"DIAMANTE\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/admin/users/create",
+          "host": ["{{base_url}}"],
+          "path": ["admin", "users", "create"]
+        },
+        "description": "Cria o usuário administrador.\n\nSe a API não tiver este endpoint dedicado, use o endpoint de registro público e depois promova para admin via SQL (ver request alternativa abaixo)."
+      }
+    },
+    {
+      "name": "1b. [Alternativa] Registrar via endpoint público",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const res = pm.response.json();",
+              "if (res.id) pm.collectionVariables.set('admin_id', res.id);",
+              "pm.test('Criado com sucesso', () => pm.response.to.have.status(201));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Matheus Castro\",\n  \"email\": \"admin@matheuspersonal.com.br\",\n  \"password\": \"Admin@2025!\",\n  \"phone\": \"(35) 99857-2602\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/auth/register",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "register"]
+        },
+        "description": "Registra via endpoint público.\n\nApós criar, execute o SQL abaixo diretamente no banco para promover para admin:\n\nUPDATE users\nSET role = 'admin', plan = 'DIAMANTE'\nWHERE email = 'admin@matheuspersonal.com.br';"
+      }
+    },
+    {
+      "name": "2. Login Admin",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const res = pm.response.json();",
+              "if (res.access_token) {",
+              "  pm.collectionVariables.set('access_token', res.access_token);",
+              "  console.log('Token salvo:', res.access_token.substring(0, 30) + '...');",
+              "}",
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Recebeu access_token', () => pm.expect(res.access_token).to.exist);",
+              "pm.test('Role é admin', () => pm.expect(res.user.role).to.equal('admin'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@matheuspersonal.com.br\",\n  \"password\": \"Admin@2025!\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/auth/login",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "login"]
+        },
+        "description": "Faz login e salva automaticamente o access_token na variável da collection.\n\nResposta esperada:\n{\n  \"access_token\": \"<jwt>\",\n  \"refresh_token\": \"<token>\",\n  \"user\": {\n    \"id\": 1,\n    \"name\": \"Matheus Castro\",\n    \"role\": \"admin\"\n  }\n}"
+      }
+    },
+    {
+      "name": "3. Verificar Perfil Admin",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/aluno/users/me",
+          "host": ["{{base_url}}"],
+          "path": ["aluno", "users", "me"]
+        },
+        "description": "Confirma que o usuário logado tem role = 'admin'."
+      }
+    },
+    {
+      "name": "4. Promover Usuário Existente para Admin",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type",  "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{access_token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"admin\",\n  \"plan\": \"DIAMANTE\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/admin/users/{{admin_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["admin", "users", "{{admin_id}}"]
+        },
+        "description": "Promove um usuário existente para admin.\nSubstitua {{admin_id}} pelo ID do usuário ou use a variável salva automaticamente."
+      }
+    },
+    {
+      "name": "5. Listar Todos os Usuários (verificação)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/admin/users",
+          "host": ["{{base_url}}"],
+          "path": ["admin", "users"]
+        },
+        "description": "Lista todos os usuários. Confirma que o admin foi criado corretamente."
+      }
+    },
+    {
+      "name": "6. Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        },
+        "description": "Verifica se a API está online antes de qualquer operação."
+      }
+    }
+  ]
+}

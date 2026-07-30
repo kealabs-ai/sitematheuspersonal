@@ -1,0 +1,27 @@
+RewriteEngine On
+
+# Proxy para cada microserviço (HTTPS -> HTTP interno)
+RewriteRule ^service/users/(.*)$         http://srv1023256.hstgr.cloud:8001/$1 [P,L]
+RewriteRule ^service/subscriptions/(.*)$ http://srv1023256.hstgr.cloud:8002/$1 [P,L]
+RewriteRule ^service/orders/(.*)$        http://srv1023256.hstgr.cloud:8003/$1 [P,L]
+RewriteRule ^service/payments/(.*)$      http://srv1023256.hstgr.cloud:8004/$1 [P,L]
+RewriteRule ^service/coupons/(.*)$       http://srv1023256.hstgr.cloud:8005/$1 [P,L]
+RewriteRule ^service/leads/(.*)$         http://srv1023256.hstgr.cloud:8006/$1 [P,L]
+
+ProxyPreserveHost Off
+
+# CORS headers
+<IfModule mod_headers.c>
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
+</IfModule>
+
+# Responder preflight OPTIONS
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
+
+# SPA fallback - redireciona rotas do React para index.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(?!api/)(.*)$ /index.html [L,QSA]

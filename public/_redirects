@@ -1,0 +1,10 @@
+/bio        /bio.html   200
+/login      /index.html 200
+/cart       /index.html 200
+/register   /index.html 200
+/checkout   /index.html 200
+/confirmation /index.html 200
+/termos     /index.html 200
+/privacidade /index.html 200
+/feedbacks   /index.html 200
+/*          /index.html 200
