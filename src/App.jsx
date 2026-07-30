@@ -36,7 +36,7 @@ const Header = () => {
   }, []);
 
   return (
-    <header className={`fixed top-10 left-0 right-0 z-50 transition-all ${scrolled ? 'bg-black/95 backdrop-blur-lg shadow-lg' : 'bg-transparent'}`}>
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all ${scrolled ? 'bg-black/95 backdrop-blur-lg shadow-lg' : 'bg-transparent'}`}>
       <nav className="container mx-auto flex justify-between items-center p-4">
         <a href="#início"><img src={matheusLogo} alt="Matheus Personal" className="h-14 md:h-16 brightness-0 invert" /></a>
         
@@ -134,7 +134,7 @@ const Header = () => {
 
 const HeroSection = () => {
   return (
-    <section id="início" className="min-h-screen flex items-center justify-center relative overflow-hidden px-4 pt-20">
+    <section id="início" className="min-h-screen flex items-center justify-center relative overflow-hidden px-4 pt-24">
       <div className="absolute inset-0 bg-gradient-to-br from-black via-dark-bg to-black opacity-90"></div>
       <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?fit=crop&w=1950&q=80')] bg-cover bg-center opacity-20"></div>
       
