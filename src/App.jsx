@@ -72,7 +72,7 @@ const Header = () => {
           </li>
           <li>
             <a 
-              href="https://instagram.com/matheusc_personal" 
+              href={import.meta.env.VITE_INSTAGRAM_URL}
               target="_blank" 
               rel="noopener noreferrer"
               className="text-lime-green hover:text-neon-green transition-colors"
@@ -483,7 +483,7 @@ const pricingPlans = [
   },
 ];
 
-const WHATSAPP = '5535998572602';
+const WHATSAPP = import.meta.env.VITE_WHATSAPP;
 
 const planDetails = {
   BRONZE: {
@@ -778,7 +778,7 @@ const TestimonialsSection = () => {
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
-    fetch('https://srv1023256.hstgr.cloud/api/feedbacks')
+    fetch(`${import.meta.env.VITE_API_URL}/feedbacks`)
       .then(r => r.json())
       .then(data => setTestimonials(Array.isArray(data) ? data : (data?.feedbacks ?? [])))
       .catch(() => setTestimonials([]))
@@ -1012,7 +1012,7 @@ const ContactSection = () => {
           </h3>
           <p className="text-gray-400 text-lg mb-8">Entre em contato agora mesmo</p>
           <a 
-            href="https://wa.me/5535998572602" 
+            href={`https://wa.me/${import.meta.env.VITE_WHATSAPP}`}
             target="_blank" 
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-lime-green hover:text-neon-green transition-colors text-2xl font-bold"
@@ -1055,7 +1055,7 @@ export const Footer = () => {
             </ul>
             <div className="mt-4 space-y-2">
               <a 
-                href="https://instagram.com/matheusc_personal" 
+                href={import.meta.env.VITE_INSTAGRAM_URL}
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-lime-green hover:text-neon-green transition-colors text-sm"
@@ -1064,7 +1064,7 @@ export const Footer = () => {
               </a>
               <br />
               <a 
-                href="https://wa.me/5535998572602" 
+                href={`https://wa.me/${import.meta.env.VITE_WHATSAPP}`}
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-lime-green hover:text-neon-green transition-colors text-sm"

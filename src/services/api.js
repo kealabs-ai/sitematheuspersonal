@@ -1,4 +1,5 @@
-const BASE = 'https://srv1023256.hstgr.cloud/api';
+const BASE = import.meta.env.VITE_API_URL;
+if (!BASE) throw new Error('[api] VITE_API_URL não definida. Configure o arquivo .env');
 
 const fetchWithTimeout = async (url, options = {}, timeout = 30000) => {
   const controller = new AbortController();
@@ -26,19 +27,10 @@ const api = {
   // Users
   async createUser(userData) {
     try {
-      // Monta o body sem a senha para log
-      const logBody = { ...userData };
-      if (logBody.password) logBody.password = '[HIDDEN]';
-      console.log('Enviando requisição para:', `${BASE}/users`);
-      console.log('Body enviado:', JSON.stringify(logBody, null, 2));
       const res = await post(`${BASE}/users`, userData);
       const data = await res.json();
-      if (!res.ok) {
-        console.error('Resposta de erro do backend:', data);
-      }
       return data;
     } catch (error) {
-      console.error('Erro ao criar usuário:', error);
       return { success: false, message: 'Erro de conexão' };
     }
   },

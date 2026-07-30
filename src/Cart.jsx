@@ -16,12 +16,6 @@ const Cart = () => {
   const [couponError, setCouponError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const coupons = {
-    'PRIMEIRA': { discount: 10, type: 'percent' },
-    'BEM-VINDO': { discount: 15, type: 'percent' },
-    'PROMO50': { discount: 50, type: 'fixed' }
-  };
-
   const removeItem = (index) => {
     setCartItems(cartItems.filter((_, i) => i !== index));
   };
@@ -79,7 +73,6 @@ const Cart = () => {
   };
 
   const handleCheckout = () => {
-    console.log('%c[JORNADA 0/4] Cart → Register, plano selecionado', 'color:#38bdf8;font-weight:bold', cartItems[0]);
     navigate('/register', { 
       state: { 
         plan: cartItems[0],
@@ -189,9 +182,6 @@ const Cart = () => {
                 {couponError && (
                   <p className="text-red-500 text-sm mt-2">{couponError}</p>
                 )}
-                <div className="mt-3 text-xs text-gray-500">
-                  <p>Cupons disponíveis: PRIMEIRA (10% off), BEM-VINDO (15% off), PROMO50 (R$50 off)</p>
-                </div>
               </div>
             ) : (
               <div className="bg-lime-green/10 border border-lime-green/30 p-4 flex justify-between items-center">

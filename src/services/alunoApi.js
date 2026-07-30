@@ -1,10 +1,9 @@
-const BASE = import.meta.env.DEV
-  ? '/api'
-  : 'https://srv1023256.hstgr.cloud/api';
+const BASE = import.meta.env.VITE_API_URL;
+if (!BASE) throw new Error('[alunoApi] VITE_API_URL não definida. Configure o arquivo .env');
 
 // --- Helpers ---
 
-const getToken = () => localStorage.getItem('access_token');
+const getToken = () => sessionStorage.getItem('access_token');
 
 const safeJson = async (r) => {
   const text = await r.text();
@@ -30,19 +29,19 @@ const postPublic = (url, body = {}) => fetch(url, {
 // --- Sessão ---
 
 export const saveSession = (data) => {
-  localStorage.setItem('access_token', data.access_token);
-  localStorage.setItem('refresh_token', data.refresh_token);
-  localStorage.setItem('user', JSON.stringify(data.user));
+  sessionStorage.setItem('access_token', data.access_token);
+  sessionStorage.setItem('refresh_token', data.refresh_token);
+  sessionStorage.setItem('user', JSON.stringify({ id: data.user?.id, role: data.user?.role, name: data.user?.name }));
 };
 
 export const clearSession = () => {
-  localStorage.removeItem('access_token');
-  localStorage.removeItem('refresh_token');
-  localStorage.removeItem('user');
+  sessionStorage.removeItem('access_token');
+  sessionStorage.removeItem('refresh_token');
+  sessionStorage.removeItem('user');
 };
 
 export const getUser = () => {
-  try { return JSON.parse(localStorage.getItem('user')); } catch { return null; }
+  try { return JSON.parse(sessionStorage.getItem('user')); } catch { return null; }
 };
 
 // ─────────────────────────────────────────────
