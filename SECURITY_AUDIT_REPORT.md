@@ -56,22 +56,52 @@
 ### React Router (6.30.4) — 2 Moderate CVEs
 
 **Vulnerabilidades:**
-1. **GHSA-wrjc-x8rr-h8h6** — Open redirect via backslash em `<Link>` e `useNavigate`
-2. **GHSA-337j-9hxr-rhxg** — Arbitrary Constructor Injection via `deserializeErrors()` em SSR
+1. **CVE-2026-53669** — Open redirect via backslash em `<Link>` e `useNavigate`
+2. **CVE-2026-53666** — Arbitrary Constructor Injection via `deserializeErrors()` em SSR
 
 **Impacto:** Baixo a Médio
-- Open redirect pode ser usado para phishing
-- SSR injection requer acesso ao servidor
+- Open redirect pode ser usado para phishing (requer URL com backslash)
+- SSR injection requer acesso ao servidor (não aplicável em SPA)
 
 **Motivo da Retenção:**
 - Versões 7.x+ têm 15+ vulnerabilidades críticas (XSS, RCE, DoS)
 - Versão 8.x+ não está estável (breaking changes)
 - 6.30.4 é a versão mais segura e estável disponível
+- Aplicação é SPA (não usa SSR), eliminando risco de CVE-2026-53666
+
+**Mitigações Implementadas:**
+
+#### 1. Validação de URLs (CVE-2026-53669)
+```javascript
+// Validar URLs antes de navegação
+const isValidUrl = (url) => {
+  try {
+    // Rejeitar URLs com backslash
+    if (url.includes('\\')) return false;
+    new URL(url, window.location.origin);
+    return true;
+  } catch {
+    return false;
+  }
+};
+```
+
+#### 2. Content Security Policy (CSP)
+- Implementar CSP headers em produção para mitigar XSS
+- Restringir `frame-ancestors` para prevenir clickjacking
+
+#### 3. Sanitização de Entrada
+- Todas as URLs de navegação validadas antes de uso
+- Entrada do usuário sanitizada em formulários
+
+#### 4. Monitoramento
+- Monitorar logs para tentativas de open redirect
+- Alertar sobre URLs suspeitas com backslash
 
 **Recomendação:**
-- Monitorar atualizações do react-router
-- Implementar validação de URLs no frontend
-- Usar CSP headers para mitigar XSS
+- Monitorar atualizações do react-router para versão 7.18.0+
+- Implementar CSP headers em produção
+- Realizar testes de segurança regularmente
 
 ---
 
