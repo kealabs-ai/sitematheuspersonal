@@ -9,9 +9,6 @@ import matheusPhoto from './assets/matheus_personal.jpeg';
 const App = () => {
   return (
     <div className="bg-dark-bg text-white font-inter">
-      <div className="bg-gradient-to-r from-lime-green to-neon-green text-black text-center py-2 px-4 text-sm md:text-base font-bold">
-        🚧 Site em Desenvolvimento 🚧
-      </div>
       <Header />
       <main>
         <HeroSection />
