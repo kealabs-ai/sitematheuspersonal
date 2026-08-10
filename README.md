@@ -41,11 +41,11 @@ npm install
 
 Criar `api/.env.development`:
 ```env
-DB_HOST=srv1078.hstgr.io
+DB_HOST=<db_host>
 DB_PORT=3306
-DB_USER=u549746795_matheusmp
-DB_PASSWORD=MP@2026!Passos
-DB_NAME=u549746795_mp
+DB_USER=<db_user>
+DB_PASSWORD=<db_password>
+DB_NAME=<db_name>
 PORT=3001
 NODE_ENV=development
 ```
@@ -171,22 +171,22 @@ npm run check-deploy # Verifica config antes do deploy
 
 ### Desenvolvimento (`api/.env.development`)
 ```env
-DB_HOST=srv1078.hstgr.io
+DB_HOST=<db_host>
 DB_PORT=3306
-DB_USER=u549746795_matheusmp
-DB_PASSWORD=MP@2026!Passos
-DB_NAME=u549746795_mp
+DB_USER=<db_user>
+DB_PASSWORD=<db_password>
+DB_NAME=<db_name>
 PORT=3001
 NODE_ENV=development
 ```
 
 ### Produção (`api/.env`)
 ```env
-DB_HOST=srv1078.hstgr.io
+DB_HOST=<db_host>
 DB_PORT=3306
-DB_USER=u549746795_matheusmp
-DB_PASSWORD=MP@2026!Passos
-DB_NAME=u549746795_mp
+DB_USER=<db_user>
+DB_PASSWORD=<db_password>
+DB_NAME=<db_name>
 NODE_ENV=production
 # PORT não é definido - Hostinger atribui automaticamente
 ```
@@ -257,7 +257,7 @@ git push origin main  # ← Deploy automático!
 cat api/.env
 
 # Testar conexão
-mysql -h srv1078.hstgr.io -u u549746795_matheusmp -p
+mysql -h <db_host> -u <db_user> -p
 ```
 
 ### Build falha
@@ -272,7 +272,7 @@ cd api && npm install
 ```bash
 # Verificar logs no painel Hostinger
 # Ou via SSH:
-ssh u549746795@srv1078.hstgr.io -p 65002
+ssh <ssh_user>@<ssh_host> -p <ssh_port>
 cd ~/public_html
 tail -f logs/*.log
 ```
