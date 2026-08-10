@@ -34,16 +34,6 @@ const Checkout = () => {
   const [pixCode, setPixCode] = useState('');
   const [copied, setCopied] = useState(false);
 
-  // Debug: Log do cupom recebido
-  useEffect(() => {
-    console.log('%c[CHECKOUT] Dados recebidos:', 'color:#a78bfa;font-weight:bold', {
-      plan,
-      coupon,
-      discountedTotal,
-      total: location.state?.total
-    });
-  }, [plan, coupon, location.state]);
-
   const handleChange = (e) => {
     let value = e.target.value;
     const name = e.target.name;
@@ -100,9 +90,6 @@ const Checkout = () => {
     setLoading(true);
     setError(null);
 
-    console.log('%c[JORNADA 3/4] Plano recebido no Checkout', 'color:#a78bfa;font-weight:bold', plan);
-    console.log('%c[JORNADA 3/4] userData recebido no Checkout', 'color:#a78bfa;font-weight:bold', { ...userData, password: '[HIDDEN]' });
-
     try {
       const planPrice = totalPrice;
       const cpfClean = (userData.cpf || '').replace(/\D/g, '');
@@ -126,10 +113,7 @@ const Checkout = () => {
         }]
       };
 
-      console.log('%c[JORNADA 3/4] POST /orders body (com desconto explícito)', 'color:#a78bfa;font-weight:bold', orderData);
-
       const orderResult = await api.createOrder(orderData);
-      console.log('%c[JORNADA 3/4] POST /orders response', 'color:#a78bfa;font-weight:bold', orderResult);
 
       const orderId =
         orderResult?.id_order ||
@@ -174,16 +158,13 @@ const Checkout = () => {
         }),
       };
 
-      console.log('%c[JORNADA 3/4] POST /asaas/checkout body (com desconto explícito)', 'color:#a78bfa;font-weight:bold', { ...checkoutBody, card_number: checkoutBody.card_number ? '[HIDDEN]' : undefined, card_cvv: checkoutBody.card_cvv ? '[HIDDEN]' : undefined });
-
-      const checkoutRes = await fetch('https://srv1023256.hstgr.cloud/api/asaas/checkout', {
+      const checkoutRes = await fetch(`${import.meta.env.VITE_API_URL}/asaas/checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(checkoutBody),
       });
 
       const checkoutData = await checkoutRes.json();
-      console.log('%c[JORNADA 3/4] POST /asaas/checkout response', 'color:#a78bfa;font-weight:bold', checkoutData);
 
       if (!checkoutRes.ok) {
         setError(friendlyError(checkoutData));
@@ -197,8 +178,6 @@ const Checkout = () => {
         return;
       }
 
-      // 4. Cartão: navega para confirmação
-      console.log('%c[JORNADA 4/4] Navegando para /confirmation', 'color:#facc15;font-weight:bold', { plan, orderId, status: checkoutData?.status });
       navigate('/confirmation', {
         state: {
           plan,
