@@ -142,9 +142,9 @@ MatheusPersonal/
 
 ## 🌐 URLs de Produção
 
-- **Frontend:** https://matheuspersonal.com.br
-- **API:** https://matheuspersonal.com.br/api
-- **Health Check:** https://matheuspersonal.com.br/api/health
+- **Frontend:** https://<seu_dominio>
+- **API:** https://<seu_dominio>/api
+- **Health Check:** https://<seu_dominio>/api/health
 
 ---
 
@@ -202,7 +202,7 @@ curl http://localhost:3001/api/health
 
 ### Testar API em produção:
 ```bash
-curl https://matheuspersonal.com.br/api/health
+curl https://<seu_dominio>/api/health
 ```
 
 ---
@@ -245,7 +245,7 @@ git push origin main  # ← Deploy automático!
 
 5. **Verificar deploy:**
 - Painel Hostinger → Git → Status
-- Testar: https://matheuspersonal.com.br
+- Testar: https://<seu_dominio>
 
 ---
 
