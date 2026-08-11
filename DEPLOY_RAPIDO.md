@@ -4,11 +4,11 @@
 
 Criar `api/.env`:
 ```env
-DB_HOST=srv1078.hstgr.io
+DB_HOST=<db_host>
 DB_PORT=3306
-DB_USER=u549746795_matheusmp
-DB_PASSWORD=MP@2026!Passos
-DB_NAME=u549746795_mp
+DB_USER=<db_user>
+DB_PASSWORD=<db_password>
+DB_NAME=<db_name>
 NODE_ENV=production
 ```
 
@@ -36,7 +36,7 @@ Painel → Avançado → Node.js → Criar Aplicação
 
 Versão: 18.x ou 20.x
 Modo: Production
-Diretório: /home/u549746795/public_html
+Diretório: /home/<ssh_user>/public_html
 Entry point: api/server.js
 Nome: matheus-personal
 ```
@@ -47,8 +47,8 @@ Clique **Criar** e aguarde 3-5 min ⏳
 
 ## 4️⃣ TESTAR
 
-✅ API: https://matheuspersonal.com.br/api/health
-✅ Site: https://matheuspersonal.com.br
+✅ API: https://<seu_dominio>/api/health
+✅ Site: https://<seu_dominio>
 
 ---
 

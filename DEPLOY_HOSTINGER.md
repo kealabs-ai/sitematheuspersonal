@@ -16,11 +16,11 @@ npm run build
 ### 2. Preparar arquivos da API
 Certifique-se de que o arquivo `.env.production` está configurado:
 ```env
-DB_HOST=srv1078.hstgr.io
+DB_HOST=<db_host>
 DB_PORT=3306
-DB_USER=u549746795_matheusmp
-DB_PASSWORD=MP@2026!Passos
-DB_NAME=u549746795_mp
+DB_USER=<db_user>
+DB_PASSWORD=<db_password>
+DB_NAME=<db_name>
 NODE_ENV=production
 ```
 
@@ -54,7 +54,7 @@ NODE_ENV=production
 2. Clique em **Criar Aplicação**
 3. Configure:
    - **Versão do Node.js:** 18.x ou 20.x
-   - **Diretório da Aplicação:** `/home/u549746795/public_html/api`
+   - **Diretório da Aplicação:** `/home/<ssh_user>/public_html/api`
    - **Arquivo de Entrada:** `server.js`
    - **Modo:** Production
    - **Porta:** (deixe em branco - será atribuída automaticamente)
@@ -65,7 +65,7 @@ NODE_ENV=production
 
 ```bash
 # Conectar via SSH
-ssh u549746795@srv1078.hstgr.io
+ssh <ssh_user>@<ssh_host>
 
 # Navegar até a pasta da API
 cd ~/public_html/api
@@ -142,7 +142,7 @@ pm2 restart matheus-personal-api
 ### Erro de conexão com banco
 ```bash
 # Testar conexão MySQL
-mysql -h srv1078.hstgr.io -u u549746795_matheusmp -p
+mysql -h <db_host> -u <db_user> -p
 
 # Verificar .env
 cat ~/public_html/api/.env
@@ -198,7 +198,7 @@ pm2 restart matheus-personal-api
 ## 📝 Estrutura Final no Servidor
 
 ```
-/home/u549746795/
+/home/<ssh_user>/
 └── public_html/
     ├── index.html              # Frontend
     ├── assets/                 # Assets do frontend

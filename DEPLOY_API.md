@@ -50,11 +50,11 @@ npm install --production
 ### 5. Configurar Variáveis de Ambiente
 Criar arquivo `.env` em `public_html/api/`:
 ```
-DB_HOST=srv1078.hstgr.io
+DB_HOST=<db_host>
 DB_PORT=3306
-DB_USER=u549746795_matheusmp
-DB_PASSWORD=MP@2026!Passos
-DB_NAME=u549746795_mp
+DB_USER=<db_user>
+DB_PASSWORD=<db_password>
+DB_NAME=<db_name>
 PORT=3001
 NODE_ENV=production
 ```
@@ -95,4 +95,4 @@ curl https://matheuspersonal.com.br/api/health
 
 ### Erro de Conexão com Banco
 - Verifique credenciais no `.env`
-- Teste conexão: `mysql -h srv1078.hstgr.io -u u549746795_matheusmp -p`
+- Teste conexão: `mysql -h <db_host> -u <db_user> -p`

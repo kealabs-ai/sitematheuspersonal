@@ -9,7 +9,7 @@ Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
 ```env
 VITE_INFINITEPAY_API_URL=https://api.infinitepay.io/v2
 VITE_INFINITEPAY_API_KEY=sua_chave_api_aqui
-VITE_APP_URL=https://matheuspersonal.com.br
+VITE_APP_URL=https://<seu_dominio>
 ```
 
 ### 2. Obter Credenciais
@@ -24,7 +24,7 @@ VITE_APP_URL=https://matheuspersonal.com.br
 
 Configure os webhooks no dashboard do InfinitePay para receber notificações de pagamento:
 
-**URL do Webhook:** `https://matheuspersonal.com.br/api/webhooks/infinitepay`
+**URL do Webhook:** `https://<seu_dominio>/api/webhooks/infinitepay`
 
 **Eventos:**
 - `payment.succeeded` - Pagamento aprovado
