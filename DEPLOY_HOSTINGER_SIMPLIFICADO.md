@@ -37,11 +37,11 @@ public_html/
 
 Criar `api/.env` com:
 ```env
-DB_HOST=srv1078.hstgr.io
+DB_HOST=<db_host>
 DB_PORT=3306
-DB_USER=u549746795_matheusmp
-DB_PASSWORD=MP@2026!Passos
-DB_NAME=u549746795_mp
+DB_USER=<db_user>
+DB_PASSWORD=<db_password>
+DB_NAME=<db_name>
 NODE_ENV=production
 ```
 
@@ -108,7 +108,7 @@ Clique em **"Criar Aplicação"** e preencha:
 │ [●] Production                                  │
 ├─────────────────────────────────────────────────┤
 │ Diretório da Aplicação:                         │
-│ /home/u549746795/public_html                   │
+│ /home/<ssh_user>/public_html                    │
 ├─────────────────────────────────────────────────┤
 │ Arquivo de Entrada:                             │
 │ api/server.js                                   │
@@ -137,7 +137,7 @@ No painel Node.js, o status deve estar: **"Running"** (verde)
 
 ### 2. Testar API
 ```
-https://matheuspersonal.com.br/api/health
+https://<seu_dominio>/api/health
 ```
 
 ✅ Deve retornar:
@@ -151,7 +151,7 @@ https://matheuspersonal.com.br/api/health
 
 ### 3. Testar Frontend
 ```
-https://matheuspersonal.com.br
+https://<seu_dominio>
 ```
 
 ✅ Deve carregar a página de cadastro
@@ -172,7 +172,7 @@ Painel → Avançado → Node.js → [Sua App] → Ver Logs
 
 ### Via SSH (Opcional)
 ```bash
-ssh u549746795@srv1078.hstgr.io -p 65002
+ssh <ssh_user>@<ssh_host> -p <ssh_port>
 
 # Ver logs da aplicação
 cd ~/public_html
@@ -229,8 +229,8 @@ node server.js
 **Solução:**
 ```bash
 # Testar conexão MySQL via SSH
-mysql -h srv1078.hstgr.io -u u549746795_matheusmp -p
-# Senha: MP@2026!Passos
+mysql -h <db_host> -u <db_user> -p
+# Senha: <db_password>
 ```
 
 Se conectar, o problema é no código. Se não conectar, verificar credenciais.
@@ -292,7 +292,7 @@ Depois reinicie no painel.
 
 ```bash
 # Conectar
-ssh u549746795@srv1078.hstgr.io -p 65002
+ssh <ssh_user>@<ssh_host> -p <ssh_port>
 
 # Navegar para projeto
 cd ~/public_html
@@ -334,14 +334,14 @@ ps aux | grep node
 
 ### Configuração Hostinger:
 - [ ] Aplicação Node.js criada
-- [ ] Diretório: `/home/u549746795/public_html`
+- [ ] Diretório: `/home/<ssh_user>/public_html`
 - [ ] Entry point: `api/server.js`
 - [ ] Modo: Production
 - [ ] Status: Running (verde)
 
 ### Testes:
-- [ ] Health check: `https://matheuspersonal.com.br/api/health` ✅
-- [ ] Frontend: `https://matheuspersonal.com.br` ✅
+- [ ] Health check: `https://<seu_dominio>/api/health` ✅
+- [ ] Frontend: `https://<seu_dominio>` ✅
 - [ ] Cadastro funcionando ✅
 - [ ] PIX sendo gerado ✅
 
@@ -361,8 +361,8 @@ ps aux | grep node
 - Redireciona rotas do frontend para `index.html` (SPA)
 
 **URLs finais:**
-- Frontend: `https://matheuspersonal.com.br`
-- API: `https://matheuspersonal.com.br/api/*`
+- Frontend: `https://<seu_dominio>`
+- API: `https://<seu_dominio>/api/*`
 
 ---
 

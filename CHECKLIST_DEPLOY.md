@@ -50,7 +50,7 @@ Painel → Avançado → Node.js → Criar Aplicação
 
 Versão: 18.x ou 20.x
 Modo: Production
-Diretório: /home/u549746795/public_html/api
+Diretório: /home/<ssh_user>/public_html/api
 Arquivo: server.js
 ```
 
@@ -60,7 +60,7 @@ Arquivo: server.js
 
 ### 1. Conectar
 ```bash
-ssh u549746795@srv1078.hstgr.io -p 65002
+ssh <ssh_user>@<ssh_host> -p <ssh_port>
 ```
 
 ### 2. Instalar
@@ -84,12 +84,12 @@ pm2 startup
 
 ### ✅ API
 ```
-https://matheuspersonal.com.br/api/health
+https://<seu_dominio>/api/health
 ```
 
 ### ✅ Frontend
 ```
-https://matheuspersonal.com.br
+https://<seu_dominio>
 ```
 
 ### ✅ Cadastro Completo

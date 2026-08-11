@@ -20,11 +20,11 @@ npm run check-deploy
 - Renomear `api/.env.production` para `api/.env`
 - OU criar novo arquivo `api/.env` com o conteúdo:
 ```env
-DB_HOST=srv1078.hstgr.io
+DB_HOST=<db_host>
 DB_PORT=3306
-DB_USER=u549746795_matheusmp
-DB_PASSWORD=MP@2026!Passos
-DB_NAME=u549746795_mp
+DB_USER=<db_user>
+DB_PASSWORD=<db_password>
+DB_NAME=<db_name>
 NODE_ENV=production
 ```
 
@@ -35,7 +35,7 @@ NODE_ENV=production
 ### Passo 1: Login
 1. Acesse: https://hpanel.hostinger.com
 2. Faça login com suas credenciais
-3. Selecione o domínio: **matheuspersonal.com.br**
+3. Selecione o domínio: **<seu_dominio>**
 
 ---
 
@@ -82,8 +82,8 @@ Painel Hostinger → Arquivos → Gerenciador de Arquivos
 
 #### Configurações FTP:
 ```
-Host: ftp.matheuspersonal.com.br
-Usuário: u549746795
+Host: ftp.<seu_dominio>
+Usuário: <ftp_user>
 Senha: [sua senha da Hostinger]
 Porta: 21
 ```
@@ -117,7 +117,7 @@ Painel Hostinger → Avançado → Node.js
 │ [●] Production  [ ] Development                 │
 ├─────────────────────────────────────────────────┤
 │ Diretório da Aplicação:                         │
-│ /home/u549746795/public_html/api               │
+│ /home/<ssh_user>/public_html/api               │
 ├─────────────────────────────────────────────────┤
 │ Arquivo de Entrada:                             │
 │ server.js                                       │
@@ -149,9 +149,9 @@ Painel Hostinger → Avançado → SSH Access
 - Clique em **"Ativar SSH"**
 - Anote as credenciais:
   ```
-  Host: srv1078.hstgr.io
-  Port: 65002
-  Username: u549746795
+  Host: <ssh_host>
+  Port: <ssh_port>
+  Username: <ssh_user>
   Password: [sua senha]
   ```
 
@@ -159,13 +159,13 @@ Painel Hostinger → Avançado → SSH Access
 
 **Windows (PowerShell ou CMD):**
 ```bash
-ssh u549746795@srv1078.hstgr.io -p 65002
+ssh <ssh_user>@<ssh_host> -p <ssh_port>
 ```
 
 **Ou use PuTTY:**
-- Host: srv1078.hstgr.io
-- Port: 65002
-- Username: u549746795
+- Host: <ssh_host>
+- Port: <ssh_port>
+- Username: <ssh_user>
 
 ### Passo 4: Navegar até a pasta da API
 ```bash
@@ -236,7 +236,7 @@ Deve mostrar:
 ### Teste 1: Health Check da API
 Abra no navegador:
 ```
-https://matheuspersonal.com.br/api/health
+https://<seu_dominio>/api/health
 ```
 
 ✅ Deve retornar:
@@ -251,7 +251,7 @@ https://matheuspersonal.com.br/api/health
 ### Teste 2: Frontend
 Abra no navegador:
 ```
-https://matheuspersonal.com.br
+https://<seu_dominio>
 ```
 
 ✅ Deve carregar a página de cadastro
@@ -302,8 +302,8 @@ pm2 restart matheus-personal-api
 cat ~/public_html/api/.env
 
 # Testar conexão MySQL
-mysql -h srv1078.hstgr.io -u u549746795_matheusmp -p
-# Digite a senha: MP@2026!Passos
+mysql -h <db_host> -u <db_user> -p
+# Digite a senha: <db_password>
 ```
 
 ### Problema 3: "404 Not Found" na API
@@ -413,6 +413,6 @@ cat logs.txt
 Se todos os testes passaram, sua aplicação está no ar! 🚀
 
 **URLs:**
-- Frontend: https://matheuspersonal.com.br
-- API: https://matheuspersonal.com.br/api
-- Health Check: https://matheuspersonal.com.br/api/health
+- Frontend: https://<seu_dominio>
+- API: https://<seu_dominio>/api
+- Health Check: https://<seu_dominio>/api/health
