@@ -23,8 +23,8 @@ import './index.css';
 
 const ProtectedAdminRoute = () => {
   try {
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (user?.role === 'admin' && localStorage.getItem('access_token')) return <Admin />;
+    const user = JSON.parse(sessionStorage.getItem('user'));
+    if (user?.role === 'admin' && sessionStorage.getItem('access_token')) return <Admin />;
   } catch {}
   return <Navigate to="/login" replace />;
 };

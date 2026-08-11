@@ -101,7 +101,7 @@ function AdminPanel({ user, onLogout }) {
   const current = MODULES.find(m => m.key === active);
 
   const handleLogout = async () => {
-    await auth.logout(localStorage.getItem('refresh_token')).catch(() => {});
+    await auth.logout(sessionStorage.getItem('refresh_token')).catch(() => {});
     clearSession();
     onLogout();
   };
