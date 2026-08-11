@@ -19,7 +19,7 @@ const Login = () => {
       const data = await auth.login(email, password);
       if (data.access_token) {
         saveSession(data);
-        navigate('/dashboard');
+        navigate(data.user?.role === 'admin' ? '/admin' : '/dashboard');
       } else {
         const detail = data.detail ?? data.message ?? '';
         if (detail.toLowerCase().includes('senha')) {
