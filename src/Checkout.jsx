@@ -32,6 +32,7 @@ const Checkout = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [pixCode, setPixCode] = useState('');
+  const [pixQrImage, setPixQrImage] = useState('');
   const [copied, setCopied] = useState(false);
 
   const handleChange = (e) => {
@@ -172,8 +173,9 @@ const Checkout = () => {
       }
 
       // 3. PIX: exibe QR code retornado pela API
-      if (formData.paymentMethod === 'pix' && checkoutData?.pix_code) {
-        setPixCode(checkoutData.pix_code);
+      if (formData.paymentMethod === 'pix') {
+        setPixCode(checkoutData?.pix_code || '');
+        setPixQrImage(checkoutData?.pix_qr_image || '');
         setLoading(false);
         return;
       }
@@ -213,6 +215,7 @@ const Checkout = () => {
   useEffect(() => {
     if (formData.paymentMethod === 'pix') {
       setPixCode('');
+      setPixQrImage('');
     }
   }, [formData.paymentMethod]);
 
@@ -384,11 +387,14 @@ const Checkout = () => {
                     Pagamento via PIX
                   </h3>
                   <div className="bg-black border border-lime-green/30 p-6">
-                    {pixCode && (
+                    {(pixCode || pixQrImage) && (
                     <div className="text-center mb-6">
                       <p className="text-gray-300 mb-4">Escaneie o QR Code para pagar</p>
                       <div className="bg-white p-4 inline-block rounded">
-                        <QRCodeSVG value={pixCode} size={200} />
+                        {pixQrImage
+                          ? <img src={`data:image/png;base64,${pixQrImage}`} alt="QR Code PIX" width={200} height={200} />
+                          : <QRCodeSVG value={pixCode} size={200} />
+                        }
                       </div>
                     </div>
                     )}
@@ -398,7 +404,7 @@ const Checkout = () => {
                     </div>
                     )}
                     {pixCode && (
-                    <div className="mt-4">
+                    <div className="mt-4" key="pix-copy">
                       <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
                         Código PIX Copia e Cola
                       </label>
