@@ -12,6 +12,7 @@ import { ShimmerButton } from './components/magicui/shimmer-button';
 import { Meteors } from './components/magicui/meteors';
 import { AnimatedGradientText } from './components/magicui/animated-gradient-text';
 import { ShineBorder } from './components/magicui/shine-border';
+import UpgradeModal from './UpgradeModal';
 
 const modules = [
   { icon: <Dumbbell size={28} />, label: 'Treinos',  path: '/dashboard/treinos',  color: 'border-lime-green text-lime-green', desc: 'Ver plano da semana' },
@@ -34,6 +35,7 @@ export default function Dashboard() {
   const [loading, setLoading]           = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [userGender, setUserGender]     = useState(null);
+  const [showExpiredModal, setShowExpiredModal] = useState(false);
 
   useEffect(() => {
     const localUser = (() => { try { return JSON.parse(localStorage.getItem('user') || '{}'); } catch { return {}; } })();
@@ -45,6 +47,9 @@ export default function Dashboard() {
         setUserGender(gender);
         const hasGoal = !!(me?.goal || me?.objective || localUser?.goal);
         if (!hasGoal) setShowOnboarding(true);
+        // Verifica plano vencido
+        const renewal = me?.plan_renewal;
+        if (renewal && new Date(renewal) < new Date()) setShowExpiredModal(true);
       })
       .catch(() => {
         // API indisponível — usa dados locais
@@ -117,6 +122,10 @@ export default function Dashboard() {
       {/* Orbe IA pulsante */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(0,180,216,0.08)_0%,transparent_70%)] animate-ai-pulse pointer-events-none z-0" />
       <div className="fixed bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(0,100,180,0.06)_0%,transparent_70%)] animate-ai-pulse pointer-events-none z-0" style={{ animationDelay: '2s' }} />
+
+      {showExpiredModal && (
+        <UpgradeModal closable={false} expired={true} onClose={() => setShowExpiredModal(false)} />
+      )}
 
       {showOnboarding && (
         <OnboardingModal

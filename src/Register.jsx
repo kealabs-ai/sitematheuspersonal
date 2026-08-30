@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, User } from 'lucide-react';
+import { ArrowLeft, User, AlertTriangle, X } from 'lucide-react';
 import ProgressIndicator from './ProgressIndicator';
 import api from './services/api';
 import { friendlyError } from './utils/friendlyError';
@@ -95,8 +95,7 @@ const Register = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-
+  const [duplicateModal, setDuplicateModal] = useState(null);
 
   const handleChange = (e) => {
     let value = e.target.value;
@@ -205,7 +204,14 @@ const Register = () => {
           }
         });
       } else {
-        setError(friendlyError(result));
+        const msg = friendlyError(result);
+        const isDuplicate = msg.toLowerCase().includes('já existe');
+        if (isDuplicate) {
+          const field = (result?.field === 'cpf' || (result?.message || '').toLowerCase().includes('cpf')) ? 'cpf' : 'email';
+          setDuplicateModal({ field, isActive: result?.is_active ?? true });
+        } else {
+          setError(msg);
+        }
       }
     } catch (err) {
       setError('Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.');
@@ -219,8 +225,73 @@ const Register = () => {
     return null;
   }
 
+  const fieldLabel = duplicateModal?.field === 'cpf' ? 'CPF' : 'e-mail';
+
   return (
     <div className="bg-dark-bg text-white">
+
+      {duplicateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+          <div className="bg-dark-card border border-yellow-500 max-w-md w-full p-6 relative">
+            <button
+              onClick={() => setDuplicateModal(null)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white"
+            >
+              <X size={20} />
+            </button>
+            <div className="flex items-center gap-3 mb-4">
+              <AlertTriangle size={28} className="text-yellow-400 shrink-0" />
+              <h2 className="text-xl font-bebas uppercase text-yellow-400">
+                Cadastro já existente
+              </h2>
+            </div>
+            <p className="text-gray-300 text-sm mb-4">
+              Já existe um cadastro com este {fieldLabel} em nossa base.
+            </p>
+            {duplicateModal.isActive ? (
+              <>
+                <p className="text-gray-300 text-sm mb-6">
+                  Sua conta está <span className="text-lime-green font-bold">ativa</span>. Para fazer upgrade de plano, acesse sua conta e altere o plano pelo painel do aluno.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="flex-1 bg-lime-green text-black font-bold py-3 uppercase hover:bg-neon-green transition-all"
+                  >
+                    Fazer Login
+                  </button>
+                  <button
+                    onClick={() => setDuplicateModal(null)}
+                    className="flex-1 border border-dark-border text-gray-400 py-3 uppercase hover:border-gray-400 transition-all"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-gray-300 text-sm mb-6">
+                  Sua conta está <span className="text-red-400 font-bold">inativa</span>. Entre em contato ou tente fazer login para reativar.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="flex-1 bg-lime-green text-black font-bold py-3 uppercase hover:bg-neon-green transition-all"
+                  >
+                    Fazer Login
+                  </button>
+                  <button
+                    onClick={() => setDuplicateModal(null)}
+                    className="flex-1 border border-dark-border text-gray-400 py-3 uppercase hover:border-gray-400 transition-all"
+                  >
+                    Continuar mesmo assim
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
       <div className="container mx-auto px-4 py-20">
         <div className="max-w-3xl mx-auto">
           <ProgressIndicator currentStep={2} />
