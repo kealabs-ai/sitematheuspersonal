@@ -12,6 +12,7 @@ import BottomNav from './BottomNav';
 import AppFooter from './AppFooter';
 import { ShimmerButton } from './components/magicui/shimmer-button';
 import { AnimatedGradientText } from './components/magicui/animated-gradient-text';
+import UpgradeModal from './UpgradeModal';
 
 const GOALS = [
   { value: 'Hipertrofia',   icon: <Dumbbell size={28} />, color: 'border-lime-green text-lime-green bg-lime-green/10' },
@@ -104,6 +105,7 @@ export default function Perfil() {
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
   const [imcModalOpen, setImcModalOpen]       = useState(false);
+  const [upgradeOpen, setUpgradeOpen]         = useState(false);
   const avatarInputRef                        = React.useRef(null);
 
   const PRESET_AVATARS = [
@@ -351,7 +353,7 @@ export default function Perfil() {
             <p className={`text-xs font-bold uppercase tracking-widest ${pc.text}`}>
               {planEmoji[user.plan]} Plano {user.plan} — Ativo
             </p>
-            <button onClick={() => window.open('https://www.matheuspersonal.com.br/#consultoria', '_blank')}
+            <button onClick={() => setUpgradeOpen(true)}
               className={`text-xs border ${pc.border} ${pc.text} px-3 py-1 hover:opacity-80 transition-opacity`}>
               Upgrade
             </button>
@@ -378,31 +380,7 @@ export default function Perfil() {
                 )}
               </p>
             </div>
-            <div className="col-span-2 flex items-center justify-between pt-2 border-t border-white/10">
-              <div>
-                <p className="text-white text-sm font-medium">Cobrança recorrente</p>
-                <p className="text-gray-500 text-xs mt-0.5">Renovação automática mensal via cartão</p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={recurringBilling}
-                onClick={() => !recurringLoading && toggleRecurring(!recurringBilling)}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none ${
-                  recurringBilling ? 'bg-lime-green' : 'bg-dark-border'
-                } ${recurringLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-              >
-                {recurringLoading ? (
-                  <span className="absolute inset-0 flex items-center justify-center">
-                    <span className="w-3 h-3 border-2 border-white/60 border-t-transparent rounded-full animate-spin" />
-                  </span>
-                ) : (
-                  <span className={`inline-block h-4 w-4 rounded-full bg-white shadow-md transform transition-transform duration-200 ${
-                    recurringBilling ? 'translate-x-6' : 'translate-x-1'
-                  }`} />
-                )}
-              </button>
-            </div>
+
           </div>
         </motion.div>
 
@@ -521,6 +499,10 @@ export default function Perfil() {
             </button>
           ))}
         </motion.div>
+
+        {upgradeOpen && (
+          <UpgradeModal onClose={() => setUpgradeOpen(false)} closable={true} />
+        )}
 
         {/* Modal avatar */}
         {avatarModalOpen && (
