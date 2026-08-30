@@ -145,9 +145,12 @@ export default function Dashboard() {
               <AnimatedGradientText>{(user.name ?? 'Aluno').split(' ')[0]}</AnimatedGradientText>
               {' '}<span className="text-white">💪</span>
             </h1>
-            <span className={`border px-3 py-1 text-xs font-bold uppercase tracking-wider ${planColors[user.plan] ?? 'text-lime-green border-lime-green'}`}>
-              Plano {user.plan ?? '—'}
-            </span>
+            <div className="text-right">
+              <p className="text-[9px] text-gray-400 uppercase tracking-[0.2em] mb-1">Plano contratado</p>
+              <span className={`border px-3 py-1 text-xs font-bold uppercase tracking-wider ${planColors[user.plan] ?? 'text-lime-green border-lime-green'}`}>
+                {user.plan ?? '—'}
+              </span>
+            </div>
           </div>
         </motion.div>
 
