@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Trash2, ShoppingCart, Tag } from 'lucide-react';
 import ProgressIndicator from './ProgressIndicator';
@@ -9,6 +9,8 @@ const Cart = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const initialPlan = location.state?.plan;
+
+  useEffect(() => { window.scrollTo(0, 0); }, []);
 
   const [cartItems, setCartItems] = useState(initialPlan ? [initialPlan] : []);
   const [couponCode, setCouponCode] = useState('');
