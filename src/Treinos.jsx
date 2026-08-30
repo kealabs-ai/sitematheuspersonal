@@ -54,9 +54,10 @@ function CalendarModal({ onClose }) {
       .then(d => {
         const raw = d.logs ?? d.history ?? [];
         // Normaliza para UTC→local e filtra apenas finalizados
-        const finished = raw.filter(l => l.completed && l.finished_at).map(l => {
-          const hasTimezone = /Z$|[+-]\d{2}:\d{2}$/.test(l.finished_at);
-          const norm = l.finished_at.includes('T') ? (hasTimezone ? l.finished_at : l.finished_at + 'Z') : l.finished_at + 'T00:00:00';
+        const finished = raw.filter(l => l.completed && (l.finished_at || l.started_at)).map(l => {
+          const dateRaw = l.finished_at || l.started_at;
+          const hasTimezone = /Z$|[+-]\d{2}:\d{2}$/.test(dateRaw);
+          const norm = dateRaw.includes('T') ? (hasTimezone ? dateRaw : dateRaw + 'Z') : dateRaw + 'T00:00:00';
           return { ...l, localIso: toLocalISO(new Date(norm)) };
         });
         setLogs(finished);
@@ -610,7 +611,10 @@ export default function Treinos() {
         setAllDays(days);
         setUserGoal(planData.plan?.user_goal ?? null);
         setTemplateGender(planData.plan?.gender ?? null);
-        const s = days.find(d => d.status === 'today' && !d.is_rest);
+
+        const trainOnly = days.filter(d => !d.is_rest);
+        // Tenta usar o dia marcado como 'today' pela API, senão usa o primeiro dia de treino
+        const s = trainOnly.find(d => d.status === 'today') ?? trainOnly[0] ?? null;
         setSuggested(s ?? null);
         setTodayDay(s ?? null);
         if (s) fetchExercises(s.id);
@@ -631,9 +635,9 @@ export default function Treinos() {
 
     const map = {};
     logs.forEach(l => {
-      // Apenas treinos finalizados (completed=true e com finished_at)
-      if (!l.completed || !l.finished_at) return;
-      const dateRaw = l.finished_at;
+      if (!l.completed) return;
+      const dateRaw = l.finished_at || l.started_at;
+      if (!dateRaw) return;
       const hasTimezone = /Z$|[+-]\d{2}:\d{2}$/.test(dateRaw);
       const normalized = dateRaw.includes('T') ? (hasTimezone ? dateRaw : dateRaw + 'Z') : dateRaw + 'T00:00:00';
       const d = new Date(normalized);
@@ -653,7 +657,7 @@ export default function Treinos() {
     setLoadingEx(false);
   };
 
-  const trainDays = allDays.filter(d => !d.originalIsRest).slice(0, 3);
+  const trainDays = allDays.filter(d => !d.originalIsRest);
 
   // Aluno escolhe treino no modal → atualiza dia corrente
   const handleSelect = async (day) => {
@@ -705,9 +709,11 @@ export default function Treinos() {
     weekEnd.setDate(weekStart.getDate() + 7);
 
     const weeklyDone = allLogs.filter(l => {
-      if (!l.completed || !l.finished_at) return false;
-      const hasTimezone = /Z$|[+-]\d{2}:\d{2}$/.test(l.finished_at);
-      const normalized = l.finished_at.includes('T') ? (hasTimezone ? l.finished_at : l.finished_at + 'Z') : l.finished_at + 'T00:00:00';
+      if (!l.completed) return false;
+      const _raw = l.finished_at || l.started_at;
+      if (!_raw) return false;
+      const hasTimezone = /Z$|[+-]\d{2}:\d{2}$/.test(_raw);
+      const normalized = _raw.includes('T') ? (hasTimezone ? _raw : _raw + 'Z') : _raw + 'T00:00:00';
       const d = new Date(normalized);
       return d >= weekStart && d < weekEnd;
     }).length;

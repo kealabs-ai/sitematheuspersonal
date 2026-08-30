@@ -1,7 +1,7 @@
 const BASE = import.meta.env.VITE_API_URL;
 if (!BASE) throw new Error('[adminApi] VITE_API_URL não definida. Configure o arquivo .env');
 
-const getToken = () => sessionStorage.getItem('access_token');
+const getToken = () => localStorage.getItem('access_token');
 
 const safeJson = async (r) => {
   const text = await r.text();

@@ -169,9 +169,14 @@ export default function AppNav() {
           {/* Nome + plano */}
           <div className="text-left">
             <p className="text-white text-sm font-semibold leading-tight">{firstName}</p>
-            <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 border rounded-sm mt-0.5 ${pb}`}>
-              {user.plan ?? '—'}
-            </span>
+            <div className="mt-0.5">
+              <span className="block text-[8px] text-gray-400 uppercase tracking-[0.18em] leading-none">
+                Plano contratado
+              </span>
+              <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 border rounded-sm mt-0.5 ${pb}`}>
+                {user.plan ?? '—'}
+              </span>
+            </div>
           </div>
 
           {/* Botão sair — só ícone */}
@@ -198,9 +203,14 @@ export default function AppNav() {
         <div className="relative flex items-center gap-2">
           <div className="text-right">
             <p className="text-white text-xs font-semibold leading-tight">{firstName}</p>
-            <span className={`inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 border rounded-sm mt-0.5 ${pb}`}>
-              {user.plan ?? '—'}
-            </span>
+            <div className="mt-0.5">
+              <span className="block text-[7px] text-gray-400 uppercase tracking-[0.16em] leading-none">
+                Plano contratado
+              </span>
+              <span className={`inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 border rounded-sm mt-0.5 ${pb}`}>
+                {user.plan ?? '—'}
+              </span>
+            </div>
           </div>
           <AvatarBtn
             size={9}

@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import App from './App.jsx';
 import Login from './Login.jsx';
 import LinkBio from './LinkBio.jsx';
@@ -21,14 +21,6 @@ import Admin from './Admin.jsx';
 import ResetPassword from './ResetPassword.jsx';
 import './index.css';
 
-const ProtectedAdminRoute = () => {
-  try {
-    const user = JSON.parse(sessionStorage.getItem('user'));
-    if (user?.role === 'admin' && sessionStorage.getItem('access_token')) return <Admin />;
-  } catch {}
-  return <Navigate to="/login" replace />;
-};
-
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
@@ -48,7 +40,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/dashboard/evolucao" element={<Evolucao />} />
         <Route path="/dashboard/nutricao" element={<Nutricao />} />
         <Route path="/dashboard/perfil" element={<Perfil />} />
-        <Route path="/admin" element={<ProtectedAdminRoute />} />
+        <Route path="/admin" element={<Admin />} />
         <Route path="/recuperar-senha" element={<ResetPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="*" element={<NotFound />} />
