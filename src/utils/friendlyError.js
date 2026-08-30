@@ -19,6 +19,13 @@ const CARD_ERRORS = {
 export function friendlyError(result) {
   if (!result) return 'Ocorreu um erro inesperado. Tente novamente.';
 
+  // Erros do Asaas: { errors: [{ description: '...' }] }
+  const asaasErrors = result?.errors ?? result?.error?.errors;
+  if (Array.isArray(asaasErrors) && asaasErrors.length > 0) {
+    const desc = asaasErrors[0]?.description;
+    if (desc) return desc;
+  }
+
   const raw = result?.message || result?.error || result?.detail || '';
   const msg = typeof raw === 'string' ? raw : JSON.stringify(raw);
   const lower = msg.toLowerCase();

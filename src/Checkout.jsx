@@ -168,7 +168,7 @@ const Checkout = () => {
       const checkoutData = await checkoutRes.json();
 
       if (!checkoutRes.ok) {
-        setError(friendlyError(checkoutData));
+        setError(friendlyError(checkoutData?.error ?? checkoutData));
         return;
       }
 
