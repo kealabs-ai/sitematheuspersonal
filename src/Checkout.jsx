@@ -109,7 +109,7 @@ const Checkout = () => {
           plan_name: `Plano ${plan.name}`,
           plan_price: fullPrice,
           plan_price_with_discount: totalPrice,
-          plan_frequency: plan.frequency || 'monthly',
+          plan_frequency: plan.frequency ?? 'monthly',
           quantity: 1
         }]
       };
