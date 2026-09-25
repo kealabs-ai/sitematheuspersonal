@@ -249,6 +249,7 @@ function Field({ label, children }) {
 }
 
 export default function AdminTreinos() {
+  const [activeTab, setActiveTab]   = useState('Iniciante');
   const [templates, setTemplates]   = useState([]);
   const [loading, setLoading]       = useState(true);
   const [expanded, setExpanded]       = useState(null);
@@ -469,16 +470,39 @@ export default function AdminTreinos() {
         </button>
       </div>
 
+      {/* Abas de nível */}
+      <div className="flex border-b border-dark-border">
+        {LEVELS.map(lv => {
+          const count = templates.filter(t => (t.level ?? 'Iniciante') === lv).length;
+          return (
+            <button
+              key={lv}
+              onClick={() => setActiveTab(lv)}
+              className={`flex items-center gap-2 px-5 py-2.5 text-sm font-bold uppercase tracking-wide border-b-2 transition-colors ${
+                activeTab === lv
+                  ? `border-current ${LEVEL_COLORS[lv].split(' ')[0]}`
+                  : 'border-transparent text-gray-600 hover:text-gray-400'
+              }`}
+            >
+              {lv}
+              <span className={`text-[10px] px-1.5 py-0.5 border rounded-full ${
+                activeTab === lv ? LEVEL_COLORS[lv] : 'text-gray-700 border-dark-border'
+              }`}>{count}</span>
+            </button>
+          );
+        })}
+      </div>
+
       {loading ? (
         <p className="text-gray-500 text-sm animate-pulse">Carregando...</p>
-      ) : templates.length === 0 ? (
+      ) : templates.filter(t => (t.level ?? 'Iniciante') === activeTab).length === 0 ? (
         <div className="text-center py-12">
           <Dumbbell size={40} className="text-gray-700 mx-auto mb-3" />
-          <p className="text-gray-600 text-sm">Nenhum template criado.</p>
+          <p className="text-gray-600 text-sm">Nenhum template {activeTab.toLowerCase()} criado.</p>
         </div>
       ) : (
         <div className="space-y-2">
-          {templates.map((tpl, i) => (
+          {templates.filter(t => (t.level ?? 'Iniciante') === activeTab).map((tpl, i) => (
             <div key={tid(tpl) ?? i} className="border border-dark-border bg-dark-card overflow-hidden">
 
               {/* Cabeçalho */}
