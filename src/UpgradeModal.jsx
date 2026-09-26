@@ -9,7 +9,6 @@ const PLANS = [
   { name: 'BRONZE',   price: 79.90, months: 1, duration: '1 mês',    frequency: 'monthly',    color: 'border-orange-400 text-orange-400', bg: 'bg-orange-400/10', emoji: '🥉' },
   { name: 'PRATA',    price: 69.90, months: 3, duration: '3 meses',   frequency: 'quarterly',  color: 'border-gray-300 text-gray-300',     bg: 'bg-gray-300/10',   emoji: '🥈' },
   { name: 'OURO',     price: 49.90, months: 6, duration: '6 meses',   frequency: 'semiannual', color: 'border-yellow-400 text-yellow-400', bg: 'bg-yellow-400/10', emoji: '🥇', popular: true },
-  { name: 'DIAMANTE', price: 99.90, months: 1, duration: '1 mês',     frequency: 'monthly',    color: 'border-purple-400 text-purple-400', bg: 'bg-purple-400/10', emoji: '💎' },
 ];
 
 // closable=false → modal de plano vencido, sem botão de fechar
@@ -204,11 +203,9 @@ export default function UpgradeModal({ onClose, closable = true, expired = false
               {step === 'plan' ? 'Escolha seu Plano' : `Plano ${selectedPlan?.name} — Pagamento`}
             </h2>
           </div>
-          {closable && (
             <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
               <X size={20} />
             </button>
-          )}
         </div>
 
         <div className="p-6 space-y-5">

@@ -3,12 +3,14 @@ import { ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import matheusLogo from './assets/logotipo_matheus_personal.png';
 import { auth, saveSession } from './services/alunoApi';
+import UpgradeModal from './UpgradeModal';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [inactiveModal, setInactiveModal] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -27,7 +29,7 @@ const Login = () => {
         } else if (detail.toLowerCase().includes('encontrado')) {
           setError('E-mail não cadastrado. Verifique o endereço digitado.');
         } else if (detail.toLowerCase().includes('inativa')) {
-          setError('Sua conta está inativa. Entre em contato com o Matheus.');
+          setInactiveModal(true);
         } else {
           setError('Não foi possível entrar. Verifique seus dados e tente novamente.');
         }
@@ -41,6 +43,9 @@ const Login = () => {
 
   return (
     <div className="min-h-screen sport-bg flex items-center justify-center px-4">
+      {inactiveModal && (
+        <UpgradeModal closable={false} expired={true} onClose={() => setInactiveModal(false)} />
+      )}
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <a href="/"><img 

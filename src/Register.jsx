@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, User, AlertTriangle, X } from 'lucide-react';
 import ProgressIndicator from './ProgressIndicator';
@@ -96,6 +96,17 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [duplicateModal, setDuplicateModal] = useState(null);
+  const emailValueRef = useRef(formData.email);
+
+  const handleEmailBlur = async () => {
+    const email = formData.email.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+
+    const result = await api.checkUserByEmail(email);
+    if (result?.exists && emailValueRef.current.trim().toLowerCase() === email.toLowerCase()) {
+      setDuplicateModal({ field: 'email', isActive: Boolean(result.is_active) });
+    }
+  };
 
   const handleChange = (e) => {
     let value = e.target.value;
@@ -138,6 +149,8 @@ const Register = () => {
     }
 
     if (name === 'email') {
+      emailValueRef.current = value;
+      setDuplicateModal(null);
       setFormData(prev => ({ ...prev, email: value, username: value }));
       return;
     }
@@ -187,6 +200,7 @@ const Register = () => {
         password: formData.password,
         plan: planName,
         role: 'student',
+        is_active: false,
       };
 
       const result = await api.createUser(userBody);
@@ -344,6 +358,7 @@ const Register = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
+                    onBlur={handleEmailBlur}
                     required
                     className="w-full p-4 bg-black border border-dark-border text-white focus:outline-none focus:border-lime-green transition-colors"
                     placeholder="seu@email.com"

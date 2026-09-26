@@ -10,6 +10,23 @@ const inp        = 'w-full bg-black border border-dark-border text-white text-sm
 const TABS       = ['dados', 'metricas', 'notas'];
 const TAB_LABEL  = { dados: 'Dados', metricas: 'Métricas', notas: 'Notas' };
 
+const fmtPhone = (v) => {
+  if (!v) return '—';
+  const d = String(v).replace(/\D/g, '');
+  if (d.length === 11) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+  if (d.length === 10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+  return v;
+};
+
+const fmtDate = (v) => {
+  if (!v) return '—';
+  const s = String(v).split('T')[0];
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s; // já formatado
+  const parts = s.split('-');
+  if (parts.length === 3 && parts[0].length === 4) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  return v;
+};
+
 function Field({ label, children }) {
   return (
     <div>
@@ -146,9 +163,9 @@ export default function AdminAluno() {
                   {[
                     ['Nome',            selected.name],
                     ['E-mail',          selected.email],
-                    ['Telefone',        selected.phone        ?? '—'],
-                    ['Início do plano', selected.plan_start   ? selected.plan_start.split('T')[0]   : '—'],
-                    ['Renovação',       selected.plan_renewal ? selected.plan_renewal.split('T')[0] : '—'],
+                    ['Telefone',        fmtPhone(selected.phone)],
+                    ['Início do plano', fmtDate(selected.plan_start)],
+                    ['Renovação',       fmtDate(selected.plan_renewal)],
                     ['Objetivo',        selected.goal         ?? '—'],
                   ].map(([label, value]) => (
                     <div key={label} className="flex justify-between items-center border-b border-dark-border/50 pb-2">

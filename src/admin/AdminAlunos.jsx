@@ -4,6 +4,23 @@ import { adminUsers } from '../services/adminApi';
 
 const planColor = { BRONZE: 'text-orange-400 border-orange-400', PRATA: 'text-gray-300 border-gray-300', OURO: 'text-yellow-400 border-yellow-400', DIAMANTE: 'text-purple-400 border-purple-400' };
 
+const fmtPhone = (v) => {
+  if (!v) return '—';
+  const d = String(v).replace(/\D/g, '');
+  if (d.length === 11) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+  if (d.length === 10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+  return v;
+};
+
+const fmtDate = (v) => {
+  if (!v) return '—';
+  const s = String(v).split('T')[0];
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s; // já formatado
+  const parts = s.split('-');
+  if (parts.length === 3 && parts[0].length === 4) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  return v;
+};
+
 export default function AdminAlunos() {
   const [users, setUsers]         = useState([]);
   const [loading, setLoading]     = useState(true);
@@ -95,9 +112,9 @@ export default function AdminAlunos() {
                   {[
                     ['Nome',            selected.name],
                     ['E-mail',          selected.email],
-                    ['Telefone',        selected.phone        ?? '—'],
-                    ['Início do plano', selected.plan_start   ? selected.plan_start.split('T')[0]   : '—'],
-                    ['Renovação',       selected.plan_renewal ? selected.plan_renewal.split('T')[0] : '—'],
+                    ['Telefone',        fmtPhone(selected.phone)],
+                    ['Início do plano', fmtDate(selected.plan_start)],
+                    ['Renovação',       fmtDate(selected.plan_renewal)],
                   ].map(([label, value]) => (
                     <div key={label} className="flex justify-between items-center border-b border-dark-border/50 pb-2">
                       <span className="text-[10px] text-gray-500 uppercase tracking-wide">{label}</span>

@@ -25,6 +25,7 @@ const del  = (url)       => req('DELETE', url);
 // ─── Alunos ───────────────────────────────────
 export const adminUsers = {
   listAll: () => get(`${BASE}/aluno/users/all`),
+  dashboard: () => get(`${BASE}/aluno/users/admin/dashboard`),
   update:  (id, data) => post(`${BASE}/aluno/users/admin/${id}`, data),
   metrics: (id) => get(`${BASE}/aluno/users/${id}/metrics`),
 };

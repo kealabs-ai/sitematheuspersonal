@@ -35,12 +35,37 @@ const api = {
     }
   },
 
+  async activateUser(userId) {
+    try {
+      const res = await post(`${BASE}/users/${userId}/activate`, { is_active: true });
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, message: data?.detail || data?.message || 'Não foi possível ativar o usuário.' };
+      }
+      return data;
+    } catch (error) {
+      return { success: false, message: 'Erro de conexão' };
+    }
+  },
+
   async getUserById(userId) {
     try {
       const res = await get(`${BASE}/users/${userId}`);
       return res.json();
     } catch (error) {
       console.error('Erro ao buscar usuário:', error);
+      return { success: false, message: 'Erro de conexão' };
+    }
+  },
+
+  async checkUserByEmail(email) {
+    try {
+      const params = new URLSearchParams({ email: email.trim() });
+      const res = await get(`${BASE}/users/check-email?${params.toString()}`);
+      const data = await res.json();
+      if (!res.ok) return { success: false, message: data?.detail || 'Não foi possível verificar o e-mail.' };
+      return data;
+    } catch (error) {
       return { success: false, message: 'Erro de conexão' };
     }
   },
