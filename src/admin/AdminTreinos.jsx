@@ -155,7 +155,13 @@ const LEVEL_COLORS = {
   'Avançado':      'text-red-400 border-red-400/30',
 };
 
-const emptyTpl = { name: '', description: '', goal: '', gender: 'masculino', level: 'Iniciante', months: '' };
+const GOALS = ['Todos', 'Emagrecimento', 'Hipertrofia'];
+const GOAL_COLORS = {
+  'Emagrecimento': 'border-orange-400 text-orange-400 bg-orange-400/10',
+  'Hipertrofia':   'border-purple-400 text-purple-400 bg-purple-400/10',
+};
+
+const emptyTpl = { name: '', description: '', goal: 'Hipertrofia', gender: 'masculino', level: 'Iniciante', months: '' };
 const emptyDay  = { name: '', day_of_week: 'SEG', duration_min: 60, is_rest: false };
 const emptyEx = { name: '', sets: 3, reps: '12', rest_seconds: 60, muscle_groups: [], video_url: '', notes: '' };
 
@@ -249,7 +255,10 @@ function Field({ label, children }) {
 }
 
 export default function AdminTreinos() {
-  const [templates, setTemplates]   = useState([]);
+  const [activeTab, setActiveTab]       = useState('Iniciante');
+  const [activeGender, setActiveGender] = useState('todos');
+  const [activeGoal, setActiveGoal]     = useState('Todos');
+  const [templates, setTemplates]       = useState([]);
   const [loading, setLoading]       = useState(true);
   const [expanded, setExpanded]       = useState(null);
   const [expandedDay, setExpandedDay] = useState(null);
@@ -469,16 +478,94 @@ export default function AdminTreinos() {
         </button>
       </div>
 
+      {/* Abas de nível */}
+      <div className="flex border-b border-dark-border">
+        {LEVELS.map(lv => {
+          const count = templates.filter(t => (t.level ?? 'Iniciante') === lv).length;
+          return (
+            <button
+              key={lv}
+              onClick={() => setActiveTab(lv)}
+              className={`flex items-center gap-2 px-5 py-2.5 text-sm font-bold uppercase tracking-wide border-b-2 transition-colors ${
+                activeTab === lv
+                  ? `border-current ${LEVEL_COLORS[lv].split(' ')[0]}`
+                  : 'border-transparent text-gray-600 hover:text-gray-400'
+              }`}
+            >
+              {lv}
+              <span className={`text-[10px] px-1.5 py-0.5 border rounded-full ${
+                activeTab === lv ? LEVEL_COLORS[lv] : 'text-gray-700 border-dark-border'
+              }`}>{count}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Toggle gênero + objetivo */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          {[
+            { value: 'todos',     label: 'Todos',     icon: null },
+            { value: 'masculino', label: 'Masculino', icon: <IconMars /> },
+            { value: 'feminino',  label: 'Feminino',  icon: <IconVenus /> },
+          ].map(({ value, label, icon }) => (
+            <button
+              key={value}
+              onClick={() => setActiveGender(value)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold border transition-colors ${
+                activeGender === value
+                  ? value === 'feminino'
+                    ? 'border-pink-400 text-pink-400 bg-pink-400/10'
+                    : value === 'masculino'
+                      ? 'border-blue-400 text-blue-400 bg-blue-400/10'
+                      : 'border-lime-green text-lime-green bg-lime-green/10'
+                  : 'border-dark-border text-gray-600 hover:border-gray-500 hover:text-gray-400'
+              }`}
+            >
+              {icon}{label}
+            </button>
+          ))}
+        </div>
+
+        <div className="w-px h-4 bg-dark-border" />
+
+        <div className="flex items-center gap-2">
+          {GOALS.map(g => (
+            <button
+              key={g}
+              onClick={() => setActiveGoal(g)}
+              className={`px-3 py-1.5 text-xs font-bold border transition-colors ${
+                activeGoal === g
+                  ? g === 'Todos'
+                    ? 'border-lime-green text-lime-green bg-lime-green/10'
+                    : GOAL_COLORS[g]
+                  : 'border-dark-border text-gray-600 hover:border-gray-500 hover:text-gray-400'
+              }`}
+            >
+              {g}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {loading ? (
         <p className="text-gray-500 text-sm animate-pulse">Carregando...</p>
-      ) : templates.length === 0 ? (
+      ) : templates.filter(t =>
+          (t.level ?? 'Iniciante') === activeTab &&
+          (activeGender === 'todos' || (t.gender ?? 'masculino') === activeGender) &&
+          (activeGoal === 'Todos' || (t.goal ?? '') === activeGoal)
+        ).length === 0 ? (
         <div className="text-center py-12">
           <Dumbbell size={40} className="text-gray-700 mx-auto mb-3" />
-          <p className="text-gray-600 text-sm">Nenhum template criado.</p>
+          <p className="text-gray-600 text-sm">Nenhum template {activeTab.toLowerCase()}{activeGender !== 'todos' ? ` ${activeGender}` : ''}{activeGoal !== 'Todos' ? ` · ${activeGoal}` : ''} criado.</p>
         </div>
       ) : (
         <div className="space-y-2">
-          {templates.map((tpl, i) => (
+          {templates.filter(t =>
+            (t.level ?? 'Iniciante') === activeTab &&
+            (activeGender === 'todos' || (t.gender ?? 'masculino') === activeGender) &&
+            (activeGoal === 'Todos' || (t.goal ?? '') === activeGoal)
+          ).map((tpl, i) => (
             <div key={tid(tpl) ?? i} className="border border-dark-border bg-dark-card overflow-hidden">
 
               {/* Cabeçalho */}
@@ -642,7 +729,18 @@ export default function AdminTreinos() {
             <input className={inp} value={tplForm.name} onChange={e => setTplForm({ ...tplForm, name: e.target.value })} placeholder="Ex: Hipertrofia A/B/C" />
           </Field>
           <Field label="Objetivo">
-            <input className={inp} value={tplForm.goal} onChange={e => setTplForm({ ...tplForm, goal: e.target.value })} placeholder="Ex: Hipertrofia" />
+            <div className="grid grid-cols-2 gap-2">
+              {['Emagrecimento', 'Hipertrofia'].map(g => (
+                <button key={g} type="button" onClick={() => setTplForm({ ...tplForm, goal: g })}
+                  className={`py-2.5 text-xs font-bold border transition-colors ${
+                    tplForm.goal === g
+                      ? GOAL_COLORS[g]
+                      : 'border-dark-border text-gray-600 hover:border-gray-500'
+                  }`}>
+                  {g}
+                </button>
+              ))}
+            </div>
           </Field>
           <Field label="Gênero">
             <div className="grid grid-cols-2 gap-2">

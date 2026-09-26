@@ -13,9 +13,11 @@ import AdminTreinos    from './admin/AdminTreinos';
 import AdminNutricao   from './admin/AdminNutricao';
 import AdminFinanceiro from './admin/AdminFinanceiro';
 import AdminCupons    from './admin/AdminCupons';
+import AdminDashboard from './admin/AdminDashboard';
 
 // ─── Módulos do painel ────────────────────────────────────────────────────────
 const MODULES = [
+  { key: 'dashboard',  label: 'Dashboard',     icon: <LayoutDashboard size={18} />, color: 'text-lime-green', desc: 'Indicadores e desempenho' },
   { key: 'aluno',      label: 'Área do Aluno', icon: <Users size={18} />,         color: 'text-lime-green',  desc: 'Configurar toda área do aluno' },
   { key: 'alunos',     label: 'Alunos',        icon: <LayoutDashboard size={18} />,color: 'text-cyan-400',    desc: 'Lista e dados dos alunos' },
   { key: 'videos',     label: 'Vídeos',        icon: <PlayCircle size={18} />,    color: 'text-blue-400',    desc: 'Postar e organizar vídeos' },
@@ -95,7 +97,7 @@ function AdminLogin({ onLogin }) {
 
 // ─── Painel principal ─────────────────────────────────────────────────────────
 function AdminPanel({ user, onLogout }) {
-  const [active, setActive]     = useState('alunos');
+  const [active, setActive]     = useState('dashboard');
   const [sideOpen, setSideOpen] = useState(false);
 
   const current = MODULES.find(m => m.key === active);
@@ -199,6 +201,7 @@ function AdminPanel({ user, onLogout }) {
               <motion.div key={active}
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.15 }}>
+                {active === 'dashboard'  && <AdminDashboard key="dashboard" />}
                 {active === 'aluno'      && <AdminAluno      key="aluno" />}
                 {active === 'alunos'     && <AdminAlunos     key="alunos" />}
                 {active === 'videos'     && <AdminVideos     key="videos" />}

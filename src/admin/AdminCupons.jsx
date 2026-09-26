@@ -38,8 +38,9 @@ export default function AdminCupons() {
   const [loading, setLoading] = useState(true);
   const [modal, setModal]     = useState(null); // null | 'new' | coupon obj
   const [form, setForm]       = useState(emptyCoupon);
-  const [saving, setSaving]   = useState(false);
-  const [copied, setCopied]   = useState(null);
+  const [saving, setSaving]       = useState(false);
+  const [copied, setCopied]       = useState(null);
+  const [discountError, setDiscountError] = useState(false);
 
   useEffect(() => { load(); }, []);
 
@@ -66,6 +67,10 @@ export default function AdminCupons() {
   };
 
   const save = async () => {
+    if (parseFloat(form.discount_value) < 1 || form.discount_value === '' || form.discount_value === '0') {
+      setDiscountError(true);
+      return;
+    }
     setSaving(true);
     const payload = {
       ...form,
@@ -161,6 +166,22 @@ export default function AdminCupons() {
         </div>
       )}
 
+      {discountError && (
+        <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
+          <div className="bg-[#111] border border-red-500 w-full max-w-sm p-6 text-center">
+            <p className="text-red-400 text-4xl mb-3">⚠</p>
+            <h4 className="text-lg font-bebas uppercase text-red-400 mb-2">Desconto inválido</h4>
+            <p className="text-gray-300 text-sm mb-5">O campo <span className="text-white font-bold">Desconto</span> não pode ser zero. O valor mínimo permitido é <span className="text-lime-green font-bold">{form.discount_type === 'percent' ? '1%' : 'R$ 1,00'}</span>.</p>
+            <button
+              onClick={() => setDiscountError(false)}
+              className="bg-lime-green text-black font-bold px-6 py-2 uppercase text-sm hover:bg-neon-green transition-colors"
+            >
+              Entendido
+            </button>
+          </div>
+        </div>
+      )}
+
       {modal !== null && (
         <Modal title={modal === 'new' ? 'Novo Cupom' : 'Editar Cupom'} onClose={() => setModal(null)}>
           <Field label="Código do cupom">
@@ -182,9 +203,15 @@ export default function AdminCupons() {
               </select>
             </Field>
             <Field label={form.discount_type === 'percent' ? 'Desconto (%)' : 'Desconto (R$)'}>
-              <input type="number" step="0.01" min="0" className={inp} value={form.discount_value}
+              <input
+                type="number"
+                step={form.discount_type === 'percent' ? '1' : '0.01'}
+                min="1"
+                className={inp}
+                value={form.discount_value}
                 onChange={e => setForm({ ...form, discount_value: e.target.value })}
-                placeholder={form.discount_type === 'percent' ? '20' : '10.00'} />
+                placeholder={form.discount_type === 'percent' ? '1' : '10.00'}
+              />
             </Field>
           </div>
           <div className="grid grid-cols-2 gap-3">

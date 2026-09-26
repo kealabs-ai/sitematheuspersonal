@@ -34,6 +34,7 @@ const Checkout = () => {
   const [pixCode, setPixCode] = useState('');
   const [pixQrImage, setPixQrImage] = useState('');
   const [copied, setCopied] = useState(false);
+  const [existingUserModal, setExistingUserModal] = useState(false);
 
   const handleChange = (e) => {
     let value = e.target.value;
@@ -94,6 +95,21 @@ const Checkout = () => {
     try {
       const planPrice = totalPrice;
       const cpfClean = (userData.cpf || '').replace(/\D/g, '');
+
+      // 0. Verifica se e-mail ou CPF já pertencem a outro usuário
+      const [byEmail, byCpf] = await Promise.all([
+        api.getUserByEmail(userData.email).catch(() => null),
+        api.getUserByCpf(userData.cpf).catch(() => null),
+      ]);
+      const foundId =
+        byEmail?.id_user ?? byEmail?.userId ?? byEmail?.id ??
+        byCpf?.id_user  ?? byCpf?.userId  ?? byCpf?.id;
+      const currentId = userData.userId;
+      if (foundId && String(foundId) !== String(currentId)) {
+        setExistingUserModal(true);
+        setLoading(false);
+        return;
+      }
 
       // 1. Cria o pedido COM DESCONTO EXPLÍCITO
       const orderData = {
@@ -169,6 +185,12 @@ const Checkout = () => {
 
       if (!checkoutRes.ok) {
         setError(friendlyError(checkoutData?.error ?? checkoutData));
+        return;
+      }
+
+      const activation = await api.activateUser(userData.userId);
+      if (activation?.success === false || activation?.error) {
+        setError(activation?.message || 'Pagamento iniciado, mas não foi possível ativar sua conta. Entre em contato com o suporte.');
         return;
       }
 
@@ -566,6 +588,33 @@ const Checkout = () => {
         </div>
       </div>
       <Footer />
+
+      {existingUserModal && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+          <div className="bg-[#111] border border-yellow-500/40 w-full max-w-sm p-6 text-center space-y-4">
+            <p className="text-yellow-400 text-4xl">⚠️</p>
+            <h4 className="text-xl font-bebas uppercase text-white">Cadastro já existente</h4>
+            <p className="text-gray-300 text-sm">
+              O <span className="text-white font-bold">e-mail</span> ou <span className="text-white font-bold">CPF</span> informado já possui uma conta cadastrada.
+              Para continuar com o pagamento, faça o login na sua conta.
+            </p>
+            <div className="flex flex-col gap-2 pt-2">
+              <a
+                href="/login"
+                className="w-full bg-lime-green text-black font-bold py-3 uppercase text-sm hover:bg-neon-green transition-colors block"
+              >
+                Fazer Login
+              </a>
+              <button
+                onClick={() => setExistingUserModal(false)}
+                className="w-full py-2.5 text-sm text-gray-500 hover:text-gray-300 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -209,12 +209,19 @@ const GOAL_OPTIONS = [
   { value: 'Emagrecimento', label: 'Emagrecimento', icon: '🔥', desc: 'Queima de gordura' },
 ];
 
+const LEVEL_OPTIONS = [
+  { value: 'beginner',     label: 'Iniciante',     icon: '🌱', desc: 'Estou começando agora' },
+  { value: 'intermediate', label: 'Intermediário', icon: '⚡', desc: 'Já treino há algum tempo' },
+  { value: 'advanced',     label: 'Avançado',      icon: '🏆', desc: 'Treino há anos' },
+];
+
 // ─── Modal ────────────────────────────────────────────────────────────────────
 
 export default function OnboardingModal({ userName, userGender, onComplete }) {
-  const [step, setStep]     = useState(0); // 0=loading, 1=gênero, 2=objetivo, 3=criando, 4=sucesso
+  const [step, setStep]     = useState(0); // 0=loading, 1=gênero, 2=objetivo, 3=nível, 4=salvando, 5=sucesso
   const [gender, setGender] = useState(null);
   const [goal, setGoal]     = useState(null);
+  const [level, setLevel]   = useState(null);
   const [error, setError]   = useState('');
 
   useEffect(() => {
@@ -222,33 +229,29 @@ export default function OnboardingModal({ userName, userGender, onComplete }) {
     setStep(userGender ? 2 : 1);
   }, []);
 
-  // Dispara salvamento quando step muda para 3
+  // Dispara salvamento quando step muda para 4
   useEffect(() => {
-    if (step !== 3) return;
+    if (step !== 4) return;
     setError('');
 
-    users.update({ gender, goal })
+    users.update({ gender, goal, level })
       .then(res => {
-        // FastAPI retorna 404 como JSON com 'detail', ou o Traefik retorna HTML
-        // Em ambos os casos, consideramos sucesso parcial e deixamos o aluno prosseguir
         if (res?.status === 404 || (res?.error && res?.status)) {
-          // Backend indisponível — salva localmente e prossegue
           try {
             const stored = JSON.parse(localStorage.getItem('user') || '{}');
-            localStorage.setItem('user', JSON.stringify({ ...stored, gender, goal }));
+            localStorage.setItem('user', JSON.stringify({ ...stored, gender, goal, level }));
           } catch {}
-          setStep(4);
+          setStep(5);
           return;
         }
-        setStep(4);
+        setStep(5);
       })
       .catch(() => {
-        // Falha de rede — salva localmente e prossegue
         try {
           const stored = JSON.parse(localStorage.getItem('user') || '{}');
-          localStorage.setItem('user', JSON.stringify({ ...stored, gender, goal }));
+          localStorage.setItem('user', JSON.stringify({ ...stored, gender, goal, level }));
         } catch {}
-        setStep(4);
+        setStep(5);
       });
   }, [step]);
 
@@ -292,7 +295,7 @@ export default function OnboardingModal({ userName, userGender, onComplete }) {
           {/* STEP 1 — Gênero */}
           {step === 1 && (
             <motion.div key="step1" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
-              <p className="text-lime-green text-xs uppercase tracking-widest mb-1">Passo 1 de 2 · Bem-vindo(a)</p>
+              <p className="text-lime-green text-xs uppercase tracking-widest mb-1">Passo 1 de 3 · Bem-vindo(a)</p>
               <h2 className="text-3xl font-bebas uppercase mb-2 text-white">
                 Olá, {userName?.split(' ')[0]}! 👋
               </h2>
@@ -314,16 +317,50 @@ export default function OnboardingModal({ userName, userGender, onComplete }) {
           {step === 2 && (
             <motion.div key="step2" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
               <button onClick={() => setStep(1)} className="text-gray-500 text-xs mb-4 hover:text-lime-green transition-colors">← Voltar</button>
-              <p className="text-lime-green text-xs uppercase tracking-widest mb-1">Passo 2 de 2</p>
+              <p className="text-lime-green text-xs uppercase tracking-widest mb-1">Passo 2 de 3</p>
               <h2 className="text-3xl font-bebas uppercase mb-2 text-white">Qual é o seu objetivo?</h2>
               <p className="text-gray-400 text-sm mb-8">Seu plano de treino será montado de acordo com sua escolha.</p>
               <SelectionGrid options={GOAL_OPTIONS} value={goal} onChange={setGoal} />
+              <button
+                onClick={() => setStep(3)}
+                disabled={!goal}
+                className="w-full bg-lime-green text-black font-bold py-4 uppercase hover:bg-neon-green transition-all disabled:opacity-40"
+              >
+                Próximo →
+              </button>
+            </motion.div>
+          )}
+
+          {/* STEP 3 — Nível */}
+          {step === 3 && (
+            <motion.div key="step3" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
+              <button onClick={() => setStep(2)} className="text-gray-500 text-xs mb-4 hover:text-lime-green transition-colors">← Voltar</button>
+              <p className="text-lime-green text-xs uppercase tracking-widest mb-1">Passo 3 de 3</p>
+              <h2 className="text-3xl font-bebas uppercase mb-2 text-white">Qual é o seu nível?</h2>
+              <p className="text-gray-400 text-sm mb-8">Isso nos ajuda a calibrar a intensidade do seu treino.</p>
+              <div className="grid grid-cols-3 gap-3 mb-8">
+                {LEVEL_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setLevel(opt.value)}
+                    className={`flex flex-col items-center justify-center p-4 border-2 transition-all ${
+                      level === opt.value
+                        ? 'border-lime-green bg-lime-green/10'
+                        : 'border-dark-border hover:border-lime-green/50'
+                    }`}
+                  >
+                    <span className="text-4xl mb-2">{opt.icon}</span>
+                    <span className="font-bebas text-base uppercase text-white">{opt.label}</span>
+                    <span className="text-gray-500 text-[10px] mt-1 text-center">{opt.desc}</span>
+                  </button>
+                ))}
+              </div>
               {error && (
                 <p className="text-red-400 text-xs text-center mb-4 bg-red-500/10 border border-red-500/30 p-3">{error}</p>
               )}
               <button
-                onClick={() => setStep(3)}
-                disabled={!goal}
+                onClick={() => setStep(4)}
+                disabled={!level}
                 className="w-full bg-lime-green text-black font-bold py-4 uppercase hover:bg-neon-green transition-all disabled:opacity-40"
               >
                 Criar Meu Plano ✓
@@ -331,9 +368,9 @@ export default function OnboardingModal({ userName, userGender, onComplete }) {
             </motion.div>
           )}
 
-          {/* STEP 3 — Salvando */}
-          {step === 3 && (
-            <motion.div key="step3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-8">
+          {/* STEP 4 — Salvando */}
+          {step === 4 && (
+            <motion.div key="step4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-8">
               <div className="text-6xl mb-6 animate-bounce">⚙️</div>
               <h2 className="text-3xl font-bebas uppercase text-lime-green mb-2">Salvando preferências...</h2>
               <p className="text-gray-400 text-sm">Configurando seu perfil de treino</p>
@@ -345,9 +382,9 @@ export default function OnboardingModal({ userName, userGender, onComplete }) {
             </motion.div>
           )}
 
-          {/* STEP 4 — Sucesso */}
-          {step === 4 && (
-            <motion.div key="step4" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-8">
+          {/* STEP 5 — Sucesso */}
+          {step === 5 && (
+            <motion.div key="step5" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-8">
               <div className="text-6xl mb-6">🎉</div>
               <h2 className="text-3xl font-bebas uppercase text-lime-green mb-2">Plano criado!</h2>
               <p className="text-gray-300 text-sm mb-1">
