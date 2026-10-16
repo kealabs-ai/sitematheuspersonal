@@ -6,14 +6,34 @@ import { QRCodeSVG } from 'qrcode.react';
 import api from './services/api';
 import { friendlyError } from './utils/friendlyError';
 import { Footer } from './App';
+import { getUser } from './services/alunoApi';
 
 const Checkout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const plan = location.state?.plan;
-  const userData = location.state?.userData;
   const coupon = location.state?.coupon;
   const discountedTotal = location.state?.total;
+
+  // userData pode vir via state (fluxo novo cadastro) ou da sessão (usuário já logado)
+  const stateUser = location.state?.userData;
+  const sessionUser = getUser();
+  const [userData, setUserData] = useState(stateUser ?? null);
+
+  // Se não veio userData no state mas há sessão ativa, busca dados completos
+  useEffect(() => {
+    if (!stateUser && sessionUser?.id) {
+      api.getUserById(sessionUser.id)
+        .then(data => {
+          const id = data?.id_user ?? data?.userId ?? data?.id ?? sessionUser.id;
+          setUserData({ ...data, userId: id });
+        })
+        .catch(() => {
+          // fallback mínimo com dados da sessão
+          setUserData({ ...sessionUser, userId: sessionUser.id });
+        });
+    }
+  }, []);
 
   const [formData, setFormData] = useState({
     name: userData?.name || '',
@@ -28,6 +48,19 @@ const Checkout = () => {
     installments: '1',
     recurringPayment: false,
   });
+
+  // Atualiza formData quando userData for carregado de forma assíncrona
+  useEffect(() => {
+    if (userData) {
+      setFormData(prev => ({
+        ...prev,
+        name:  prev.name  || userData.name  || '',
+        email: prev.email || userData.email || '',
+        phone: prev.phone || userData.phone || '',
+        cpf:   prev.cpf   || userData.cpf   || '',
+      }));
+    }
+  }, [userData]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -237,6 +270,14 @@ const Checkout = () => {
   if (!plan) {
     navigate('/');
     return null;
+  }
+
+  if (!userData) {
+    return (
+      <div className="min-h-screen bg-dark-bg flex items-center justify-center">
+        <p className="text-gray-400 text-sm animate-pulse">Carregando dados...</p>
+      </div>
+    );
   }
 
   useEffect(() => {
