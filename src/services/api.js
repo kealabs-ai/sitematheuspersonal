@@ -134,7 +134,11 @@ const api = {
   // Orders
   async createOrder(orderData) {
     try {
-      const res = await post(`${BASE}/orders`, orderData);
+      const userId = orderData?.id_user ?? orderData?.userId ?? orderData?.id;
+      if (!Number.isInteger(Number(userId)) || Number(userId) <= 0) {
+        return { success: false, message: 'Não foi possível identificar sua conta para criar o pedido. Volte ao cadastro e tente novamente.' };
+      }
+      const res = await post(`${BASE}/orders`, { ...orderData, id_user: Number(userId) });
       return res.json();
     } catch (error) {
       console.error('Erro ao criar pedido:', error);
