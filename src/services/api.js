@@ -58,6 +58,32 @@ const api = {
     }
   },
 
+  async getUserByEmail(email) {
+    try {
+      const params = new URLSearchParams({ email: email.trim() });
+      const res = await get(`${BASE}/users/by-email?${params.toString()}`);
+      if (!res.ok) return null;
+      return res.json();
+    } catch { return null; }
+  },
+
+  async getUserByCpf(cpf) {
+    try {
+      const params = new URLSearchParams({ cpf: cpf.replace(/\D/g, '') });
+      const res = await get(`${BASE}/users/by-cpf?${params.toString()}`);
+      if (!res.ok) return null;
+      return res.json();
+    } catch { return null; }
+  },
+
+  async getActiveSubscription(userId) {
+    try {
+      const res = await get(`${BASE}/subscriptions/subscriptions/user/${userId}`);
+      if (!res.ok) return null;
+      return res.json();
+    } catch { return null; }
+  },
+
   async checkUserByEmail(email) {
     try {
       const params = new URLSearchParams({ email: email.trim() });
