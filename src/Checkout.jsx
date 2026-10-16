@@ -89,6 +89,11 @@ const Checkout = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const userId = userData?.userId ?? userData?.id_user ?? userData?.id ?? userData?.user_id;
+    if (!userId || !Number.isInteger(Number(userId)) || Number(userId) <= 0) {
+      setError('Não foi possível identificar sua conta. Volte ao cadastro e tente novamente.');
+      return;
+    }
     setLoading(true);
     setError(null);
 
@@ -104,7 +109,7 @@ const Checkout = () => {
       const foundId =
         byEmail?.id_user ?? byEmail?.userId ?? byEmail?.id ??
         byCpf?.id_user  ?? byCpf?.userId  ?? byCpf?.id;
-      const currentId = userData.userId;
+      const currentId = userId;
       if (foundId && String(foundId) !== String(currentId)) {
         setExistingUserModal(true);
         setLoading(false);
@@ -113,7 +118,7 @@ const Checkout = () => {
 
       // 1. Cria o pedido COM DESCONTO EXPLÍCITO
       const orderData = {
-        id_user: userData.userId,
+        id_user: Number(userId),
         payment_method: formData.paymentMethod === 'credit' ? 'CREDIT_CARD' : 'PIX',
         id_coupon: coupon?.id || null,
         coupon_code: coupon?.code || null,
@@ -155,7 +160,7 @@ const Checkout = () => {
       const billingType = formData.paymentMethod === 'pix' ? 'PIX' : 'CREDIT_CARD';
       const checkoutBody = {
         id_order: orderId,
-        id_user: userData.userId,
+        id_user: Number(userId),
         payment_id: orderId,
         customer_name: userData.name,
         customer_email: userData.email,
@@ -188,7 +193,7 @@ const Checkout = () => {
         return;
       }
 
-      const activation = await api.activateUser(userData.userId);
+      const activation = await api.activateUser(userId);
       if (activation?.success === false || activation?.error) {
         setError(activation?.message || 'Pagamento iniciado, mas não foi possível ativar sua conta. Entre em contato com o suporte.');
         return;
