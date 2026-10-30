@@ -28,6 +28,22 @@ const planColors = {
   DIAMANTE: 'text-purple-400 border-purple-400',
 };
 
+const isPlanExpired = (renewalValue, now = new Date()) => {
+  if (!renewalValue) return false;
+
+  // Datas SQL vêm como YYYY-MM-DD. Parse como data local para evitar que UTC
+  // transforme a renovação de hoje em ontem em fusos como America/Sao_Paulo.
+  const match = String(renewalValue).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const renewalDate = match
+    ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+    : new Date(renewalValue);
+  if (Number.isNaN(renewalDate.getTime())) return false;
+
+  renewalDate.setHours(0, 0, 0, 0);
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return renewalDate < today;
+};
+
 export default function Dashboard() {
   useBlockBack();
   const navigate = useNavigate();
@@ -49,7 +65,7 @@ export default function Dashboard() {
         if (!hasGoal) setShowOnboarding(true);
         // Verifica plano vencido
         const renewal = me?.plan_renewal;
-        if (renewal && new Date(renewal) < new Date()) setShowExpiredModal(true);
+        setShowExpiredModal(isPlanExpired(renewal));
       })
       .catch(() => {
         // API indisponível — usa dados locais

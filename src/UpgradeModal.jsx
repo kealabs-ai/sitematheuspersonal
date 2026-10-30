@@ -3,7 +3,58 @@ import { motion } from 'framer-motion';
 import { X, CreditCard, Lock, Shield, Copy, Check, AlertTriangle, Tag, Trash2 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { getUser } from './services/alunoApi';
+import api from './services/api';
 import { friendlyError } from './utils/friendlyError';
+
+const formatDocument = (value) => {
+  const characters = value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 14);
+  if (characters.length <= 11 && !/[A-Z]/.test(characters)) {
+    return characters.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  }
+  return `${characters.slice(0, 2)}${characters.length > 2 ? `.${characters.slice(2, 5)}` : ''}${characters.length > 5 ? `.${characters.slice(5, 8)}` : ''}${characters.length > 8 ? `/${characters.slice(8, 12)}` : ''}${characters.length > 12 ? `-${characters.slice(12, 14)}` : ''}`;
+};
+
+const isValidCpf = (digits) => {
+  if (digits.length !== 11 || /^(\d)\1+$/.test(digits)) return false;
+  const checkDigit = (length) => {
+    const sum = digits.slice(0, length).split('').reduce((total, digit, index) => total + Number(digit) * (length + 1 - index), 0);
+    const remainder = (sum * 10) % 11;
+    return (remainder === 10 ? 0 : remainder) === Number(digits[length]);
+  };
+  return checkDigit(9) && checkDigit(10);
+};
+
+const isValidCnpj = (digits) => {
+  if (!/^[A-Z0-9]{12}\d{2}$/.test(digits) || /^(\w)\1+$/.test(digits)) return false;
+  const checkDigit = (length) => {
+    const weights = length === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    const sum = digits.slice(0, length).split('').reduce((total, character, index) => total + (character.charCodeAt(0) - 48) * weights[index], 0);
+    const remainder = sum % 11;
+    return (remainder < 2 ? 0 : 11 - remainder) === Number(digits[length]);
+  };
+  return checkDigit(12) && checkDigit(13);
+};
+
+const detectCardBrand = (value) => {
+  const digits = value.replace(/\D/g, '');
+  if (/^(5[1-5]|222[1-9]|22[3-9]\d|2[3-6]\d{2}|27[01]\d|2720)/.test(digits)) return 'Mastercard';
+  if (/^(4011(78|79)|431274|438935|451416|457393|504175|5067|5090|627780|636297|636368|650|6516|6550)/.test(digits)) return 'Elo';
+  if (/^4/.test(digits)) return 'Visa';
+  if (/^(34|37)/.test(digits)) return 'Amex';
+  if (/^(606282|3841)/.test(digits)) return 'Hipercard';
+  if (/^3(0[0-5]|[68])/.test(digits)) return 'Diners';
+  return digits ? 'Cartão' : '';
+};
+
+const CardBrand = ({ brand }) => {
+  if (brand === 'Mastercard') return <span className="flex items-center" aria-label="Mastercard"><i className="w-4 h-4 rounded-full bg-red-500" /><i className="-ml-2 w-4 h-4 rounded-full bg-yellow-400/90" /></span>;
+  if (brand === 'Amex') return <span className="bg-blue-600 text-white text-[9px] font-black px-1 py-1 rounded-sm">AMEX</span>;
+  if (brand === 'Elo') return <span className="text-yellow-300 font-black italic text-sm">elo</span>;
+  if (brand === 'Hipercard') return <span className="text-red-500 font-black italic text-[10px]">HIPERCARD</span>;
+  if (brand === 'Diners') return <span className="text-blue-300 font-black text-[10px]">DINERS</span>;
+  if (brand === 'Visa') return <span className="text-blue-400 font-black italic text-sm">VISA</span>;
+  return <CreditCard size={20} className="text-gray-500" aria-hidden="true" />;
+};
 
 const PLANS = [
   { name: 'BRONZE',   price: 79.90, months: 1, duration: '1 mês',    frequency: 'monthly',    color: 'border-orange-400 text-orange-400', bg: 'bg-orange-400/10', emoji: '🥉' },
@@ -16,7 +67,7 @@ export default function UpgradeModal({ onClose, closable = true, expired = false
   const [step, setStep] = useState('plan'); // 'plan' | 'payment'
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [payMethod, setPayMethod] = useState('credit');
-  const [card, setCard] = useState({ number: '', name: '', expiry: '', cvv: '', installments: '1' });
+  const [card, setCard] = useState({ number: '', name: '', cpf: '', expiry: '', cvv: '', installments: '1' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [pixCode, setPixCode] = useState('');
@@ -36,6 +87,9 @@ export default function UpgradeModal({ onClose, closable = true, expired = false
       : appliedCoupon.discount
     : 0;
   const totalPrice = basePrice - discount;
+  const cardHolderDocument = card.cpf.replace(/\D/g, '');
+  const validCardHolderDocument = isValidCpf(cardHolderDocument) || isValidCnpj(cardHolderDocument);
+  const cardBrand = detectCardBrand(card.number);
 
   const handleApplyCoupon = async () => {
     if (!couponCode) return;
@@ -69,6 +123,7 @@ export default function UpgradeModal({ onClose, closable = true, expired = false
       value = value.replace(/\D/g, '').slice(0, 4).replace(/(\d{2})(\d)/, '$1/$2');
     }
     if (name === 'cvv') value = value.replace(/\D/g, '').slice(0, 4);
+    if (name === 'cpf') value = formatDocument(value);
     setCard(prev => ({ ...prev, [name]: value }));
   };
 
@@ -83,11 +138,27 @@ export default function UpgradeModal({ onClose, closable = true, expired = false
       const meRes = await fetch(`${BASE}/aluno/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const meData = await meRes.json();
-      const cpfClean = (meData?.cpf || meData?.cpf_cnpj || '').replace(/\D/g, '');
-      const userName = meData?.name || user?.name || '';
-      const userEmail = meData?.email || user?.email || '';
-      const userId = meData?.id || meData?.id_user || user?.id;
+      const meData = await meRes.json().catch(() => ({}));
+      const profile = meData?.user ?? meData?.data?.user ?? meData?.data ?? meData;
+      const storedUser = user ?? {};
+      const userIdValue =
+        profile?.id_user ?? profile?.userId ?? profile?.user_id ?? profile?.id ??
+        meData?.id_user ?? meData?.userId ?? meData?.user_id ?? meData?.id ??
+        storedUser.id_user ?? storedUser.userId ?? storedUser.user_id ?? storedUser.id;
+      const userId = Number(userIdValue);
+      if (!Number.isInteger(userId) || userId <= 0) {
+        console.error('[pagamento] Não foi possível identificar id_user para criar o pedido:', {
+          meStatus: meRes.status,
+          camposRespostaMe: Object.keys(meData || {}),
+          camposPerfil: Object.keys(profile || {}),
+          camposUsuarioLocal: Object.keys(storedUser),
+        });
+        setError('Não foi possível identificar sua conta. Saia e entre novamente antes de tentar o pagamento.');
+        return;
+      }
+      const cpfClean = (profile?.cpf || profile?.cpf_cnpj || '').replace(/\D/g, '');
+      const userName = profile?.name || storedUser.name || '';
+      const userEmail = profile?.email || storedUser.email || '';
 
       const planFrequency = selectedPlan.frequency || 'monthly';
       const planName = `Plano ${selectedPlan.name}`;
@@ -113,11 +184,13 @@ export default function UpgradeModal({ onClose, closable = true, expired = false
         }],
       };
 
-      const orderRes = await fetch(`${BASE}/orders`, {
+      console.info('[pagamento] POST /orders — parâmetros:', orderPayload);
+      const orderResponse = await fetch(`${BASE}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(orderPayload),
-      }).then(r => r.json());
+      });
+      const orderRes = await orderResponse.json();
 
       const orderId =
         orderRes?.id_order ||
@@ -127,16 +200,24 @@ export default function UpgradeModal({ onClose, closable = true, expired = false
         orderRes?.data?.id_order ||
         orderRes?.data?.id;
 
-      if (!orderId) { setError(friendlyError(orderRes)); setLoading(false); return; }
+      if (!orderResponse.ok || !orderId) {
+        console.error('[pagamento] Falha em POST /orders:', {
+          status: orderResponse.status,
+          parametros: orderPayload,
+          resposta: orderRes,
+        });
+        setError(friendlyError(orderRes)); setLoading(false); return;
+      }
 
       // 2. Chama o checkout Asaas
+      const cardHolderCpf = cardHolderDocument;
       const checkoutBody = {
         id_order: orderId,
         id_user: userId,
         payment_id: orderId,
         customer_name: userName,
         customer_email: userEmail,
-        customer_cpf_cnpj: cpfClean,
+        customer_cpf_cnpj: payMethod === 'pix' ? cpfClean : cardHolderCpf,
         amount: finalPrice,
         original_amount: planPrice,
         discount_amount: planPrice - finalPrice,
@@ -144,14 +225,29 @@ export default function UpgradeModal({ onClose, closable = true, expired = false
         coupon_id: appliedCoupon?.id || null,
         billing_type: payMethod === 'pix' ? 'PIX' : 'CREDIT_CARD',
         ...(payMethod !== 'pix' && {
+          creditCardHolderInfo: { cpfCnpj: cardHolderCpf },
           card_number: card.number.replace(/\s/g, ''),
           card_name: card.name,
+          card_cpf_cnpj: cardHolderCpf,
           card_expiry: card.expiry,
           card_cvv: card.cvv,
           installments: parseInt(card.installments),
         }),
       };
 
+      const safeCheckoutLog = {
+        ...checkoutBody,
+        customer_cpf_cnpj: checkoutBody.customer_cpf_cnpj ? '[omitido]' : '',
+        creditCardHolderInfo: checkoutBody.creditCardHolderInfo
+          ? { ...checkoutBody.creditCardHolderInfo, cpfCnpj: '[omitido]' }
+          : undefined,
+        card_number: checkoutBody.card_number ? `****${checkoutBody.card_number.slice(-4)}` : undefined,
+        card_name: checkoutBody.card_name ? '[omitido]' : undefined,
+        card_cpf_cnpj: checkoutBody.card_cpf_cnpj ? '[omitido]' : undefined,
+        card_expiry: checkoutBody.card_expiry ? '[omitido]' : undefined,
+        card_cvv: checkoutBody.card_cvv ? '[omitido]' : undefined,
+      };
+      console.info('[pagamento] POST /asaas/checkout — parâmetros (dados sensíveis ocultos):', safeCheckoutLog);
       const checkoutRes = await fetch(`${BASE}/asaas/checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -159,7 +255,14 @@ export default function UpgradeModal({ onClose, closable = true, expired = false
       });
       const checkoutData = await checkoutRes.json();
 
-      if (!checkoutRes.ok) { setError(friendlyError(checkoutData?.error ?? checkoutData)); setLoading(false); return; }
+      if (!checkoutRes.ok) {
+        console.error('[pagamento] Falha em POST /asaas/checkout:', {
+          status: checkoutRes.status,
+          parametros: safeCheckoutLog,
+          resposta: checkoutData,
+        });
+        setError(friendlyError(checkoutData?.error ?? checkoutData)); setLoading(false); return;
+      }
 
       // 3. PIX: exibe QR code retornado pela API
       if (payMethod === 'pix') {
@@ -169,6 +272,16 @@ export default function UpgradeModal({ onClose, closable = true, expired = false
         return;
       }
 
+      const activation = await api.activateUser(Number(userId));
+      if (activation?.success === false || activation?.error) {
+        console.error('[pagamento] Pagamento iniciado, mas a ativação da conta falhou:', activation);
+      }
+      try {
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        localStorage.setItem('user', JSON.stringify({ ...storedUser, is_active: true }));
+      } catch {
+        // O estado remoto permanece como fonte da verdade.
+      }
       setSuccess(true);
     } catch (err) {
       console.error('Erro ao processar pagamento:', err);
@@ -222,7 +335,7 @@ export default function UpgradeModal({ onClose, closable = true, expired = false
                 </button>
               )}
               {!closable && (
-                <button onClick={() => window.location.reload()} className="mt-4 bg-lime-green text-black font-bold px-8 py-3 uppercase hover:bg-neon-green transition-all">
+                <button onClick={() => onClose ? onClose() : window.location.reload()} className="mt-4 bg-lime-green text-black font-bold px-8 py-3 uppercase hover:bg-neon-green transition-all">
                   Acessar Dashboard
                 </button>
               )}
@@ -359,10 +472,17 @@ export default function UpgradeModal({ onClose, closable = true, expired = false
               {/* Dados do cartão */}
               {payMethod === 'credit' && (
                 <div className="space-y-3">
-                  <input name="number" placeholder="Número do cartão" value={card.number} onChange={handleCardChange} maxLength={19}
-                    className="w-full p-3 bg-black border border-dark-border text-white text-sm focus:outline-none focus:border-lime-green transition-colors" />
+                  <div className="relative">
+                    <input name="number" placeholder="Número do cartão" value={card.number} onChange={handleCardChange} maxLength={19}
+                      className="w-full p-3 pr-20 bg-black border border-dark-border text-white text-sm focus:outline-none focus:border-lime-green transition-colors" />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2" title={cardBrand || 'Bandeira do cartão'}><CardBrand brand={cardBrand} /></span>
+                  </div>
                   <input name="name" placeholder="Nome no cartão" value={card.name} onChange={handleCardChange}
                     className="w-full p-3 bg-black border border-dark-border text-white text-sm focus:outline-none focus:border-lime-green transition-colors" />
+                  <input name="cpf" type="text" autoComplete="off" placeholder="CPF ou CNPJ do titular do cartão" value={card.cpf}
+                    onChange={handleCardChange} maxLength={18} title="Informe um CPF ou CNPJ válido"
+                    className="w-full p-3 bg-black border border-dark-border text-white text-sm focus:outline-none focus:border-lime-green transition-colors" />
+                  {card.cpf && !validCardHolderDocument && <p className="text-red-400 text-xs">Informe um CPF ou CNPJ válido.</p>}
                   <div className="grid grid-cols-2 gap-3">
                     <input name="expiry" placeholder="MM/AA" value={card.expiry} onChange={handleCardChange} maxLength={5}
                       className="w-full p-3 bg-black border border-dark-border text-white text-sm focus:outline-none focus:border-lime-green transition-colors" />
@@ -438,7 +558,7 @@ export default function UpgradeModal({ onClose, closable = true, expired = false
                     Voltar
                   </button>
                   <button onClick={handleSubmit} disabled={loading ||
-                    (payMethod === 'credit' && (!card.number || !card.name || !card.expiry || !card.cvv))}
+                    (payMethod === 'credit' && (!card.number || !card.name || !validCardHolderDocument || !card.expiry || !card.cvv))}
                     className="flex-1 bg-lime-green text-black font-bold py-3 uppercase hover:bg-neon-green transition-all disabled:opacity-40 flex items-center justify-center gap-2">
                     <Lock size={14} />
                     {loading ? 'Processando...' : payMethod === 'pix' ? 'Gerar PIX' : 'Confirmar Pagamento'}

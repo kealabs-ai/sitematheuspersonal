@@ -21,17 +21,18 @@
     "qrcode.react": "^4.2.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router": "^6.30.4",
+    "react-router": "^8.4.0",
     "react-router-dom": "^6.30.4",
     "recharts": "^2.12.0",
     "tailwind-merge": "^2.5.0"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "concurrently": "^9.2.1",
     "postcss": "^8.4.49",
-    "tailwindcss": "^3.4.17",
+    "tailwindcss": "^3.4.19",
     "vite": "^7.0.0"
   },
   "engines": {

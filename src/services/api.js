@@ -233,6 +233,20 @@ const api = {
     }
   },
 
+  async getPaymentStatus(orderId) {
+    try {
+      const res = await get(`${BASE}/payments/payments/order/${orderId}/status`);
+      if (!res.ok) {
+        // fallback: tenta rota genérica do pedido
+        const fallback = await get(`${BASE}/payments/payments/order/${orderId}`);
+        return fallback.json();
+      }
+      return res.json();
+    } catch {
+      return null;
+    }
+  },
+
   // Coupons
   async validateCoupon(code, amount) {
     try {

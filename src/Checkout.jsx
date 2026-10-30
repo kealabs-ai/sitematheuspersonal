@@ -1,12 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Lock, Shield, CreditCard, Copy, Check } from 'lucide-react';
-import ProgressIndicator from './ProgressIndicator';
 import { QRCodeSVG } from 'qrcode.react';
+import ProgressIndicator from './ProgressIndicator';
 import api from './services/api';
 import { friendlyError } from './utils/friendlyError';
 import { Footer } from './App';
 import { getUser } from './services/alunoApi';
+
+const getPixDetails = (response) => {
+  const sources = [
+    response,
+    response?.data,
+    response?.payment,
+    response?.pixQrCode,
+    response?.pix_qr_code,
+    response?.data?.pixQrCode,
+    response?.data?.pix_qr_code,
+    response?.payment?.pixQrCode,
+    response?.payment?.pix_qr_code,
+  ].filter(source => source && typeof source === 'object');
+
+  const getString = (keys) => {
+    for (const source of sources) {
+      for (const key of keys) {
+        if (typeof source[key] === 'string' && source[key].trim()) {
+          return source[key].trim();
+        }
+      }
+    }
+    return '';
+  };
+
+  return {
+    pixCode: getString(['pix_code', 'pixCode', 'payload', 'qr_code', 'qrCode', 'copyAndPaste']),
+    pixQrImage: getString(['pix_qr_image', 'pixQrImage', 'encodedImage', 'encoded_image', 'qr_image', 'qrImage']),
+  };
+};
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -64,10 +94,11 @@ const Checkout = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [existingUserModal, setExistingUserModal] = useState(false);
   const [pixCode, setPixCode] = useState('');
   const [pixQrImage, setPixQrImage] = useState('');
-  const [copied, setCopied] = useState(false);
-  const [existingUserModal, setExistingUserModal] = useState(false);
+  const [pixOrderId, setPixOrderId] = useState(null);
+  const [pixCopied, setPixCopied] = useState(false);
 
   const handleChange = (e) => {
     let value = e.target.value;
@@ -120,7 +151,7 @@ const Checkout = () => {
   
   const totalPrice = finalPrice;
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e, paymentMethod = formData.paymentMethod) => {
     e.preventDefault();
     const userId = userData?.userId ?? userData?.id_user ?? userData?.id ?? userData?.user_id;
     if (!userId || !Number.isInteger(Number(userId)) || Number(userId) <= 0) {
@@ -152,7 +183,7 @@ const Checkout = () => {
       // 1. Cria o pedido COM DESCONTO EXPLÍCITO
       const orderData = {
         id_user: Number(userId),
-        payment_method: formData.paymentMethod === 'credit' ? 'CREDIT_CARD' : 'PIX',
+        payment_method: paymentMethod === 'credit' ? 'CREDIT_CARD' : 'PIX',
         id_coupon: coupon?.id || null,
         coupon_code: coupon?.code || null,
         discount_type: coupon?.type || null,
@@ -190,7 +221,7 @@ const Checkout = () => {
       }
 
       // 2. Chama o checkout Asaas COM DESCONTO EXPLÍCITO
-      const billingType = formData.paymentMethod === 'pix' ? 'PIX' : 'CREDIT_CARD';
+      const billingType = paymentMethod === 'pix' ? 'PIX' : 'CREDIT_CARD';
       const checkoutBody = {
         id_order: orderId,
         id_user: Number(userId),
@@ -204,9 +235,10 @@ const Checkout = () => {
         coupon_code: coupon?.code || null,
         coupon_id: coupon?.id || null,
         billing_type: billingType,
-        ...(formData.paymentMethod !== 'pix' && {
+        ...(paymentMethod !== 'pix' && {
           card_number: formData.cardNumber.replace(/\s/g, ''),
           card_name: formData.cardName,
+          card_cpf_cnpj: (formData.cpf || '').replace(/\D/g, ''),
           card_expiry: formData.cardExpiry,
           card_cvv: formData.cardCvv,
           installments: parseInt(formData.installments),
@@ -226,17 +258,18 @@ const Checkout = () => {
         return;
       }
 
-      const activation = await api.activateUser(userId);
-      if (activation?.success === false || activation?.error) {
-        setError(activation?.message || 'Pagamento iniciado, mas não foi possível ativar sua conta. Entre em contato com o suporte.');
+      // 3. PIX: redireciona para pagina de polling de status
+      if (paymentMethod === 'pix') {
+        const { pixCode, pixQrImage } = getPixDetails(checkoutData);
+        setPixCode(pixCode);
+        setPixQrImage(pixQrImage);
+        setPixOrderId(orderId);
         return;
       }
 
-      // 3. PIX: exibe QR code retornado pela API
-      if (formData.paymentMethod === 'pix') {
-        setPixCode(checkoutData?.pix_code || '');
-        setPixQrImage(checkoutData?.pix_qr_image || '');
-        setLoading(false);
+      const activation = await api.activateUser(userId);
+      if (activation?.success === false || activation?.error) {
+        setError(activation?.message || 'Pagamento iniciado, mas não foi possível ativar sua conta. Entre em contato com o suporte.');
         return;
       }
 
@@ -245,7 +278,7 @@ const Checkout = () => {
           plan,
           userData: {
             ...userData,
-            paymentMethod: formData.paymentMethod,
+            paymentMethod,
             last4Digits: formData.cardNumber.replace(/\s/g, '').slice(-4),
             recurringPayment: formData.recurringPayment
           },
@@ -261,9 +294,21 @@ const Checkout = () => {
 
     } catch (err) {
       console.error('Erro ao processar pagamento:', err);
-      setError('Não foi possível processar seu pagamento. Verifique os dados do cartão e tente novamente.');
+      setError('Não foi possível processar o pagamento. Verifique os dados e tente novamente.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const copyPixCode = async () => {
+    if (!pixCode) return;
+    try {
+      await navigator.clipboard.writeText(pixCode);
+      setPixCopied(true);
+      setTimeout(() => setPixCopied(false), 2000);
+    } catch (copyError) {
+      console.error('Erro ao copiar código PIX:', copyError);
+      setError('Não foi possível copiar o código PIX. Selecione e copie o código manualmente.');
     }
   };
 
@@ -279,19 +324,6 @@ const Checkout = () => {
       </div>
     );
   }
-
-  useEffect(() => {
-    if (formData.paymentMethod === 'pix') {
-      setPixCode('');
-      setPixQrImage('');
-    }
-  }, [formData.paymentMethod]);
-
-  const copyPixCode = () => {
-    navigator.clipboard.writeText(pixCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   return (
     <div className="bg-dark-bg text-white">
@@ -345,7 +377,14 @@ const Checkout = () => {
                   <div className="grid grid-cols-2 gap-4 mb-6">
                     <button
                       type="button"
-                      onClick={() => setFormData({ ...formData, paymentMethod: 'credit' })}
+                      disabled={loading}
+                      onClick={() => {
+                        setFormData({ ...formData, paymentMethod: 'credit' });
+                        setPixCode('');
+                        setPixQrImage('');
+                        setPixOrderId(null);
+                        setError(null);
+                      }}
                       className={`p-4 border-2 transition-all ${
                         formData.paymentMethod === 'credit'
                           ? 'border-lime-green bg-lime-green/10'
@@ -360,7 +399,16 @@ const Checkout = () => {
 
                     <button
                       type="button"
-                      onClick={() => setFormData({ ...formData, paymentMethod: 'pix' })}
+                      disabled={loading}
+                      onClick={(event) => {
+                        if (formData.paymentMethod === 'pix' || pixOrderId) return;
+                        setFormData({ ...formData, paymentMethod: 'pix' });
+                        setPixCode('');
+                        setPixQrImage('');
+                        setPixOrderId(null);
+                        setError(null);
+                        handleSubmit(event, 'pix');
+                      }}
                       className={`p-4 border-2 transition-all ${
                         formData.paymentMethod === 'pix'
                           ? 'border-lime-green bg-lime-green/10'
@@ -376,6 +424,58 @@ const Checkout = () => {
                     </button>
                   </div>
                 </div>
+
+                {formData.paymentMethod === 'pix' && (
+                  <div className="bg-black border border-lime-green/30 p-6 text-center space-y-4">
+                    {loading ? (
+                      <p className="text-gray-300 animate-pulse">Gerando QR Code PIX...</p>
+                    ) : pixCode || pixQrImage ? (
+                      <>
+                        <p className="text-gray-300">Escaneie o QR Code para pagar</p>
+                        <div className="inline-block bg-white p-3 rounded">
+                          {pixQrImage
+                            ? <img
+                                src={/^(data:image\/|https?:\/\/)/i.test(pixQrImage)
+                                  ? pixQrImage
+                                  : `data:image/png;base64,${pixQrImage}`}
+                                alt="QR Code PIX"
+                                width={200}
+                                height={200}
+                              />
+                            : <QRCodeSVG value={pixCode} size={200} />
+                          }
+                        </div>
+                        {pixCode && (
+                          <div className="flex gap-2 text-left">
+                            <input
+                              type="text"
+                              value={pixCode}
+                              readOnly
+                              aria-label="Código PIX copia e cola"
+                              className="flex-1 min-w-0 p-3 bg-black border border-dark-border text-white text-xs"
+                            />
+                            <button
+                              type="button"
+                              onClick={copyPixCode}
+                              className="bg-lime-green text-black px-4 py-2 font-bold hover:bg-neon-green transition-all flex items-center gap-2"
+                            >
+                              {pixCopied ? <Check size={16} /> : <Copy size={16} />}
+                              {pixCopied ? 'Copiado!' : 'Copiar'}
+                            </button>
+                          </div>
+                        )}
+                        <p className="text-xs text-gray-500">
+                          Pedido #{pixOrderId} · R$ {totalPrice.toFixed(2).replace('.', ',')}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-sm text-yellow-200">
+                        A cobrança foi iniciada, mas o servidor não retornou o QR Code PIX.
+                        {pixOrderId ? ` Pedido #${pixOrderId}.` : ''}
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {formData.paymentMethod === 'credit' && (
                 <div className="bg-dark-card border border-dark-border p-6">
@@ -454,55 +554,13 @@ const Checkout = () => {
                   <h3 className="text-2xl font-bebas uppercase mb-4 text-lime-green">
                     Pagamento via PIX
                   </h3>
-                  <div className="bg-black border border-lime-green/30 p-6">
-                    {(pixCode || pixQrImage) && (
-                    <div className="text-center mb-6">
-                      <p className="text-gray-300 mb-4">Escaneie o QR Code para pagar</p>
-                      <div className="bg-white p-4 inline-block rounded">
-                        {pixQrImage
-                          ? <img src={`data:image/png;base64,${pixQrImage}`} alt="QR Code PIX" width={200} height={200} />
-                          : <QRCodeSVG value={pixCode} size={200} />
-                        }
-                      </div>
-                    </div>
-                    )}
-                    {!pixCode && (
-                    <div className="text-center mb-6 text-gray-400">
-                      <p>Clique em "Confirmar Pagamento" para gerar o QR Code PIX</p>
-                    </div>
-                    )}
-                    {pixCode && (
-                    <div className="mt-4" key="pix-copy">
-                      <label className="block text-sm text-gray-400 mb-2 uppercase tracking-wide">
-                        Código PIX Copia e Cola
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={pixCode}
-                          readOnly
-                          className="flex-1 p-3 bg-black border border-dark-border text-white text-xs focus:outline-none"
-                        />
-                        <button
-                          type="button"
-                          onClick={copyPixCode}
-                          className="bg-lime-green text-black px-4 py-2 font-bold hover:bg-neon-green transition-all flex items-center gap-2"
-                        >
-                          {copied ? <Check size={16} /> : <Copy size={16} />}
-                          {copied ? 'Copiado!' : 'Copiar'}
-                        </button>
-                      </div>
-                    </div>
-                    )}
-                    <div className="mt-4 bg-lime-green/10 border border-lime-green/30 p-4 text-sm text-gray-300">
-                      <p className="mb-2 font-bold text-lime-green">Como pagar:</p>
-                      <ol className="list-decimal list-inside space-y-1">
-                        <li>Abra o app do seu banco</li>
-                        <li>Escolha pagar com PIX</li>
-                        <li>Escaneie o QR Code ou cole o código</li>
-                        <li>Confirme o pagamento de R$ {totalPrice.toFixed(2).replace('.', ',')}</li>
-                      </ol>
-                    </div>
+                  <div className="bg-black border border-lime-green/30 p-4 text-sm text-gray-300">
+                    <p className="mb-2 font-bold text-lime-green">Gerando seu pagamento:</p>
+                    <ol className="list-decimal list-inside space-y-1">
+                      <li>Ao selecionar PIX, a cobrança e o QR Code são gerados</li>
+                      <li>Escaneie o QR Code ou copie o código no seu banco</li>
+                      <li>O acesso é liberado assim que o pagamento for confirmado</li>
+                    </ol>
                   </div>
                 </div>
                 )}
@@ -554,18 +612,20 @@ const Checkout = () => {
                   </div>
                 )}
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-lime-green text-black font-bold py-4 uppercase hover:bg-neon-green transition-all text-lg disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {loading ? 'Processando...' : (
-                    <>
-                      <Lock size={20} />
-                      Confirmar Pagamento
-                    </>
-                  )}
-                </button>
+                {formData.paymentMethod === 'credit' && (
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-lime-green text-black font-bold py-4 uppercase hover:bg-neon-green transition-all text-lg disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {loading ? 'Processando...' : (
+                      <>
+                        <Lock size={20} />
+                        Confirmar Pagamento
+                      </>
+                    )}
+                  </button>
+                )}
 
                 <div className="text-center text-xs text-gray-500">
                   <p className="mb-2">Ao continuar, você concorda com nossos</p>
