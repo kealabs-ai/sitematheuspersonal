@@ -121,6 +121,18 @@ export const auth = {
 };
 
 // ─────────────────────────────────────────────
+// 🔑 PASSKEYS / WEBAUTHN
+// ─────────────────────────────────────────────
+export const passkeys = {
+  registerOptions: () => post(`${BASE}/auth/passkeys/register/options`, {}),
+  registerVerify: (response) => post(`${BASE}/auth/passkeys/register/verify`, { response }),
+  authenticateOptions: (email) => postPublic(`${BASE}/auth/passkeys/authenticate/options`, { email }),
+  authenticateVerify: (email, response) => postPublic(`${BASE}/auth/passkeys/authenticate/verify`, { email, response }),
+  list: () => get(`${BASE}/auth/passkeys`),
+  revoke: (credentialId) => fetchWithAuth(`${BASE}/auth/passkeys/${encodeURIComponent(credentialId)}`, { method: 'DELETE' }),
+};
+
+// ─────────────────────────────────────────────
 // 👤 PERFIL
 // ─────────────────────────────────────────────
 export const users = {

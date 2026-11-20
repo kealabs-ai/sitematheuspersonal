@@ -20,7 +20,14 @@ import NotFound from './NotFound.jsx';
 import Admin from './Admin.jsx';
 import ResetPassword from './ResetPassword.jsx';
 import PixStatus from './PixStatus.jsx';
+import { registerSW } from 'virtual:pwa-register';
 import './index.css';
+
+registerSW({
+  onNeedRefresh() {
+    window.dispatchEvent(new CustomEvent('matheus-pwa-update'));
+  }
+});
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

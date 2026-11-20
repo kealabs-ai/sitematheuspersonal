@@ -6,7 +6,7 @@ import {
   Dumbbell, Calendar, Scale, Ruler,
   Star, ChevronRight, Shield, Bell, Lock, Eye, EyeOff, Camera, Flame
 } from 'lucide-react';
-import { users as usersApi, auth, clearSession, getUser } from './services/alunoApi';
+import { users as usersApi, auth, passkeys, clearSession, getUser } from './services/alunoApi';
 import { useBlockBack } from './hooks/useBlockBack';
 import BottomNav from './BottomNav';
 import AppFooter from './AppFooter';
@@ -104,6 +104,8 @@ export default function Perfil() {
   const [avatar, setAvatar]               = useState(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
+  const [passkeyList, setPasskeyList] = useState([]);
+  const [passkeyMessage, setPasskeyMessage] = useState('');
   const [imcModalOpen, setImcModalOpen]       = useState(false);
   const [upgradeOpen, setUpgradeOpen]         = useState(false);
   const avatarInputRef                        = React.useRef(null);
@@ -148,6 +150,10 @@ export default function Perfil() {
     }).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    passkeys.list().then((data) => setPasskeyList(Array.isArray(data) ? data : (data.credentials ?? []))).catch(() => setPasskeyList([]));
+  }, []);
+
   const openMetrics = () => {
     setMetricsDraft({
       weight:   metrics?.weight   ?? '',
@@ -175,6 +181,16 @@ export default function Perfil() {
     }
     setMetricsSaving(false);
     setMetricsOpen(false);
+  };
+
+  const revokePasskey = async (credentialId) => {
+    setPasskeyMessage('');
+    const result = await passkeys.revoke(credentialId).catch(() => null);
+    if (result?.error || result?.success === false) {
+      setPasskeyMessage(result.detail || result.message || 'Não foi possível remover a passkey.');
+      return;
+    }
+    setPasskeyList((items) => items.filter((item) => (item.credential_id || item.id) !== credentialId));
   };
 
   const savePassword = async () => {
@@ -498,6 +514,38 @@ export default function Perfil() {
               <ChevronRight size={16} className="text-gray-600" />
             </button>
           ))}
+        </motion.div>
+
+        {/* Passkeys cadastradas */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}
+          className="bg-dark-card border border-dark-border p-4">
+          <div className="flex items-center gap-2">
+            <Shield size={16} className="text-lime-green" />
+            <p className="text-xs text-gray-400 uppercase tracking-widest">Acesso por biometria</p>
+          </div>
+          {passkeyMessage && <p className="mt-3 text-xs text-red-400">{passkeyMessage}</p>}
+          {passkeyList.length === 0 ? (
+            <p className="mt-3 text-sm text-gray-500">Nenhuma passkey cadastrada neste dispositivo.</p>
+          ) : (
+            <div className="mt-3 divide-y divide-dark-border">
+              {passkeyList.map((item) => {
+                const credentialId = item.credential_id || item.id;
+                return (
+                  <div key={credentialId} className="flex items-center justify-between py-3">
+                    <div>
+                      <p className="text-sm text-white">{item.device_name || 'Dispositivo deste aluno'}</p>
+                      <p className="mt-0.5 text-[10px] text-gray-500">
+                        {item.created_at ? `Cadastrada em ${new Date(item.created_at).toLocaleDateString('pt-BR')}` : 'Credencial ativa'}
+                      </p>
+                    </div>
+                    <button onClick={() => revokePasskey(credentialId)} className="border border-red-500/30 px-3 py-2 text-xs text-red-400 hover:bg-red-500/10">
+                      Remover
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </motion.div>
 
         {upgradeOpen && (

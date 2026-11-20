@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import matheusLogo from './assets/logotipo_matheus_personal.png';
-import { auth, saveSession } from './services/alunoApi';
+import { auth, passkeys, saveSession } from './services/alunoApi';
 import UpgradeModal from './UpgradeModal';
+import InstallPwaModal from './components/InstallPwaModal';
+import { hasPlatformAuthenticator, hasWebAuthn } from './utils/pwa';
+import { prepareCreationOptions, prepareRequestOptions, creationResponse, assertionResponse } from './utils/passkeys';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -11,7 +14,14 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [inactiveModal, setInactiveModal] = useState(false);
+  const [passkeySupported, setPasskeySupported] = useState(false);
+  const [passkeyPrompt, setPasskeyPrompt] = useState(null);
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    hasPlatformAuthenticator().then((available) => setPasskeySupported(hasWebAuthn() && available));
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,7 +31,8 @@ const Login = () => {
       const data = await auth.login(email, password);
       if (data.access_token) {
         saveSession(data);
-        navigate(data.user?.role === 'admin' ? '/admin' : '/dashboard');
+        if (passkeySupported) setPasskeyPrompt(data);
+        else navigate(data.user?.role === 'admin' ? '/admin' : '/dashboard');
       } else {
         const detail = data.detail ?? data.message ?? '';
         if (detail.toLowerCase().includes('senha')) {
@@ -41,10 +52,69 @@ const Login = () => {
     }
   };
 
+  const activatePasskey = async () => {
+    setPasskeyLoading(true);
+    setError('');
+    try {
+      const options = await passkeys.registerOptions();
+      const publicKey = prepareCreationOptions(options.publicKey ?? options);
+      const credential = await navigator.credentials.create({ publicKey });
+      if (!credential) throw new Error('Registro cancelado');
+      const result = await passkeys.registerVerify(creationResponse(credential));
+      if (result?.error || result?.success === false) throw new Error(result.detail || result.message || 'Não foi possível ativar');
+    } catch (err) {
+      setError(err?.name === 'NotAllowedError' ? 'A ativação da biometria foi cancelada.' : (err.message || 'Não foi possível ativar o login por biometria.'));
+      setPasskeyLoading(false);
+      return;
+    }
+    setPasskeyLoading(false);
+    setPasskeyPrompt(null);
+    navigate(passkeyPrompt?.user?.role === 'admin' ? '/admin' : '/dashboard');
+  };
+
+  const loginWithPasskey = async () => {
+    setPasskeyLoading(true);
+    setError('');
+    try {
+      const options = await passkeys.authenticateOptions(email);
+      if (options?.error) throw new Error(options.detail || options.message || 'Não foi possível iniciar a biometria.');
+      const publicKey = prepareRequestOptions(options.publicKey ?? options);
+      const credential = await navigator.credentials.get({ publicKey });
+      if (!credential) throw new Error('Autenticação cancelada');
+      const data = await passkeys.authenticateVerify(email, assertionResponse(credential));
+      if (!data.access_token) throw new Error(data.detail || data.message || 'Credencial inválida ou revogada.');
+      saveSession(data);
+      navigate(data.user?.role === 'admin' ? '/admin' : '/dashboard');
+    } catch (err) {
+      setError(err?.name === 'NotAllowedError' ? 'A autenticação por biometria foi cancelada.' : (err.message || 'Falha na autenticação por biometria.'));
+    } finally {
+      setPasskeyLoading(false);
+    }
+  };
+
+  const continueAfterPrompt = () => {
+    setPasskeyPrompt(null);
+    navigate(passkeyPrompt?.user?.role === 'admin' ? '/admin' : '/dashboard');
+  };
+
   return (
     <div className="min-h-screen sport-bg flex items-center justify-center px-4">
+      <InstallPwaModal />
       {inactiveModal && (
         <UpgradeModal closable={false} expired={true} onClose={() => setInactiveModal(false)} />
+      )}
+      {passkeyPrompt && (
+        <div className="fixed inset-0 z-[900] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm" role="presentation">
+          <div role="dialog" aria-modal="true" aria-labelledby="passkey-title" className="w-full max-w-md border border-lime-green/30 bg-[#111] p-6">
+            <h2 id="passkey-title" className="text-2xl font-bebas uppercase text-white">Entre com biometria nos próximos acessos</h2>
+            <p className="mt-3 text-sm leading-6 text-gray-300">Ative o acesso rápido e seguro ao Matheus Personal usando a biometria ou o desbloqueio do seu celular.</p>
+            {error && <p className="mt-3 border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-400">{error}</p>}
+            <button type="button" onClick={activatePasskey} disabled={passkeyLoading} className="mt-5 w-full bg-lime-green py-4 font-bold uppercase text-black disabled:opacity-70">
+              {passkeyLoading ? 'Configurando...' : 'Ativar acesso rápido'}
+            </button>
+            <button type="button" onClick={continueAfterPrompt} className="mt-2 w-full py-3 text-sm text-gray-400">Agora não</button>
+          </div>
+        </div>
       )}
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
@@ -109,6 +179,16 @@ const Login = () => {
             >
               {loading ? 'Entrando...' : <> Entrar <ArrowRight className="ml-2" size={20} /> </>}
             </button>
+            {passkeySupported && (
+              <button
+                type="button"
+                onClick={loginWithPasskey}
+                disabled={passkeyLoading}
+                className="w-full border border-lime-green/60 text-lime-green font-bold py-4 uppercase hover:bg-lime-green/10 disabled:opacity-70"
+              >
+                {passkeyLoading ? 'Verificando...' : 'Entrar com biometria'}
+              </button>
+            )}
           </form>
 
           <div className="mt-6 text-center">
