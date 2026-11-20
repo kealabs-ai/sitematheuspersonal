@@ -61,12 +61,20 @@ export default function InstallPwaModal() {
         : 'No menu do navegador, procure a opção “Adicionar à tela inicial” ou “Instalar aplicativo”.');
       return;
     }
-    await installPrompt.prompt();
-    const choice = await installPrompt.userChoice;
-    if (choice.outcome === 'accepted') {
-      localStorage.setItem(STORAGE_KEY, 'prompt-accepted');
+    try {
+      await installPrompt.prompt();
+      const choice = await installPrompt.userChoice;
+      if (choice.outcome === 'accepted') {
+        localStorage.setItem(STORAGE_KEY, 'prompt-accepted');
+        setManualMessage('Confirme “Instalar” na janela do navegador. O ícone será adicionado à tela inicial pelo sistema.');
+      } else {
+        setManualMessage('Instalação cancelada. Você pode tentar novamente pelo menu do navegador.');
+      }
+    } catch {
+      setManualMessage('Não foi possível abrir a instalação automática. Use o menu do navegador e escolha “Adicionar à tela inicial” ou “Instalar aplicativo”.');
+    } finally {
+      setInstallPrompt(null);
     }
-    setInstallPrompt(null);
   };
 
   if (!open) return null;
@@ -118,9 +126,9 @@ export default function InstallPwaModal() {
                 <li key={item} className="flex gap-2"><span className="text-lime-green">✓</span>{item}</li>
               ))}
             </ul>
-            {manualMessage && <p className="mt-4 border border-yellow-400/30 bg-yellow-400/10 p-3 text-sm text-yellow-200">{manualMessage}</p>}
+            {manualMessage && <p role="status" aria-live="polite" className="mt-4 border border-yellow-400/30 bg-yellow-400/10 p-3 text-sm text-yellow-200">{manualMessage}</p>}
             <button onClick={handleInstall} className="mt-5 flex w-full items-center justify-center gap-2 bg-lime-green py-4 font-bold uppercase text-black">
-              <Download size={19} /> Adicionar à tela inicial
+              <Download size={19} /> Instalar / adicionar à tela inicial
             </button>
             <button onClick={() => close('later')} className="mt-2 w-full py-3 text-sm text-gray-400 hover:text-white">Agora não</button>
           </>
