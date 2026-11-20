@@ -99,7 +99,6 @@ const Login = () => {
 
   return (
     <div className="min-h-screen sport-bg flex items-center justify-center px-4">
-      <InstallPwaModal />
       {inactiveModal && (
         <UpgradeModal closable={false} expired={true} onClose={() => setInactiveModal(false)} />
       )}
@@ -165,6 +164,8 @@ const Login = () => {
                 Esqueci minha senha
               </a>
             </div>
+
+            <InstallPwaModal showTrigger />
 
             {error && (
               <div className="bg-red-500/10 border border-red-500/40 text-red-400 text-sm p-3">

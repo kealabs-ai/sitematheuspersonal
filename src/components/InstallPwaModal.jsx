@@ -6,7 +6,7 @@ import { isAndroid, isIOS, isMobile, isStandalone } from '../utils/pwa';
 
 const STORAGE_KEY = 'matheus_pwa_install_decision';
 
-export default function InstallPwaModal() {
+export default function InstallPwaModal({ showTrigger = false }) {
   const [open, setOpen] = useState(false);
   const [manualMessage, setManualMessage] = useState('');
   const [installPrompt, setInstallPrompt] = useState(null);
@@ -52,12 +52,14 @@ export default function InstallPwaModal() {
   const handleInstall = async () => {
     if (isIOS()) {
       setManualMessage('No Safari, toque em Compartilhar e escolha “Adicionar à Tela de Início”. Confirme a adição para criar o atalho.');
+      setOpen(true);
       return;
     }
     if (!installPrompt) {
       setManualMessage(isAndroid()
         ? 'Abra o menu do navegador (⋮) e escolha “Adicionar à tela inicial” ou “Instalar aplicativo”.'
         : 'No menu do navegador, procure a opção “Adicionar à tela inicial” ou “Instalar aplicativo”.');
+      setOpen(true);
       return;
     }
     try {
@@ -68,17 +70,30 @@ export default function InstallPwaModal() {
         setManualMessage('Confirme “Instalar” na janela do navegador. O ícone será adicionado à tela inicial pelo sistema.');
       } else {
         setManualMessage('Instalação cancelada. Você pode tentar novamente pelo menu do navegador.');
+        setOpen(true);
       }
     } catch {
       setManualMessage('Não foi possível abrir a instalação automática. Use o menu do navegador e escolha “Adicionar à tela inicial” ou “Instalar aplicativo”.');
+      setOpen(true);
     } finally {
       setInstallPrompt(null);
     }
   };
 
-  if (!open) return null;
-
-  return createPortal(
+  return (
+    <>
+      {showTrigger && isMobile() && !isStandalone() && (
+        <button
+          type="button"
+          onClick={handleInstall}
+          aria-label="Instalar Matheus Personal e adicionar à tela inicial"
+          className="flex w-full items-center justify-center gap-2 border border-lime-green/50 py-3 font-bold uppercase text-lime-green transition-colors hover:bg-lime-green/10"
+        >
+          <Download size={18} />
+          Instalar aplicativo
+        </button>
+      )}
+      {open && createPortal(
     <div className="fixed inset-0 z-[1000] flex items-end sm:items-center justify-center bg-black/80 p-3 backdrop-blur-sm" role="presentation">
       <div
         role="dialog"
@@ -113,5 +128,7 @@ export default function InstallPwaModal() {
       </div>
     </div>,
     document.body
+      )}
+    </>
   );
 }
