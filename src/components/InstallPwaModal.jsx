@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Download, Share, PlusSquare, Smartphone, X } from 'lucide-react';
+import { Download, X } from 'lucide-react';
 import matheusLogo from '../assets/logotipo_matheus_personal.png';
 import { isAndroid, isIOS, isMobile, isStandalone } from '../utils/pwa';
 
@@ -8,7 +8,6 @@ const STORAGE_KEY = 'matheus_pwa_install_decision';
 
 export default function InstallPwaModal() {
   const [open, setOpen] = useState(false);
-  const [iosTutorial, setIosTutorial] = useState(false);
   const [manualMessage, setManualMessage] = useState('');
   const [installPrompt, setInstallPrompt] = useState(null);
   const closeRef = useRef(null);
@@ -52,7 +51,7 @@ export default function InstallPwaModal() {
 
   const handleInstall = async () => {
     if (isIOS()) {
-      setIosTutorial(true);
+      setManualMessage('No Safari, toque em Compartilhar e escolha “Adicionar à Tela de Início”. Confirme a adição para criar o atalho.');
       return;
     }
     if (!installPrompt) {
@@ -95,28 +94,7 @@ export default function InstallPwaModal() {
           </button>
         </div>
 
-        {iosTutorial ? (
-          <>
-            <h2 id="install-pwa-title" className="mt-4 text-2xl font-bebas uppercase text-white">Adicione à tela inicial</h2>
-            <ol className="mt-4 space-y-3 text-sm text-gray-300">
-              {[
-                [Share, 'Abra este site no Safari.'],
-                [Share, 'Toque no botão Compartilhar ou no menu correspondente.'],
-                [PlusSquare, 'Selecione “Adicionar à Tela de Início”.'],
-                [Smartphone, 'Habilite “Abrir como App”, quando disponível.'],
-                [Download, 'Confirme a adição.']
-              ].map(([Icon, text], index) => (
-                <li key={text} className="flex items-center gap-3 border border-white/10 p-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-lime-green/10 text-lime-green"><Icon size={18} /></span>
-                  <span><b className="text-lime-green">{index + 1}.</b> {text}</span>
-                </li>
-              ))}
-            </ol>
-            <p className="mt-3 text-xs text-gray-400">Se estiver usando outro navegador no iPhone, abra esta página no Safari para concluir a instalação.</p>
-            <button onClick={() => close('ios-instructions-seen')} className="mt-5 w-full bg-lime-green py-3 font-bold text-black">Entendi</button>
-          </>
-        ) : (
-          <>
+        <>
             <h2 id="install-pwa-title" className="mt-5 text-3xl font-bebas uppercase text-white">Leve seu treino com você!</h2>
             <p className="mt-2 text-sm leading-6 text-gray-300">
               Instale o Matheus Personal na tela inicial do seu celular e tenha acesso rápido aos seus treinos, evolução e acompanhamento personalizado, com uma experiência semelhante a um aplicativo.
@@ -131,8 +109,7 @@ export default function InstallPwaModal() {
               <Download size={19} /> Instalar / adicionar à tela inicial
             </button>
             <button onClick={() => close('later')} className="mt-2 w-full py-3 text-sm text-gray-400 hover:text-white">Agora não</button>
-          </>
-        )}
+        </>
       </div>
     </div>,
     document.body
