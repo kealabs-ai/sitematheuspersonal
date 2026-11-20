@@ -11,14 +11,22 @@ export default defineConfig(({ mode }) => {
       react(),
       VitePWA({
         registerType: 'prompt',
-        includeAssets: ['icons/matheus-personal-192.png', 'icons/matheus-personal-512.png'],
+        includeAssets: [
+          'icons/matheus-personal-180.png',
+          'icons/matheus-personal-192.png',
+          'icons/matheus-personal-512.png',
+          'icons/matheus-personal-maskable-512.png'
+        ],
         manifest: {
+          id: '/',
           name: 'Matheus Personal',
           short_name: 'Matheus',
           description: 'Área do aluno, treinos e acompanhamento Matheus Personal',
+          lang: 'pt-BR',
           start_url: '/login',
           scope: '/',
           display: 'standalone',
+          display_override: ['standalone', 'minimal-ui'],
           orientation: 'portrait-primary',
           theme_color: '#020408',
           background_color: '#020408',
